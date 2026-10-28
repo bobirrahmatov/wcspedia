@@ -4,349 +4,1099 @@
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ad7b46fc21e291164b380c7.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/direct-debit-powering-digital-payments-landscape",
     "articleTitle": "Beyond the Batch: How Direct Debit is Powering the Digital Payments Landscape",
-    "bytes": 68716
+    "bytes": 68716,
+    "sha256": "520040327f6d8321735dcf691172abeb7649ddfc6f483470bf0c89e8bde44a4d",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-01.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 40980,
+      "sha256": "5a9aab5779b2b510ee342ec996f65cfa684476074ea07dc68fc1fbe1c947fb50",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.2895
+    }
   },
   {
     "file": "wcs-insight-cover-02.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ac63978becd6ebe78f6004f.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/navigating-the-t-1-landscape-podcast-episode-4",
     "articleTitle": "Episode 4 - Aligning the Nordics",
-    "bytes": 139169
+    "bytes": 139169,
+    "sha256": "0e1e2bfda6f990f3da19812b240618e328523c64e5058a68f98bd9ad750ef88f",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-02.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 127472,
+      "sha256": "4c4adf2ffe91725a07a15503a4cc02ea9867c0943d938dbcf1f22f8f7dae2d1a",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 36.6715
+    }
   },
   {
     "file": "wcs-insight-cover-03.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ace979449e5053255ac0dc0.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/standardization-etf-primary-market-apac",
     "articleTitle": "Standardization is the Next Step for the ETF Primary Market in APAC",
-    "bytes": 54215
+    "bytes": 54215,
+    "sha256": "4bf0034261bb289f259c71c3065df595927188bdcbe2a8c96482f2eb6a0c21ca",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-03.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 28526,
+      "sha256": "6993f993ca6c84c37504e6cadfc65a66fc6e07b18037c70f7e33329b7d0482fe",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.8992
+    }
   },
   {
     "file": "wcs-insight-cover-04.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ac910b13ee8cde8db22754d.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/digital-frontier-collateral-tokenized-world",
     "articleTitle": "The Digital Frontier: Collateral in a Tokenized World",
-    "bytes": 77911
+    "bytes": 77911,
+    "sha256": "f23e21d6a23b0002bd0a3912015ee5f6f74baf8f49eb0e48d5356873e1ef8636",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-04.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 51966,
+      "sha256": "c2027a36ca9e30a31eef0978e01a07498c11a90d18b8edaf8ad12d47e132c91b",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.5044
+    }
   },
   {
     "file": "wcs-insight-cover-05.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ac7bfa18ffd6ba83d9e4c9b.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/five-treasury-trends-reshaping-liquidity-management-gulf",
     "articleTitle": "Five Treasury Trends Reshaping Liquidity Management in the Gulf",
-    "bytes": 116192
+    "bytes": 116192,
+    "sha256": "0d4a14282ebeb8647e98d019a4baf90deb9694420e027c7bc1131b4caeabd628",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-05.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 95204,
+      "sha256": "aeb289dfe811d2965988d77b917f05d220e712cd2dd20d835257572ee8ad0112",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.2457
+    }
   },
   {
     "file": "wcs-insight-cover-06.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ac7b8f33ee8cde8db22654b.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/ongoing-developments-in-financial-services-regulation-in-the-eu-and-uk-part-ii",
-    "articleTitle": "Ongoing Developments in Financial Services Regulation in the EU and UK \u2013 Part II",
-    "bytes": 61991
+    "articleTitle": "Ongoing Developments in Financial Services Regulation in the EU and UK – Part II",
+    "bytes": 61991,
+    "sha256": "a5326f41489c7d3bf2c4f3d842bd33ec76f231e55ba204947e39e90b53de77f7",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-06.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 35224,
+      "sha256": "a657d3a4d6a460346f4cb9ea98ebf5edad00540b6c754bc7569e411de0cbc2eb",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.8624
+    }
   },
   {
     "file": "wcs-insight-cover-07.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6abbf6e479aa0952badc784a.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/navigating-the-t-1-landscape-podcast-episode-3",
     "articleTitle": "Episode 3 - Unpacking Corporate Actions Under Pressure",
-    "bytes": 159873
+    "bytes": 159873,
+    "sha256": "b70e7c5d17a50f56cee54af8993d055c90d583d31b75786b7e370556d0912073",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-07.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 149306,
+      "sha256": "28bef41d94406da92bb331cfeeccc04aacd5bbd85673d3d85e99bd130cdfe707",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 36.394
+    }
   },
   {
     "file": "wcs-insight-cover-08.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6abbff94e80a0019764da763.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/are-your-ssis-in-place",
     "articleTitle": "Are Your SSIs in Place?",
-    "bytes": 123869
+    "bytes": 123869,
+    "sha256": "f49dd4bfee48e9d8620d5900501f5f536694a766f27f1e74a0287a996063e439",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-08.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 107920,
+      "sha256": "71ab8c720a340f363a2d1c069329cc37ed2d382b636a4cb6aa14a7476ab7e295",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.1675
+    }
   },
   {
     "file": "wcs-insight-cover-09.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aba98a1ea8dc85f2bd48483.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/fx-real-time-world-currency-execution",
     "articleTitle": "FX in a Real-Time World: Building The Future Of Currency Execution",
-    "bytes": 137119
+    "bytes": 137119,
+    "sha256": "5fc0b078931e0a7b9fbef1aeb6c38e1805dd5d707cc4f6287efaf42fd3f82136",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-09.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 103678,
+      "sha256": "2511e32b5c421052baa07f50aadcb382dbd2566a9ee7841773823ffc6645adce",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 36.8895
+    }
   },
   {
     "file": "wcs-insight-cover-10.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ab3f28d05630e7dc14a8236.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/unlocking-data-center-supercycle-trade-finance",
     "articleTitle": "Unlocking the Data Center Supercycle with Trade Finance",
-    "bytes": 59256
+    "bytes": 59256,
+    "sha256": "f10486b0d9cabf6586f96c76060dc49a3e657f8e88fe036c030ba86eb0380e51",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-10.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 33008,
+      "sha256": "6c6ece374c8e28d75c4403ebecc1ee7b778ec13bbfec332f508c814cbb565e6f",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.2726
+    }
   },
   {
     "file": "wcs-insight-cover-11.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aba8afbea8dc85f2bd4844a.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/the-dual-ascent-founders-guide-to-scaling-your-company-and-building-your-wealth",
     "articleTitle": "The Dual Ascent: A Founder's Guide to Scaling Your Company and Building Your Wealth",
-    "bytes": 37326
+    "bytes": 37326,
+    "sha256": "1faa7719d4dbab72368200e6ba9936ac201ad75da94f54e73f8034c191754770",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-11.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 16480,
+      "sha256": "ec319ff5dc8e29b05cb1b27b661e9cd850f3b32bbdd6f601130ddaf005d6c71b",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 42.7204
+    }
   },
   {
     "file": "wcs-insight-cover-12.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/67595e86aed90861a829babe.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/global-resilience-sunshine-despite-very-cloudy-skies",
     "articleTitle": "Global Resilience Sunshine Despite Very Cloudy Skies",
-    "bytes": 68816
+    "bytes": 68816,
+    "sha256": "0ef770437186dac63505a545d687dfddbe605cfd83ba8b9c670e465b4d4c1b15",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-12.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 38854,
+      "sha256": "09829344e1af5282f7dc11d15dc98c2096eee09f31910739c38b03cdc69a4489",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.7692
+    }
   },
   {
     "file": "wcs-insight-cover-13.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ab68c0ec1d879abe8be4e09.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/on-behalf-of-payment-models-corporate-treasury-optimization",
     "articleTitle": "Exploring On-Behalf-Of Payment Models",
-    "bytes": 50529
+    "bytes": 50529,
+    "sha256": "8ffc7fc778b4abb4451079462a9cfcdd5558198c1e88a36b8a2dae5c82ffa46f",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-13.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 24962,
+      "sha256": "4269fe06b5e73710e68b7ff85423e486d7c1e344061d26343f1d0113e1f98c3a",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 41.6127
+    }
   },
   {
     "file": "wcs-insight-cover-14.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ab5683f39c071e91ce01e6b.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/digital-collateral-a-practical-reality",
     "articleTitle": "Digital Collateral: A Practical Reality",
-    "bytes": 41400
+    "bytes": 41400,
+    "sha256": "d2c5aca56b24904e765cd136a8ef27c5f0dd65f633f8c1ec43183ac12781a129",
+    "width": 344,
+    "height": 275,
+    "webp": {
+      "file": "wcs-insight-cover-14.webp",
+      "format": "image/webp",
+      "width": 344,
+      "height": 275,
+      "bytes": 32344,
+      "sha256": "c9d16bd6aa3ccac55c6ce023acfed0c4cb470d48e0402c8698f606c54b36d304",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 36.0968
+    }
   },
   {
     "file": "wcs-insight-cover-15.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6ab139b5c1d879abe8be105c.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/connective-tissue-digital-finance-interoperability-programmability-path-to-institutional-scale",
     "articleTitle": "The Connective Tissue of Digital Finance",
-    "bytes": 136714
+    "bytes": 136714,
+    "sha256": "6e223bbb899ea953dd323df5bb6973bc4977cc4276ef2b0da3a4e3a4896e4315",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-15.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 110808,
+      "sha256": "b687eceedfd1bc445c05f833bcd2cb383639222860b807cc1c0e400b9a550127",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.2156
+    }
   },
   {
     "file": "wcs-insight-cover-16.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aad6a57c501fefab42828bb.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/how-sovereign-platforms-build-enduring-enterprises",
     "articleTitle": "How Sovereign Platforms Build Enduring Enterprises",
-    "bytes": 49122
+    "bytes": 49122,
+    "sha256": "b250f8a22bd43f8f90cf41350a135074db16b7586c5adf6ce6c82b9dcefaaf1f",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-16.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 30496,
+      "sha256": "1e39404e819a279880834b36b2951d04735e66b111ce4c34ec5abfe96a959cd7",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.6256
+    }
   },
   {
     "file": "wcs-insight-cover-17.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aa96ddf1ab8cc7014f3f2cc.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/the-world-rewired",
     "articleTitle": "The World Rewired",
-    "bytes": 139385
+    "bytes": 139385,
+    "sha256": "2266037df3e82236e853e89cb895798f9dad221ef3aca33b0f903ba0409c6e7b",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-17.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 122614,
+      "sha256": "a2fa1a236d853da291457f55b78cbe94e83dd64ae8560967731997f41ff47368",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.0722
+    }
   },
   {
     "file": "wcs-insight-cover-18.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aa94d521ab8cc7014f3f211.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/eucalyptus-grove-grand-opening-event",
     "articleTitle": "Eucalyptus Grove Grand Opening Event",
-    "bytes": 68440
+    "bytes": 68440,
+    "sha256": "e2c47563d73f89fafe726337c58f44878272352d37dfcf9e99fb12bd373cf5cf",
+    "width": 720,
+    "height": 455,
+    "webp": {
+      "file": "wcs-insight-cover-18.webp",
+      "format": "image/webp",
+      "width": 720,
+      "height": 455,
+      "bytes": 44956,
+      "sha256": "a64a447fe26f304fb36c9ab8cff07ad995f9b4efc12c400ab702c65f36a89509",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.1699
+    }
   },
   {
     "file": "wcs-insight-cover-19.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aa94d8ebb39153dee466401.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/valley-vista-groundbreaking-event",
     "articleTitle": "Valley Vista Groundbreaking Event",
-    "bytes": 75129
+    "bytes": 75129,
+    "sha256": "4b0bd2b0abedbb72d0ec58be20c1afab36c8a0a472488a90a00cf56c37999ea7",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-19.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 49154,
+      "sha256": "61cb8f9578f70713a9136a127712e474e352f928750dbe199dbdb76fe5fb6360",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.2889
+    }
   },
   {
     "file": "wcs-insight-cover-20.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aa834241ab8cc7014f3ea12.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/ai-in-the-digital-economy",
     "articleTitle": "AI in the Digital Economy - From Experimentation to Global Deployment",
-    "bytes": 134850
+    "bytes": 134850,
+    "sha256": "783fa03fb4a2539c074ea40e789b1857bcee33e570781143d70104b23d80b35a",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-20.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 113684,
+      "sha256": "9772fd9fc507d3a910cb1afc642e7d6ca59653953ecb627e42a5600bcadb9449",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.0455
+    }
   },
   {
     "file": "wcs-insight-cover-21.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aa83009bb39153dee46561e.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/latam-poised-for-take-off",
     "articleTitle": "LatAm Poised for Take-Off",
-    "bytes": 74337
+    "bytes": 74337,
+    "sha256": "ddd53761a1e9549da1d17340fb4b15586a7823a46d4fa1fb54f968e37386d95e",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-21.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 47956,
+      "sha256": "ce61baa946b98b94455f0d1b04641a8a7b6de38fb49c6d451fb84aae156b7983",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.9246
+    }
   },
   {
     "file": "wcs-insight-cover-22.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6aa1961a5f096f5a1d6bcd13.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/shorter-cycles-higher-stakes",
     "articleTitle": "Shorter Cycles, Higher Stakes: Corporate Actions in a T+1 World",
-    "bytes": 61902
+    "bytes": 61902,
+    "sha256": "7415cecb7f05724aabdf3b6cffc1e77876b11e4720ac5c72fcb0eb0ca2bb91af",
+    "width": 1400,
+    "height": 445,
+    "webp": {
+      "file": "wcs-insight-cover-22.webp",
+      "format": "image/webp",
+      "width": 1280,
+      "height": 407,
+      "bytes": 50580,
+      "sha256": "16a5fb330d6e1763da08c8a40f2f1168d86a1d3df759df115448b013fc8189fe",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.436
+    }
   },
   {
     "file": "wcs-insight-cover-23.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/66fbb622d8413059ebe6436d.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/protecting-europe",
     "articleTitle": "Protecting Europe",
-    "bytes": 61353
+    "bytes": 61353,
+    "sha256": "41dc00ae5b54edfbd2eafade48213368c1ad801e0340b221fe3f007fb5c6ef55",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-23.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 30964,
+      "sha256": "65068a4d68902dce9c9873348c83e0779e7ba7eb0889a4e8e1acd5e8b1a138a0",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.1204
+    }
   },
   {
     "file": "wcs-insight-cover-24.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/68713299143d4c6df037c337.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/unlock-value-by-paying-to-digital-wallets",
     "articleTitle": "Unlock Value by Paying to Digital Wallets",
-    "bytes": 55866
+    "bytes": 55866,
+    "sha256": "0f590a7b60be1eaaede675a198e48a51ffd1452d07f2da5427338b220023504f",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-24.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 28284,
+      "sha256": "af320fa14e41141dc6db69b1b0e8c0a05796b1878287cc3aacbc17b88110cf72",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.7793
+    }
   },
   {
     "file": "wcs-insight-cover-25.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/68d305d7f885b579bd5f798f.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/unlocking-value-for-banks-in-a-real-time-world",
     "articleTitle": "Unlocking Value for Banks in a 24/7 Real-Time World",
-    "bytes": 77326
+    "bytes": 77326,
+    "sha256": "e25406b0816186c18ced54c4fd99f769729081bc4b56e78fe7a71224d8e24eb2",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-25.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 48608,
+      "sha256": "1db97d4f8fef53ca0e88e72afb3905b1556c0700078a893aeaaacbe629fd438d",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.5
+    }
   },
   {
     "file": "wcs-insight-cover-26.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a972fc79f2423c6a063ad33.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/citis-2026-global-tmt-conference-preview-key-tech-themes-to-watch",
-    "articleTitle": "Citi\u2019s 2026 Global TMT Conference Preview",
-    "bytes": 99773
+    "articleTitle": "Citi’s 2026 Global TMT Conference Preview",
+    "bytes": 99773,
+    "sha256": "68e7dcea11f73f7feef8d0f97ac3a7755190b1f7eda944d34f1f487320dfdc6e",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-26.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 73966,
+      "sha256": "d9867e240bf71533eec5b5b8c3a5390cbccca42e4e7f3bca4dd7590d9d971c32",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.9509
+    }
   },
   {
     "file": "wcs-insight-cover-27.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a8c4b88c7d100b7d9e724a4.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/ongoing-developments-in-financial-services-regulation-in-the-eu-and-uk-part-1",
     "articleTitle": "Ongoing Developments in Financial Services Regulation in the EU and UK - Part I",
-    "bytes": 86020
+    "bytes": 86020,
+    "sha256": "c7be0aa37147eb15c0fd3d78b2ece1cb399589b4af0339f6b75da86fdd664573",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-27.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 62664,
+      "sha256": "4bc3693287af350a2316486ffb25b1bc6cca7c17f947a3e8cec89bf4b88a839c",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.9871
+    }
   },
   {
     "file": "wcs-insight-cover-28.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a8c38a9c70cc5feb9324045.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/fueling-resilience-securing-energy-supply-chain",
     "articleTitle": "Fueling Resilience: Securing Energy Supply Chain",
-    "bytes": 58788
+    "bytes": 58788,
+    "sha256": "2a4da797453aa4aa91b575ff3d4433452eb0dbfee8e80cef964552726fb4581f",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-28.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 34782,
+      "sha256": "47f11c7286d3a37807b63d871b6e300125cdc7c2d5967b27c64e1257cceb993a",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.3465
+    }
   },
   {
     "file": "wcs-insight-cover-29.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a8c53c3c70cc5feb93240a1.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/accelerating-b2b-cash",
     "articleTitle": "Accelerating B2B Cash: Real-Time Liquidity, Payments and Data for Corporate Treasurers",
-    "bytes": 71463
+    "bytes": 71463,
+    "sha256": "b73eb64fc6d4702bc6416c174fe7df0c79836cc7b7419cd22529a2edf3dac915",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-29.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 39918,
+      "sha256": "1ec48256f14097e0797da7aa5ddf3bb8ea2667971fc1c9f4977cc41c99ae5391",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.6568
+    }
   },
   {
     "file": "wcs-insight-cover-30.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6790c9ce4ef75d79b5249b0d.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/global-resilience-many-storm-clouds-but-still-little-rain",
     "articleTitle": "Global Resilience: Many Storm Clouds, but Still Little Rain",
-    "bytes": 92224
+    "bytes": 92224,
+    "sha256": "a56bc602b4dd1d13c4f465ee3e68ce7ffc1446a725dce90d04171f1b946d6b27",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-30.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 62554,
+      "sha256": "e1e8573493d676d125fe589a46cfbc6f420683a8f3737113b7003004f8aeb143",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.0264
+    }
   },
   {
     "file": "wcs-insight-cover-31.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a8c5044a25dee92b6a77165.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/navigating-the-global-liquidity-maze",
-    "articleTitle": " Navigating the Global Liquidity Maze: A Treasurer\u2019s Guide to Cash Concentration",
-    "bytes": 130998
+    "articleTitle": " Navigating the Global Liquidity Maze: A Treasurer’s Guide to Cash Concentration",
+    "bytes": 130998,
+    "sha256": "72a4a656637799156a9d29958f2d36ce3c9429667f4caa99c9396278674f3787",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-31.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 104336,
+      "sha256": "ac6adfe579b6af6256cc97c617ee75c7c5f155e25c5e095b135d81a5b66ad9e9",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.4245
+    }
   },
   {
     "file": "wcs-insight-cover-32.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a736f258b071ba572a18923.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/where-can-we-take-you-italy",
     "articleTitle": "Where Can We Take You? Italy",
-    "bytes": 82924
+    "bytes": 82924,
+    "sha256": "9b896600675562e46943eb677193d91cfe6378773d5e37a310834d1886938e9f",
+    "width": 1400,
+    "height": 445,
+    "webp": {
+      "file": "wcs-insight-cover-32.webp",
+      "format": "image/webp",
+      "width": 1280,
+      "height": 407,
+      "bytes": 79308,
+      "sha256": "06e951f06a74e816bd44333ea4710ee0fcb520e5308deb2f551dc94b6d3b7327",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.2596
+    }
   },
   {
     "file": "wcs-insight-cover-33.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a70ea9ad19e2c6ea5932405.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/capital-market-harmonization",
     "articleTitle": " Capital Market Harmonization: The EU's Market Integration and Supervision Package",
-    "bytes": 57768
+    "bytes": 57768,
+    "sha256": "4aa34cba0aac3af950d20511a9f306f22f4a3762b4e785cf99ddf6316d1271e7",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-33.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 36732,
+      "sha256": "807efc76fcb83765b2da2ed92a2c5a82b6b2f8fa7fef904e09b037aaab8f166e",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.9755
+    }
   },
   {
     "file": "wcs-insight-cover-34.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a6a5666c8860aa602fc9efe.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/emerging-markets-economic-outlook-strategy-artificial-intelligence-and-the-em-growth-divide",
     "articleTitle": "Emerging Markets Economic Outlook & Strategy: Artificial Intelligence and the EM Growth Divide",
-    "bytes": 87485
+    "bytes": 87485,
+    "sha256": "5be90d006f03f83c85807e4cdcf2824350c9def24f9b4b3a4637146be2f3fc8f",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-34.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 60752,
+      "sha256": "54d7fdc88003a8d896ef0008d357e723cf6784bb6c3cd258b0693a89c6202c1c",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.3292
+    }
   },
   {
     "file": "wcs-insight-cover-35.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a68c921fde628352a3262e9.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/agentic-commerce-a-new-chapter-for-instant-payments",
     "articleTitle": "Agentic Commerce: A New Chapter for Instant Payments",
-    "bytes": 51189
+    "bytes": 51189,
+    "sha256": "0cd591baedb0bee50ead74e7f95acb8eb5c5eaec11affae2bdc722f680e7ef79",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-35.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 26130,
+      "sha256": "3fc621ad2c5e879387689d1730cec037eab8ab69bc0253d3b5db69cb916dda85",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 41.2247
+    }
   },
   {
     "file": "wcs-insight-cover-36.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a68ccc0fde628352a3262fa.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/from-challenge-to-capital-trade-finance-gap",
     "articleTitle": "From Challenge to Capital: A Modern SME's Guide to Navigating the $2.5 Trillion Trade Finance Gap",
-    "bytes": 66407
+    "bytes": 66407,
+    "sha256": "d12fb1c15776407bd50d16f98bd8f8419f33ad4205068f5060fa24d1e93101c1",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-36.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 38928,
+      "sha256": "a4e7cba7c33848ef3552871eec60c705e0b773e8668014e64773244c33c3adc2",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.9694
+    }
   },
   {
     "file": "wcs-insight-cover-37.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a57a64dfc255f63a59b7865.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/midyear-2026-outlook-resilience-ai-and-evolving-market-dynamics",
     "articleTitle": "Midyear 2026 Outlook: Resilience, AI, and Evolving Market Dynamics",
-    "bytes": 148216
+    "bytes": 148216,
+    "sha256": "12ed8fbaa408c06a05243847a78789e2d7d3422a2976969885f5f123c6174fc3",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-37.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 136622,
+      "sha256": "767566df0e2430a4ee73a0adbf0f3a7c3ea719ac57a73cbfde3177d22ebd86be",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 36.6721
+    }
   },
   {
     "file": "wcs-insight-cover-38.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a4fd7edfc01f82270a22bd3.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/the-next-frontier-from-cost-center-to-alpha-engine",
     "articleTitle": "The Next Frontier: From Cost Center to Alpha Engine",
-    "bytes": 114213
+    "bytes": 114213,
+    "sha256": "7c7fcf038739d3169ddb92f68c88f27ab9c87cfac5c05337ae400fc3b97f5a28",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-38.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 94964,
+      "sha256": "a9b2183232819048d672104ac84d1dd3a524f6102efcc374fd3c762bb184fa58",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.3517
+    }
   },
   {
     "file": "wcs-insight-cover-39.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a4fabaafc01f82270a22b2a.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/revolutionizing-trade-from-paper-to-real-time-data",
-    "articleTitle": "Revolutionizing Trade:  From Paper to Real-Time Data \u2013 And the Potential of Smart Contracts",
-    "bytes": 61505
+    "articleTitle": "Revolutionizing Trade:  From Paper to Real-Time Data – And the Potential of Smart Contracts",
+    "bytes": 61505,
+    "sha256": "b97f22224f3d0f3916d29d014ca4a892809e8017f42a543f9d0337e74b4f43af",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-39.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 32330,
+      "sha256": "3a309ade9608bfc3eaa268a4d2fa6d480b485158b882adf578b3349445629867",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.7027
+    }
   },
   {
     "file": "wcs-insight-cover-40.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/69e2520e986d737c8f94a378.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/digital-postcard-from-cannes-26-advertising-enters-the-agentic-era-amid-relatively-healthy-ad-environment",
-    "articleTitle": "Digital Postcard from Cannes \u201926: Advertising Enters the Agentic Era Amid a Relatively Healthy Ad Environment",
-    "bytes": 64522
+    "articleTitle": "Digital Postcard from Cannes ’26: Advertising Enters the Agentic Era Amid a Relatively Healthy Ad Environment",
+    "bytes": 64522,
+    "sha256": "1c7626b12735d91b19e052a6ef5513216ac830bb8f8d6c859e66b977e6c99277",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-40.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 38046,
+      "sha256": "e18be8077823a9a2e3de4e366c6507a47edbc3022d0eb69fdcdbe433fbf645c7",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.6522
+    }
   },
   {
     "file": "wcs-insight-cover-41.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a4685f056a118b49232324b.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/china-second-half-outlook-ai-supercycle-cuts-into-the-k-shaped-economy",
     "articleTitle": "China Second-Half Outlook: AI Supercycle Cuts Into the K-Shaped Economy",
-    "bytes": 85419
+    "bytes": 85419,
+    "sha256": "a2f2c54de56ea5453feff0ed66f82226f5d44f3cf7e839f8cb72eb35f207df52",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-41.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 59004,
+      "sha256": "fee80c54fc2cd27da98ab7c9bfe57b0a0b424fb325cd157f6c083cea93293996",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.3404
+    }
   },
   {
     "file": "wcs-insight-cover-42.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a45598e7410815ab5687001.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/overcoming-gridlock-2-0-solving-power-bottlenecks-to-drive-ai-energy-security",
-    "articleTitle": "Overcoming Gridlock 2.0 \u2014 Solving Power Bottlenecks to Drive AI & Energy Security",
-    "bytes": 145024
+    "articleTitle": "Overcoming Gridlock 2.0 — Solving Power Bottlenecks to Drive AI & Energy Security",
+    "bytes": 145024,
+    "sha256": "128af77eeff67266f0a34b0d0f4a21d1b8179ff75c008245035550363ece7f56",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-42.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 125006,
+      "sha256": "56c37c61af67ca815835bcdb15f48ebf33a247c4e49a66e1d453411b242da6cf",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.0715
+    }
   },
   {
     "file": "wcs-insight-cover-43.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/69dfef5ecf10364a9c4386f0.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/turmoil-in-the-middle-east-implications-for-supply-chains",
     "articleTitle": "Turmoil in the Middle East: Implications for Supply Chains",
-    "bytes": 76878
+    "bytes": 76878,
+    "sha256": "0e414a7b51cfbd024685bdfe8e631b0c4c6f164f42a6e1b009b5a351b5785e2a",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-43.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 51300,
+      "sha256": "8699c7f4a3e75703afb5137c81b23900df4b7a3a18a9167a6405cefb776962aa",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.6579
+    }
   },
   {
     "file": "wcs-insight-cover-44.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a397cbc669b031dd1cd7b7a.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/energy-south-america-the-next-frontier",
     "articleTitle": "Energy South America: The Next Frontier",
-    "bytes": 123294
+    "bytes": 123294,
+    "sha256": "bfc6802ce91d18e81de3519709abc1f062055572c98ace1a3935ed62b93b4402",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-44.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 102924,
+      "sha256": "230930fb0e749987bb620e291838da709a5fcd3a9ed7a4ecc4fb29af7b657785",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 37.1005
+    }
   },
   {
     "file": "wcs-insight-cover-45.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a394da29d829d46663b0653.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/where-can-we-take-you-chile",
     "articleTitle": "Where Can We Take You? Chile",
-    "bytes": 177898
+    "bytes": 177898,
+    "sha256": "31c50301af189986bdfdc064756ea038643b58b9058c74d01e9290ed79499077",
+    "width": 1400,
+    "height": 445,
+    "webp": {
+      "file": "wcs-insight-cover-45.webp",
+      "format": "image/webp",
+      "width": 1280,
+      "height": 407,
+      "bytes": 183182,
+      "sha256": "cade5f121615928b283e632f1e543e229d2a2933ad19ddbc9cd70d7e1374e883",
+      "quality": 82,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 35.7555
+    }
   },
   {
     "file": "wcs-insight-cover-46.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a32ad7e8756c2433a85adb3.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/upping-the-innovation-game-in-the-asset-management-industry",
     "articleTitle": "Upping the Innovation Game in the Asset Management Industry",
-    "bytes": 54911
+    "bytes": 54911,
+    "sha256": "442c31666f01b77c63f2634ae4021e981745ff809740787cea62f408ff77b4aa",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-46.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 27004,
+      "sha256": "8ef6ad0a018ade513302281dd144638e416ef925476197e0d3ccc6c0d50a8c9f",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.1461
+    }
   },
   {
     "file": "wcs-insight-cover-47.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a315bfd8756c2433a859f7a.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/beyond-t-1-europe-post-trade-landscape",
-    "articleTitle": "Beyond T+1: Charting the Transformation of Europe\u2019s Post-Trade Landscape",
-    "bytes": 107529
+    "articleTitle": "Beyond T+1: Charting the Transformation of Europe’s Post-Trade Landscape",
+    "bytes": 107529,
+    "sha256": "3ba6ed5c77eb8f5e450e1f782cbd0d13162bd14957e4928e11d712bbda5732d3",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-47.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 74090,
+      "sha256": "a0529aa0520d3025fc40e253408908a0dfee61ca11270e051725e154ac6b387e",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.1595
+    }
   },
   {
     "file": "wcs-insight-cover-48.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a1701e79d43fc0e47511f01.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/serving-always-on-investor-payments-playbook-broker-dealers",
     "articleTitle": "Serving the Always-On Investor: A Payments Playbook for Broker-Dealers",
-    "bytes": 91932
+    "bytes": 91932,
+    "sha256": "29c70865f82d06447e3cd9e4038ac2eeb50315b1a4354701921bcabc1c88330e",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-48.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 60524,
+      "sha256": "edf5fd33d600087afa8df11e609cc3dce236b7f1a5653a9c6cb09a038f6bad1f",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 38.3545
+    }
   },
   {
     "file": "wcs-insight-cover-49.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a26d1d8ff5ce9a9d0d2f191.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/adam-smith-awards-asia-2025-zte-fx-solution-citi-global-scorecard-auto-reset-hedge",
     "articleTitle": "Adam Smith Awards Asia 2025: ZTE",
-    "bytes": 69927
+    "bytes": 69927,
+    "sha256": "5d479b616d128c76d0538b85cb7cc582a6c1a52b7614a5ce89320903f83072e9",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-49.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 41124,
+      "sha256": "c61a554d493207d6d96d4fad76d09a2e9acace16fc766c1a65ebda8eb0a55e2f",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 39.687
+    }
   },
   {
     "file": "wcs-insight-cover-50.jpg",
     "sourceUrl": "https://www.citigroup.com/rcs/v1/siteIds/citigpa/asset/800/500/6a2139a6dfe07233e3bdca47.jpg",
     "articleUrl": "https://www.citigroup.com/global/insights/the-boardroom-s-new-mandate",
-    "articleTitle": "The Boardroom\u2019s New Mandate",
-    "bytes": 52462
+    "articleTitle": "The Boardroom’s New Mandate",
+    "bytes": 52462,
+    "sha256": "1b6ca6f9322fb6a0a8a6fcfdd5af07fe03d732136444bd9c97de210ace950f0b",
+    "width": 800,
+    "height": 500,
+    "webp": {
+      "file": "wcs-insight-cover-50.webp",
+      "format": "image/webp",
+      "width": 800,
+      "height": 500,
+      "bytes": 34342,
+      "sha256": "cf8245b017dc9ecb5c987158513530a148e81bba3dbffdcaef704e1e0f97ea40",
+      "quality": 84,
+      "method": 6,
+      "sharpYuv": true,
+      "rgbPsnrDb": 40.7031
+    }
   }
 ]

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === 'b9a0abd2a1ba') return;
+  if (registry.addDocument && registry.addDocument.version === '39b3586756cd') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -70,7 +70,19 @@
   "lock": "<rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"2\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3M12 14v3\"/>",
   "bookmark": "<path d=\"M6 3h12v18l-6-4-6 4V3Z\"/>",
   "helpful": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"8.5\" cy=\"9.5\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15.5\" cy=\"9.5\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M7.8 13.5c1.2 3.7 7.2 3.7 8.4 0\"/>",
-  "not-helpful": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"8.5\" cy=\"9.5\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15.5\" cy=\"9.5\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M7.8 16.2c1.2-3.7 7.2-3.7 8.4 0\"/>"
+  "not-helpful": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"8.5\" cy=\"9.5\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15.5\" cy=\"9.5\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M7.8 16.2c1.2-3.7 7.2-3.7 8.4 0\"/>",
+  "arrow-left": "<path d=\"M20 12H4m6-6-6 6 6 6\"/>",
+  "external": "<path d=\"M14 3h7v7m0-7L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5\"/>",
+  "quote": "<path d=\"M4 11h6v8H3v-7c0-4 2-7 6-8M15 11h6v8h-7v-7c0-4 2-7 6-8\"/>",
+  "list": "<path d=\"M8 6h13M8 12h13M8 18h13\"/><circle cx=\"3\" cy=\"6\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"3\" cy=\"12\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"3\" cy=\"18\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/>",
+  "ordered-list": "<path d=\"M9 6h12M9 12h12M9 18h12M3 4h1v5M3 9h2M2.5 14c0-2 3.5-2 3.5 0 0 1.5-3.5 3-3.5 5H6\"/>",
+  "bold": "<path d=\"M6 4h6a4 4 0 0 1 0 8H6V4Zm0 8h7a4 4 0 0 1 0 8H6v-8Z\"/>",
+  "italic": "<path d=\"M10 4h8M6 20h8M14 4 10 20\"/>",
+  "underline": "<path d=\"M6 4v7a6 6 0 0 0 12 0V4M4 21h16\"/>",
+  "strike": "<path d=\"M17 6c-1-2-4-3-7-2-4 1-4 5-1 6m6 4c5 2 3 6-1 6-3 0-5-1-6-3M3 12h18\"/>",
+  "info": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 11v6\"/><circle cx=\"12\" cy=\"7.5\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/>",
+  "warning": "<path d=\"m12 3 10 18H2L12 3Z\"/><path d=\"M12 9v5\"/><circle cx=\"12\" cy=\"17.5\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/>",
+  "error": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m9 9 6 6m0-6-6 6\"/>"
 };
   var filled={
   "insights": "M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H18.5001C19.7427 20.75 20.7501 19.7426 20.7501 18.5V5.5C20.7501 4.25736 19.7427 3.25 18.5001 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H18.5001C18.9143 4.75 19.2501 5.08579 19.2501 5.5V18.5C19.2501 18.9142 18.9143 19.25 18.5001 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V5.5ZM6.25005 9.7143C6.25005 9.30008 6.58583 8.9643 7.00005 8.9643L17 8.96429C17.4143 8.96429 17.75 9.30008 17.75 9.71429C17.75 10.1285 17.4143 10.4643 17 10.4643L7.00005 10.4643C6.58583 10.4643 6.25005 10.1285 6.25005 9.7143ZM6.25005 14.2857C6.25005 13.8715 6.58583 13.5357 7.00005 13.5357H17C17.4143 13.5357 17.75 13.8715 17.75 14.2857C17.75 14.6999 17.4143 15.0357 17 15.0357H7.00005C6.58583 15.0357 6.25005 14.6999 6.25005 14.2857Z",
@@ -85,7 +97,7 @@
   "home": "M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V8.99998C3.25 10.2426 4.25736 11.25 5.5 11.25H9C10.2426 11.25 11.25 10.2426 11.25 8.99998V5.5C11.25 4.25736 10.2426 3.25 9 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H9C9.41421 4.75 9.75 5.08579 9.75 5.5V8.99998C9.75 9.41419 9.41421 9.74998 9 9.74998H5.5C5.08579 9.74998 4.75 9.41419 4.75 8.99998V5.5ZM5.5 12.75C4.25736 12.75 3.25 13.7574 3.25 15V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H9C10.2426 20.75 11.25 19.7427 11.25 18.5V15C11.25 13.7574 10.2426 12.75 9 12.75H5.5ZM4.75 15C4.75 14.5858 5.08579 14.25 5.5 14.25H9C9.41421 14.25 9.75 14.5858 9.75 15V18.5C9.75 18.9142 9.41421 19.25 9 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V15ZM12.75 5.5C12.75 4.25736 13.7574 3.25 15 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V8.99998C20.75 10.2426 19.7426 11.25 18.5 11.25H15C13.7574 11.25 12.75 10.2426 12.75 8.99998V5.5ZM15 4.75C14.5858 4.75 14.25 5.08579 14.25 5.5V8.99998C14.25 9.41419 14.5858 9.74998 15 9.74998H18.5C18.9142 9.74998 19.25 9.41419 19.25 8.99998V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H15ZM15 12.75C13.7574 12.75 12.75 13.7574 12.75 15V18.5C12.75 19.7426 13.7574 20.75 15 20.75H18.5C19.7426 20.75 20.75 19.7427 20.75 18.5V15C20.75 13.7574 19.7426 12.75 18.5 12.75H15ZM14.25 15C14.25 14.5858 14.5858 14.25 15 14.25H18.5C18.9142 14.25 19.25 14.5858 19.25 15V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15C14.5858 19.25 14.25 18.9142 14.25 18.5V15Z"
 };
   var viewBoxes={"insights":"0 0 24 24","credit-approval-control":"0 0 24 24","credit-information-management":"0 0 24 24","credit-management-reporting":"0 0 24 24","deal-closing":"0 0 24 24","documentation-pledging":"0 0 24 24","emea-credit-admin":"0 0 24 24","loan-management":"0 0 20 20","regional-operating-manuals":"0 0 24 24","home":"0 0 24 24","mine":"0 0 24 24","review":"0 0 24 24","saved":"0 0 24 24","entitlements":"0 0 24 24","working":"0 0 24 24"};
-  var aliases={"grid":"home","users":"review","copy":"documentation-pledging","chart":"credit-management-reporting","chevron":"right","back":"left","mine":"home","review":"emea-credit-admin","saved":"documentation-pledging","entitlements":"credit-approval-control","working":"regional-operating-manuals"};
+  var aliases={"grid":"home","users":"review","copy":"documentation-pledging","chart":"credit-management-reporting","chevron":"right","back":"left","mine":"home","review":"emea-credit-admin","saved":"documentation-pledging","entitlements":"credit-approval-control","working":"regional-operating-manuals","pdf":"file","docx":"file","md":"codeblock","mdx":"codeblock","mdx-template":"template"};
   function escape(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function own(table,key){return Object.prototype.hasOwnProperty.call(table,key);}
   function has(name){name=own(aliases,name)?aliases[name]:name;return own(filled,name)||own(paths,name);}
@@ -236,9 +248,25 @@
   function insightCoverUrl(key,options) {
     options=options||{};var id=String(key||''),hash=2166136261;
     for(var i=0;i<id.length;i++)hash=Math.imul(hash^id.charCodeAt(i),16777619)>>>0;
-    var file='wcs-insight-cover-'+String(hash%50+1).padStart(2,'0')+'.jpg';
+    var file='wcs-insight-cover-'+String(hash%50+1).padStart(2,'0')+'.webp';
     var host=String(options.attachmentPageId||''),context=String(options.contextPath||'/confluence').replace(/\/$/,'');
     return /^[1-9]\d{0,19}$/.test(host)&&/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context)?context+'/download/attachments/'+host+'/'+file+'?api=v2':'assets/insights-covers/'+file;
+  }
+  // Upgrade only our bundled cover library, never an author's uploaded image.
+  // Keep the numbered selection stable and share one URL across every surface.
+  function optimizedInsightCoverUrl(value,options) {
+    if(typeof value!=='string')return value;
+    options=options||{};var path=value,host=String(options.attachmentPageId||''),context=String(options.contextPath||'/confluence').replace(/\/$/,'');
+    if(/^https?:\/\//i.test(path)){
+      try{var base=new URL(options.baseUrl),url=new URL(path);if(url.origin!==base.origin||url.username||url.password)return value;path=url.pathname+url.search+url.hash;}catch(_){return value;}
+    }
+    var file='wcs-insight-cover-(?:0[1-9]|[1-4][0-9]|50)\\.jpg';
+    var local=new RegExp('^(?:\\./)?assets/insights-covers/'+file+'(?:[?#].*)?$');
+    var prefix=context+'/download/attachments/'+host+'/';
+    var native=/^[1-9]\d{0,19}$/.test(host)&&path.indexOf(prefix)===0&&new RegExp('^'+file+'(?:[?#].*)?$').test(path.slice(prefix.length));
+    // A JPEG attachment's version belongs to that attachment, not the new WebP.
+    // Canonical URLs also let cards and readers reuse the same browser response.
+    return native?path.split(/[?#]/)[0].replace(/\.jpg$/,'.webp')+'?api=v2':local.test(path)?path.split(/[?#]/)[0].replace(/^\.\//,'').replace(/\.jpg$/,'.webp'):value;
   }
   function topicLabel(value) {
     return String(value == null ? '' : value).trim().replace(/[-_]+/g,' ').replace(/\b[a-zA-Z]+\b/g,function(word){
@@ -938,7 +966,7 @@
     normalizeImport(result);
     return result;
   }
-  return Object.freeze({ INSIGHT_TYPES: INSIGHT_TYPES, INSIGHT_CHOICES: INSIGHT_CHOICES, CREATE_TYPES: CREATE_TYPES, insightCoverUrl: insightCoverUrl, topicLabel: topicLabel, starterTemplate: starterTemplate, groupType: groupType, typeLabel: typeLabel, typeMembers: typeMembers, isInsightType: isInsightType, publicationModeFor: publicationModeFor, isDirectPublication: isDirectPublication, fromSections: fromSections, toSections: toSections, render: render, validateCover: validateCover, validateAssets: validateAssets, validateAttachments: validateAttachments, validateTags: validateTags, validateReferences: validateReferences, validateSourceMetadata: validateSourceMetadata, validateCommentsEnabled: validateCommentsEnabled, safeUrl: safeUrl, normalizeImport: normalizeImport, toMarkdown: toMarkdown, toMDX: toMDX, governanceDetails: governanceDetails, videoEmbed: videoEmbed, videoMarkdown: videoMarkdown, videoToken: videoToken });
+  return Object.freeze({ INSIGHT_TYPES: INSIGHT_TYPES, INSIGHT_CHOICES: INSIGHT_CHOICES, CREATE_TYPES: CREATE_TYPES, insightCoverUrl: insightCoverUrl, optimizedInsightCoverUrl: optimizedInsightCoverUrl, topicLabel: topicLabel, starterTemplate: starterTemplate, groupType: groupType, typeLabel: typeLabel, typeMembers: typeMembers, isInsightType: isInsightType, publicationModeFor: publicationModeFor, isDirectPublication: isDirectPublication, fromSections: fromSections, toSections: toSections, render: render, validateCover: validateCover, validateAssets: validateAssets, validateAttachments: validateAttachments, validateTags: validateTags, validateReferences: validateReferences, validateSourceMetadata: validateSourceMetadata, validateCommentsEnabled: validateCommentsEnabled, safeUrl: safeUrl, normalizeImport: normalizeImport, toMarkdown: toMarkdown, toMDX: toMDX, governanceDetails: governanceDetails, videoEmbed: videoEmbed, videoMarkdown: videoMarkdown, videoToken: videoToken });
 });
 
 ;
@@ -2058,7 +2086,7 @@ function renderStorage(document, selected, people = [], options = {}) {
   out += '<ac:structured-macro ac:name="anchor" ac:schema-version="1"><ac:parameter ac:name="">wcs-comments-v1-' + (version.commentsEnabled ? 'enabled' : 'disabled') + '</ac:parameter></ac:structured-macro>';
   out += '<ac:structured-macro ac:name="details" ac:schema-version="1"><ac:parameter ac:name="id">wcspedia-document</ac:parameter>' + (article ? '<ac:parameter ac:name="hidden">true</ac:parameter>' : '') + '<ac:rich-text-body>' + table(rows) + '</ac:rich-text-body></ac:structured-macro>';
   if (article) {
-    out += version.cover ? '<div class="wcs-native-article-cover">' + imageTag(staged(options, '$cover', version.cover.src), version.cover.alt) + (version.cover.caption ? '<p>' + xml(version.cover.caption) + '</p>' : '') + '</div>' : '<div class="wcs-native-article-cover">'+'<ac:structured-macro ac:name="html" ac:schema-version="1"><ac:plain-text-body>'+cdata('<img src="'+xml(content.insightCoverUrl(document.id,{attachmentPageId:options.attachmentPageId,contextPath:options.contextPath}))+'" alt="" decoding="async" />')+'</ac:plain-text-body></ac:structured-macro>'+'</div>';
+    out += version.cover ? '<div class="wcs-native-article-cover">' + imageTag(staged(options, '$cover', version.cover.src), version.cover.alt) + (version.cover.caption ? '<p>' + xml(version.cover.caption) + '</p>' : '') + '</div>' : '<div class="wcs-native-article-cover">'+'<ac:structured-macro ac:name="html" ac:schema-version="1"><ac:plain-text-body>'+cdata('<img src="'+xml(content.insightCoverUrl(document.id,{attachmentPageId:options.attachmentPageId,contextPath:options.contextPath}))+'" alt="" decoding="async" loading="eager" fetchpriority="high" width="800" height="500" />')+'</ac:plain-text-body></ac:structured-macro>'+'</div>';
     out += '<div class="wcs-native-article-layout"><div class="wcs-native-article-body">';
   }
   if (version.summary) out += '<ac:structured-macro ac:name="excerpt" ac:schema-version="1"><ac:rich-text-body><p>' + xml(version.summary) + '</p></ac:rich-text-body></ac:structured-macro>';
@@ -5158,5 +5186,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: 'b9a0abd2a1ba', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '39b3586756cd', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();
