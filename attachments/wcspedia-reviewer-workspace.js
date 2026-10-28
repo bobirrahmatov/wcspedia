@@ -7411,6 +7411,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         }
         return { item: item, id: id, ancestors: ancestors, insightArea: insightArea };
       }
+      var unavailableCount = 0;
       async function verifyEmptySearchAncestors(payload) {
         var pending = [], reads = new Map(), next = 0, stopped = false;
         // Check the entire batch first. An explicit conflict must not launch
@@ -7435,7 +7436,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
               // Use the verified page, including its current content/metadata,
               // rather than combining it with a possibly stale indexed row.
               payload.results[index] = await reads.get(id);
-            } catch (error) { stopped = true; throw error; }
+            } catch (error) {
+              // The index can outlive a readable page. Omit only this 404 row;
+              // authorization, network and scope failures remain real errors.
+              if (error.status === 404) { payload.results[index] = null; unavailableCount++; }
+              else { stopped = true; throw error; }
+            }
           }
         }
         // Bounded by this visible result batch, with at most three reads active.
@@ -7454,7 +7460,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         contentTransport = true; preferContentSearch = true; retriedContent = true;
       }
       if (incomplete) await verifyEmptySearchAncestors(response);
-      var results = response.results.map(function (result) {
+      var results = response.results.filter(Boolean).map(function (result) {
         var checked = checkScope(result, false), item = checked.item, id = checked.id, ancestors = checked.ancestors;
         var link = result.url || (item._links || {}).webui, href = null;
         if (link) {
@@ -7488,12 +7494,14 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // A compatibility retry uses the identical CQL and authenticated session.
       // Preserve its indexed total if the Content endpoint omits count metadata.
       if (total == null && retriedContent) total = indexedTotal;
-      var nextContinuation = searchContinuation(response, results, cql, limit, position, total, contentTransport);
+      // Continuation advances by consumed index rows, including unavailable ones.
+      var nextContinuation = searchContinuation(response, response.results, cql, limit, position, total, contentTransport);
+      if (unavailableCount) total = null; // The index count includes unreadable rows.
       if (nextContinuation && contentTransport) nextContinuation.transport = 'content';
       // A new article is readable before the CQL index catches up. Recover an
       // empty first page from the exact Insights parent, in bounded batches.
       // Never consult private workspace JSON or broaden a business-area query.
-      if (tree && (!queryOptions.types.length || queryOptions.types.some(function (type) { return type !== 'Job aid'; })) && !results.length && !nextContinuation && !options.continuation && !start && !options.nativeChildren && nativePublication.insightsPageId && (!options.area || options.area === 'insights')) {
+      if (tree && (!queryOptions.types.length || queryOptions.types.some(function (type) { return type !== 'Job aid'; })) && !response.results.length && !nextContinuation && !options.continuation && !start && !options.nativeChildren && nativePublication.insightsPageId && (!options.area || options.area === 'insights')) {
         var recoveryOptions = Object.assign({},options,{types:queryOptions.types,continuation:null});
         var recovered = await insightChildren(recoveryOptions,search);
         var batches = 1;
@@ -7502,7 +7510,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         recovered.cql = cql; recovered.start = null; recovered.nextStart = null;
         return recovered;
       }
-      return { results: results, total: total, start: position.start == null ? null : position.start, limit: limit, nextStart: nextContinuation && nextContinuation.start != null ? nextContinuation.start : null, nextContinuation: nextContinuation, cql: cql };
+      var output = { results: results, total: total, start: position.start == null ? null : position.start, limit: limit, nextStart: nextContinuation && nextContinuation.start != null ? nextContinuation.start : null, nextContinuation: nextContinuation, cql: cql };
+      if (unavailableCount) output.unavailableCount = unavailableCount;
+      return output;
     }
     async function loadLanding(options) {
       options = options || {};
@@ -7543,8 +7553,16 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       emit();
       async function recent() {
         try {
-          var result = await searchPages({ scope: 'tree', sort: 'updated', limit: 3, signal: options.signal });
-          output.recent = result.results.slice(0, 3);
+          var continuation, batches = 0, seen = new Set();
+          do {
+            var result = await searchPages({ scope: 'tree', sort: 'updated', limit: 3, signal: options.signal, continuation: continuation });
+            result.results.forEach(function (item) {
+              if (output.recent.length < 3 && !seen.has(item.id)) { seen.add(item.id); output.recent.push(item); }
+            });
+            continuation = result.nextContinuation;
+            // A stale index entry must not displace a readable latest card.
+            // At most nine candidates, always under the same tree and filters.
+          } while (output.recent.length < 3 && continuation && ++batches < 3);
         } catch (error) { cancelled(error); output.recentError = errorValue(error); }
         output.recentReady = true; emit();
       }
@@ -10599,5 +10617,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['review'] = { version: '5e5ba1ba0f9f' };
+  modules['review'] = { version: '5a5c7935adf3' };
 })();
