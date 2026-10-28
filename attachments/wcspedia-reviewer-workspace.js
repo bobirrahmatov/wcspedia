@@ -4828,10 +4828,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     async function restrictions(id,operation,signal){return request('/rest/api/content/'+id+'/restriction/byOperation/'+operation+'?expand=restrictions.user,restrictions.group&limit=200',null,undefined,signal);}
     function restrictionRows(r,operation){if(!r||r.operation!==operation||!object(r.restrictions))fail('Confluence did not return verifiable native restrictions.','INVALID_PERMISSIONS');var users=r.restrictions.user,groups=r.restrictions.group;if(!users||!groups||!Array.isArray(users.results)||!Array.isArray(groups.results))fail('Confluence did not expand native restriction subjects.','INVALID_PERMISSIONS');if((users._links&&users._links.next)||(groups._links&&groups._links.next))fail('The restriction list is too large to verify safely.','PERMISSIONS_LIMIT');return {users:users.results,groups:groups.results};}
     async function boundaries(signal,reading,currentUserRead){
-      var results=await Promise.all([storage.page(rootId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),storage.page(workingId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),request('/rest/api/space/'+encodeURIComponent(space)+'?expand=operations',null,undefined,signal)]);
+      var workingError=null;
+      var results=await Promise.all([storage.page(rootId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),storage.page(workingId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}).catch(function(error){aborted(signal);if(error.name==='AbortError')throw error;workingError=error;return null;}),request('/rest/api/space/'+encodeURIComponent(space)+'?expand=operations',null,undefined,signal)]);
       if(results[2].key!==space||results[2].operations!=null&&!Array.isArray(results[2].operations))fail('Confluence space permissions could not be verified.','INVALID_PERMISSIONS');
       var privacyError=null,protectedBy=null;
       try{
+        if(workingError)throw workingError;
         // The read restriction endpoint describes this page only. Native viewing
         // restrictions also inherit from ancestors returned by the verified page.
         var ancestors=results[1].ancestors;
@@ -4855,7 +4857,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         canCreate=grants.some(function(g){return (!g.spaceKey||g.spaceKey===space)&&g.operation&&g.operation.targetType==='page'&&g.operation.operationKey==='create';});
       }catch(error){aborted(signal);permissionError=error;}
       if(!privacyError&&permissionError)privacyError={code:'CREATE_PERMISSION_UNVERIFIED',message:'Confluence could not verify native Add page permission. An administrator should run Sync access in Entitlements. Working-root Edit is not required. '+permissionError.message};
-      return {root:results[0],working:results[1],space:results[2],canCreate:canCreate,draftsProtected:!!protectedBy,protectedBy:protectedBy,creationCode:privacyError?(privacyError.code||'INVALID_PERMISSIONS'):'',creationMessage:privacyError?(['WORKING_ROOT_UNRESTRICTED','CREATE_PERMISSION_UNVERIFIED'].includes(privacyError.code)?privacyError.message:'Confluence could not verify Working-page viewing restrictions. '+privacyError.message):''};
+      return {root:results[0],working:results[1],space:results[2],canCreate:canCreate,draftsProtected:!!protectedBy,protectedBy:protectedBy,creationCode:privacyError?(privacyError.code||(workingError?'WORKING_ROOT_UNAVAILABLE':'INVALID_PERMISSIONS')):'',creationMessage:privacyError?(workingError?'Working page ('+workingId+') is unavailable or could not be verified. Private draft actions cannot continue. '+privacyError.message:['WORKING_ROOT_UNRESTRICTED','CREATE_PERMISSION_UNVERIFIED'].includes(privacyError.code)?privacyError.message:'Confluence could not verify Working-page viewing restrictions. '+privacyError.message):''};
     }
     function directory(catalog,policy,user,previousPeople){
       var bySOEID=new Map(),byId=new Map();
@@ -4927,14 +4929,19 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     }
     async function parallel(items,fn){var output=new Array(items.length),next=0;await Promise.all(Array.from({length:Math.min(4,items.length)},async function(){while(next<items.length){var i=next++;output[i]=await fn(items[i]);}}));return output;}
     async function capabilities(input){
-      input=input||{};var ctx=await contextFor(input,input.signal,true);return {rootPageId:rootId,workingRootPageId:workingId,identity:ctx.dir.who,code:ctx.bounds.creationCode,canCreateDocument:ctx.bounds.draftsProtected&&ctx.bounds.canCreate&&E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*'),reason:ctx.bounds.creationMessage||(!ctx.bounds.canCreate?'Confluence space Add page permission is required.':!E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*')?'The WCSpedia document creation grant is required.':'')};
+      input=input||{};var ctx=await contextFor(Object.assign({},input,{skipDocuments:true}),input.signal,true),allowed=E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*');
+      // Opening the local editor is application policy. Native create/privacy
+      // checks belong to submit(), after the document type is known.
+      return {rootPageId:rootId,workingRootPageId:workingId,identity:ctx.dir.who,canOpenDocumentEditor:allowed,canCreateDocument:null,nativeCreationVerified:false,code:allowed?'':'FORBIDDEN',reason:allowed?'':'The WCSpedia document creation grant is required.'};
     }
     async function load(input){return loadWithContext(input,null);}
     async function loadWithContext(input,verifiedContext){
       input=input||{};var signal=input.signal,scope=input.workspaceScope||'all';
       if(!['all','create','mine','review'].includes(scope)&&!/^document:[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(scope))fail('Choose a supported workspace view.','CONFIGURATION');
-      var ctx=verifiedContext||await contextFor(input,signal,true);
-      if(input.skipDocuments)return Object.assign({},ctx.access,{data:Object.assign({},ctx.catalog,{people:ctx.dir.people,documents:[],isDemo:false}),actorId:ctx.dir.actor.id,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:false,discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,canSubmit:false});
+      var ctx=verifiedContext||await contextFor(scope==='create'?Object.assign({},input,{skipDocuments:true}):input,signal,true);
+      var canOpen=E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*');
+      if(input.skipDocuments)return Object.assign({},ctx.access,{data:Object.assign({},ctx.catalog,{people:ctx.dir.people,documents:[],isDemo:false}),actorId:ctx.dir.actor.id,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:false,discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,canSubmit:false,canOpenDocumentEditor:canOpen});
+      if(scope==='create')return Object.assign({},ctx.access,{data:Object.assign({},ctx.catalog,{people:ctx.dir.people,documents:clone((ctx.catalog.documents||[]).filter(function(d){return !d.nativeSessionWorkflow;})),isDemo:false}),actorId:ctx.dir.actor.id,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:true,workspaceScope:'create',discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,canSubmit:false,canOpenDocumentEditor:canOpen,nativeCreationVerified:false,creationCode:canOpen?'':'FORBIDDEN',creationMessage:canOpen?'':'The WCSpedia document creation grant is required.',nativePermissions:{root:[],workingRoot:[],documents:{}},effectivePermissions:Object.assign({},ctx.access.effectivePermissions||{},{'content.create':false}),documentPermissions:{},nativePageVersions:{},pendingOperations:[],workflowMode:'cooperative-native'});
       // A new editor needs permissions/directory only. Detail views resolve one
       // stable native title; never enumerate or download unrelated documents.
       var rows=[],pending=[];
@@ -4967,11 +4974,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var documents=clone((ctx.catalog.documents||[]).filter(function(d){return !d.nativeSessionWorkflow;})),pages={},versions={},permissions={};
       entries.forEach(function(e){var d=e.document,index=documents.findIndex(function(v){return v.id===d.id;});if(index>=0)documents[index]=d;else documents.push(d);pages[d.id]=e.page.operations||[];versions[d.id]=e.page.version.number;permissions[d.id]={edit:(d.singlePageInsight||ctx.bounds.draftsProtected)&&!e.pending&&op(e.page,'update')&&E.hasGrant(ctx.policy,ctx.dir.who,'content.edit',d.id),delete:(d.singlePageInsight||ctx.bounds.draftsProtected)&&!e.pending&&op(e.page,'delete')&&E.hasGrant(ctx.policy,ctx.dir.who,'content.delete',d.id)};});
       var effective=Object.assign({},ctx.access.effectivePermissions||{});effective['content.create']=ctx.bounds.draftsProtected&&ctx.bounds.canCreate&&E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*');
-      var nativePermissions=Object.assign({},ctx.access.nativePermissions||{},{root:ctx.bounds.root.operations||[],workingRoot:ctx.bounds.working.operations||[],documents:pages});
+      var nativePermissions=Object.assign({},ctx.access.nativePermissions||{},{root:ctx.bounds.root.operations||[],workingRoot:ctx.bounds.working&&ctx.bounds.working.operations||[],documents:pages});
       if(effective['content.create']&&!nativePermissions.root.some(function(o){return o.operation==='create'&&o.targetType==='page';}))nativePermissions.root=nativePermissions.root.concat([{operation:'create',targetType:'page'}]);
       var data=Object.assign({},ctx.catalog,{people:ctx.dir.people,documents:documents,isDemo:false});
       var actorId=ctx.dir.actor.id,assigned=entries.some(function(e){return [e.document.authorId,e.document.reviewerId,e.document.approverId].includes(actorId)&&(e.document.singlePageInsight||ctx.bounds.draftsProtected)&&op(e.page,'update');});
-      return Object.assign({},ctx.access,{data:data,actorId:actorId,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:true,workspaceScope:scope,discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,creationMessage:ctx.bounds.creationMessage,creationCode:ctx.bounds.creationCode,canSubmit:effective['content.create']||assigned,nativePermissions:nativePermissions,effectivePermissions:effective,documentPermissions:permissions,nativePageVersions:versions,pendingOperations:pending,workflowMode:'cooperative-native'});
+      return Object.assign({},ctx.access,{data:data,actorId:actorId,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:true,workspaceScope:scope,discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,creationMessage:ctx.bounds.creationMessage,creationCode:ctx.bounds.creationCode,canSubmit:effective['content.create']||assigned,canOpenDocumentEditor:E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*'),nativePermissions:nativePermissions,effectivePermissions:effective,documentPermissions:permissions,nativePageVersions:versions,pendingOperations:pending,workflowMode:'cooperative-native'});
     }
     async function completedSession(ctx,p,doc,people,signal){
       // Writes and the final operation receipt have already been verified. Build
@@ -6134,7 +6141,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var user = startup[1];
       observeSearchIdentity(user);
       var skipDocuments = ['entitlements', 'saved'].indexOf(config.pageRole) >= 0;
-      var access = await resolveAccess(user, {}, null, options.signal, !skipDocuments);
+      var access = await resolveAccess(user, {}, null, options.signal);
       var catalog = root.WCSDiscoveryCatalog || dependencies.catalog;
       if (!catalog) fail('Load the matching page bundle with its navigation catalogue.', 'CONFIGURATION');
       last = await nativeWorkflow().load({ user: user, policy: access.entitlementPolicy, access: access, catalog: clone(catalog), signal: options.signal,
@@ -6435,11 +6442,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       accessLast = null; last = null; discoveryMetrics.clear();
       return true;
     }
-    async function resolveAccess(user, documentPages, existing, signal, deferNativeCapability) {
+    async function resolveAccess(user, documentPages, existing, signal) {
       throwIfAborted(signal);
       var E = entitlementHelper(), identity = E.identity(user);
       var access = existing ? clone(existing) : { identity: identity, entitlementPolicy: null, entitlementSource: entitlementSource, entitlementsSource: entitlementSource, entitlementsPageId: entitlementPageId, entitlementsFilename: entitlementFilename, nativePermissions: { root: [], entitlements: [], documents: {} }, nativePageVersions: {}, effectivePermissions: {}, documentPermissions: {}, policyConfigured: policyConfigured };
       E.PERMISSIONS.forEach(function (permission) { access.effectivePermissions[permission] = false; });
+      access.canOpenDocumentEditor = false;
       if (mode !== 'confluence' || !policyConfigured || !identity) { accessLast = access; return clone(access); }
       if (!existing) {
         var pair = await Promise.all([pageAccess(pageId, signal), pageAccess(entitlementPageId, signal), readEntitlementAttachment(signal)]);
@@ -6457,19 +6465,13 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           try {access.entitlementSync=await nativeAccessSynchronizer().status(access.entitlementPolicy);}
           catch(error){access.entitlementSync={status:'incomplete',message:'Native access status could not be read. '+error.message};}
         }
-        // A full workspace load checks the same boundaries in contextFor().
-        // Defer this UI-only capability probe there; mutations always recheck.
-        if (nativeSession && !deferNativeCapability && E.hasGrant(access.entitlementPolicy, identity, 'content.create', '*')) {
-          var nativeCapability;
-          try { nativeCapability = await nativeWorkflow().capabilities({ user: user, policy: access.entitlementPolicy, access: access, signal: signal }); }
-          catch (error) { if (error.name === 'AbortError') throw error; nativeCapability = { canCreateDocument: false, message: error.message, code: error.code }; }
+        // Opening the editor is a JSON entitlement, independent of Working-root
+        // restrictions. Native create rights are checked for the actual save;
+        // a parent's operations do not prove space Add page permission.
+        if (nativeSession) {
           access.nativePermissions.root = rootPage.operations.filter(function (op) { return op.operation !== 'create'; });
-          if (nativeCapability.canCreateDocument === true) access.nativePermissions.root.push({ operation: 'create', targetType: 'page' });
-          access.creationMessage = nativeCapability.message || nativeCapability.reason || '';
-          access.creationCode = nativeCapability.code || '';
         }
         // Legacy service mode obtains its own actor-bound capability proof.
-        // Native-session mode has already checked built-in Confluence rights.
         if (!nativeSession && !E.nativeHas(rootPage.operations, 'create') && workflowURL && workspaceURL && E.hasGrant(access.entitlementPolicy, identity, 'content.create', '*')) {
           var capabilityURL = new URL(workspaceURL.href);
           capabilityURL.searchParams.set('rootPageId', pageId);
@@ -6496,6 +6498,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         }));
       }
       E.PERMISSIONS.forEach(function (permission) { access.effectivePermissions[permission] = E.effective(access.entitlementPolicy, identity, permission, { native: access.nativePermissions }); });
+      access.canOpenDocumentEditor = nativeSession ? E.hasGrant(access.entitlementPolicy, identity, 'content.create', '*') : access.effectivePermissions['content.create'];
       keys.forEach(function (key) { access.documentPermissions[key] = { edit: E.effective(access.entitlementPolicy, identity, 'content.edit', { native: access.nativePermissions, documentKey: key }), delete: E.effective(access.entitlementPolicy, identity, 'content.delete', { native: access.nativePermissions, documentKey: key }) }; });
       throwIfAborted(signal);
       accessLast = access;
@@ -6774,10 +6777,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         try {
           var refreshedUser = await nativeStorage().user(), refreshedIdentity = entitlementHelper().identity(refreshedUser);
           if (!refreshedIdentity || refreshedIdentity.soeid !== nextSession.identity.soeid || ['userKey', 'accountId'].some(function (key) { return (refreshedIdentity[key] || null) !== (nextSession.identity[key] || null); })) fail('Your account changed after saving. Reload the workspace.', 'IDENTITY_MAPPING');
-          // The committed workflow already checked native creation boundaries.
-          // Refresh identity, policy and policy-host rights without repeating that
-          // UI-only capability probe. Every subsequent mutation rechecks natively.
-          var freshAccess = await resolveAccess(refreshedUser, {}, null, undefined, true), E = entitlementHelper();
+          // Refresh identity and policy after the committed workflow's native
+          // checks. Every subsequent mutation checks its own destination rights.
+          var freshAccess = await resolveAccess(refreshedUser, {}, null), E = entitlementHelper();
           if (freshAccess.entitlementPolicy.revision !== nextSession.entitlementPolicy.revision) fail('Entitlements changed during saving. Reload the workspace.', 'REFRESH_REQUIRED');
           var verifiedCreate = nextSession.effectivePermissions['content.create'] === true && E.nativeHas(freshAccess.nativePermissions.root, 'read') && E.hasGrant(freshAccess.entitlementPolicy, refreshedIdentity, 'content.create', '*');
           freshAccess.nativePermissions.root = freshAccess.nativePermissions.root.filter(function (operation) { return operation.operation !== 'create'; });
@@ -10709,5 +10711,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['review'] = { version: 'b3c0c5f49085' };
+  modules['review'] = { version: 'facdea252db7' };
 })();

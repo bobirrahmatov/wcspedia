@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var revision = 'b3c0c5f49085';
+  var revision = 'facdea252db7';
   function placeFloating(host) {
     // Portal out of themed headers: transforms/overflow there can clip fixed controls.
     host.setAttribute('data-wcs-floating-add', '');
@@ -95,6 +95,7 @@
           reuseNavigationAccess: true,
           canCreate: async function (request) {
             var access = await adapter.loadAccess({signal: request.signal});
+            if (configuration.authoringMode === 'confluence-session') return access.canOpenDocumentEditor === true;
             if (access.creationMessage && !(access.effectivePermissions && access.effectivePermissions['content.create'] === true)) {
               var setupError = new Error(access.creationMessage);
               setupError.code = access.creationCode || 'CREATION_UNAVAILABLE';

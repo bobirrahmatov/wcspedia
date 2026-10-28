@@ -20,7 +20,7 @@
   }
 
   if (mount.dataset.wcsPageStarted) return;
-  if (!window.WCSPageModules || window.WCSPageModules['faq']?.version !== 'b3c0c5f49085') {
+  if (!window.WCSPageModules || window.WCSPageModules['faq']?.version !== 'facdea252db7') {
     failPage('Load wcspedia-faq.js before wcspedia-faqHTMLPage.js. Use both files from the same upload package and check their attachment URLs.');
     return;
   }
@@ -79,6 +79,10 @@
   if(session.actor&&!data.people.some(p=>p.id===session.actorId)) data.people.push(session.actor);
   const canWrite=()=>!live||session.canSubmit;
   const canCreate=()=>canWrite()&&permitted('content.create');
+  function canOpenDocumentEditor(){
+    if(!live||config.authoringMode!=='confluence-session')return canCreate();
+    try{return window.WCSEntitlements.hasGrant(window.WCSEntitlements.validatePolicy(entitlementPolicy()),signedIdentity(),'content.create','*');}catch(_){return false;}
+  }
   const actionsFor=doc=>!doc.publicReader&&canWrite()?workflow.allowedActions(doc,actorId,data.people,permissionContext(doc)).filter(action=>!window.WCSEditorContent.isInsightType(doc.type)||['edit','revise','delete','reassign-owner'].includes(action)):[];
   const baseData = clone(data);
   let library=null,libraryStarted=false, exportView=null, editor=null, editorHash='', editorSequence=0, suggestionWidget=null, suggestionInbox=null, chartView=null, chartSummary=null;
@@ -859,7 +863,8 @@
   function editorPage() {
     const r=route(),id=r.path.startsWith('/edit/')?decodeSegment(r.path.split('/')[2]):null,doc=id?documents.find(d=>d.id===id):null;
     if(live&&config.authoringMode!=='confluence-session'&&(!config.workspaceEndpoint||!config.workflowEndpoint))return '<div class="discovery-container">'+empty('Document workflow is not connected','Ask your WCSpedia administrator to connect the document workflow. Your existing editor and approval process will be available once it is connected.','Back to knowledge','#/results')+'</div>';
-    if(!canWrite()||(!id&&!canCreate())||(id&&(!doc||!actionsFor(doc).some(action=>['edit','revise'].includes(action)))))return '<div class="discovery-container">'+empty('Editing unavailable','Your account needs edit entitlement and Confluence edit permission. Submitted revisions stay locked during review.','Back to knowledge','#/results')+'</div>';
+    if(!id&&!canOpenDocumentEditor())return '<div class="discovery-container">'+empty('Adding documents unavailable','Your account needs an active Add document grant in entitlements.json.','Back to knowledge','#/results')+'</div>';
+    if(id&&(!canWrite()||!doc||!actionsFor(doc).some(action=>['edit','revise'].includes(action))))return '<div class="discovery-container">'+empty('Editing unavailable','Your account needs edit entitlement and Confluence edit permission. Submitted revisions stay locked during review.','Back to knowledge','#/results')+'</div>';
     if(editor){editor.destroy();editor=null;}
     const version=doc?workflow.currentVersion(doc):null,expected=doc?{expectedVersion:version.version,expectedRevision:version.revision,expectedAuditLength:doc.audit.length}:null;
     const authorId=actorId,createdId=workflow.newDocumentId(),editingAction=version?.status==='Published'?'revise':'edit',returnTo=editorReturn(r,doc);
@@ -870,7 +875,7 @@
         if(actorId!==authorId)throw Error('Your active identity changed. Reload before saving.');
         readState();readPolicy();const now=new Date().toISOString();let result,command;
         if(doc){const latest=documents.find(d=>d.id===doc.id);const changes={title:fields.title,summary:fields.summary,slug:fields.slug,bodyMarkdown:fields.bodyMarkdown,highlights:fields.highlights,cover:fields.cover,commentsEnabled:fields.commentsEnabled,tags:fields.tags||[],processes:fields.processes||[],regions:fields.regions||[],assets:fields.assets||[],attachments:fields.attachments||[],...(fields.sourceMetadata?{sourceMetadata:fields.sourceMetadata}:{}),...(fields.governance?{governance:fields.governance}:{})};if(!latest||!canWrite()||!actionsFor(latest).includes(editingAction))throw Error('Your edit permission or the document status changed. Your unsaved content is still in the editor.');result=workflow.transition(latest,editingAction,{...expected,actorId,people:data.people,now,comment:fields.comment,changes,requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:permissionContext(latest),actorSOEID:signedIdentity()?.soeid});command={action:editingAction,docId:doc.id,...expected,changes,comment:fields.comment};}
-        else {if(!canCreate())throw Error('You no longer have permission to add documents.');if((!data.areas.some(a=>a.id===fields.area)&&!(window.WCSEditorContent.isDirectPublication(fields)))||!types.includes(fields.type))throw Error('Choose an available content type and business area.');const input={...fields,id:createdId,reference:'WCS-'+({'Job aid':'JA',Procedure:'PR','Knowledge sharing':'KS',Blog:'BL',Training:'TR',Reference:'RF',Report:'RP'}[fields.type]||'DOC')+'-'+createdId.slice(-12).toUpperCase(),ownerId:actorId,authorId:actorId,changeSummary:fields.comment};result=workflow.createDocument(input,{actorId,people:data.people,now,requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:{actorId,documentId:createdId,create:canCreate()},actorSOEID:signedIdentity()?.soeid});command={action:'create',fields:input,comment:fields.comment};}
+        else {if(!canOpenDocumentEditor())throw Error('You no longer have permission to add documents.');if((!data.areas.some(a=>a.id===fields.area)&&!(window.WCSEditorContent.isDirectPublication(fields)))||!types.includes(fields.type))throw Error('Choose an available content type and business area.');const input={...fields,id:createdId,reference:'WCS-'+({'Job aid':'JA',Procedure:'PR','Knowledge sharing':'KS',Blog:'BL',Training:'TR',Reference:'RF',Report:'RP'}[fields.type]||'DOC')+'-'+createdId.slice(-12).toUpperCase(),ownerId:actorId,authorId:actorId,changeSummary:fields.comment};result=workflow.createDocument(input,{actorId,people:data.people,now,requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:{actorId,documentId:createdId,create:canOpenDocumentEditor()},actorSOEID:signedIdentity()?.soeid});command={action:'create',fields:input,comment:fields.comment};}
         let stored=true;
         try{if(live){refreshSession(await adapter.submitAction({...command,expectedAttachmentVersion:session.attachmentVersion}));if(!documents.some(d=>d.id===result.id)){const error=Error('The draft was saved but is no longer visible. Reload the workspace.');error.code='REFRESH_REQUIRED';throw error;}}else{const before=documents,beforeMemoryOnly=memoryOnly,index=documents.findIndex(d=>d.id===result.id);documents=index<0?[...documents,result]:documents.map((item,i)=>i===index?result:item);stored=persist();if(!stored){documents=before;memoryOnly=beforeMemoryOnly;throw Error('The draft could not be saved because browser storage is unavailable or full. Your changes remain in the editor. Copy Markdown to keep a backup, then free storage and try again.');}}}
         catch(error){if(live&&error.code==='UNKNOWN_COMMIT')error.recoverable=true;else if(live&&['REFRESH_REQUIRED','CONFLICT'].includes(error.code))error.reloadRequired=true;throw error;}
@@ -970,7 +975,7 @@
   }
   function field(id,label,value='',kind='input',attrs='') { return '<div class="form-group"><label for="'+id+'">'+label+'</label>'+(kind==='textarea'?'<textarea id="'+id+'" name="'+id+'" '+attrs+'>'+esc(value)+'</textarea>':'<input id="'+id+'" name="'+id+'" value="'+esc(value)+'" '+attrs+'>')+'</div>'; }
   function openModal(action,documentId) {
-    if(action==='new'){if(canCreate())go('#/create');return;}
+    if(action==='new'){if(canOpenDocumentEditor())go('#/create');return;}
     if(['edit','revise'].includes(action)){const doc=documentId?documents.find(d=>d.id===documentId&&!d.deletedAt):selectedDocument().doc;readPolicy();if(doc&&actionsFor(doc).includes(action))go(url('/edit/'+doc.id,{returnTo:location.hash}));return;}
     const state=selectedDocument(), doc=documentId?documents.find(d=>d.id===documentId&&!d.deletedAt):state.doc, v=doc?workflow.currentVersion(doc):null;
     if(!canWrite()||!doc||!actionsFor(doc).includes(action))return;
