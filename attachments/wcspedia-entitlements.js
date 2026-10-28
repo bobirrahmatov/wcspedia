@@ -755,9 +755,15 @@
     if (filters.categories.length) clauses.push('label IN (' + filters.categories.map(function (category) {
       return quoteCQL(labels.prefix + category);
     }).join(', ') + ')');
-    if (filters.types.length) clauses.push('label IN (' + filters.types.map(function (type) {
-      return quoteCQL(typeLabel(type));
-    }).join(', ') + ')');
+    var blogParent = config.blogParentPageId == null ? null : pageID(config.blogParentPageId);
+    if (blogParent === id) throw new TypeError('The Blogs parent must be separate from the WCSpedia root.');
+    if (filters.types.length) {
+      var typeClause = 'label IN (' + filters.types.map(function (type) { return quoteCQL(typeLabel(type)); }).join(', ') + ')';
+      // Legacy native pages under Insights may have no type label. Keep this
+      // alternative inside the same root, space, area, query and facet filters.
+      if (blogParent && filters.types.indexOf('Blog') >= 0) typeClause = '(' + typeClause + ' OR (ancestor = ' + blogParent + ' AND label NOT IN (' + TYPES.map(function (type) { return quoteCQL(typeLabel(type)); }).join(', ') + ')))';
+      clauses.push(typeClause);
+    }
     if (WINDOWS[filters.updated]) clauses.push('lastmodified >= startOfDay("-' + WINDOWS[filters.updated] + 'd")');
     var cql = clauses.join(' AND ');
     if (filters.sort === 'updated' || filters.sort === 'newest') cql += ' ORDER BY lastmodified DESC';
@@ -7203,6 +7209,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           if (data.format === 1 && data.pageId === String(item.id) && data.nativeVersion === item.version?.number && snapshot.getAttribute('data-wcs-reader-root') === pageId && v) {
             fields.summary = plain(v.summary || ''); fields.cover = v.cover || null;
             fields.documentKey=data.document.id;
+            fields.type=data.document.type;
             var author=(data.people||[]).find(function(person){return person.id===(data.document.authorId||v.createdBy);});
             fields.author=author?plain(author.name||author.displayName||''):null;
             if(metricKey(fields.documentKey)&&integer(v.version)&&integer(v.revision)){
@@ -7221,6 +7228,14 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       fields.searchText = textBody;
       if (!fields.summary) fields.summary = textBody.slice(0,220) + (textBody.length > 220 ? '…' : '');
       return fields;
+    }
+    function discoveryType(names, ancestors, search, card) {
+      var labelled = names.map(search.typeFromLabel).find(Boolean);
+      if (labelled) return labelled;
+      if (card && typeof card.type === 'string' && card.type) return search.typeFromLabel('wcs-type-' + card.type.toLowerCase().replace(/\s+/g, '-'));
+      // An unknown explicit type is not an untyped Blog.
+      if (names.some(function (name) { return typeof name === 'string' && name.indexOf('wcs-type-') === 0; })) return null;
+      return ancestors.some(function (a) { return String(object(a) ? a.id : a) === String(nativePublication.insightsPageId || ''); }) ? 'Blog' : null;
     }
     async function insightChildren(options, search) {
       var parent = String(nativePublication.insightsPageId || ''), limit = options.limit || 9, start = options.start || 0;
@@ -7244,9 +7259,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         seen.add(id);
         var labels = item.metadata?.labels?.results;
         if (!Array.isArray(labels)) fail('Confluence did not return Insights article labels.', 'INVALID_SCOPE');
-        var names = labels.map(function (label) { return label.name; }), type = names.map(search.typeFromLabel).find(Boolean);
+        var names = labels.map(function (label) { return label.name; }), card = discoveryBody(item), type = discoveryType(names, ancestors, search, card);
         if (options.types?.length && !options.types.includes(type)) return null;
-        var row = Object.assign({id:id,title:(names.includes('wcs-published') || names.includes('wcs-reader'))?plain(item.title).replace(new RegExp(' · WCS ' + id + '$'),''):plain(item.title),summary:'',type:type,category:'insights',status:'Published',tags:names.filter(function (name) {return typeof name === 'string' && name.startsWith('wcs-tag-');}).map(function (name) {return name.slice(8);}),updated:item.version?.when || null,version:item.version?.number || null,url:readerURL(id,names)}, discoveryBody(item));
+        var row = Object.assign({id:id,title:(names.includes('wcs-published') || names.includes('wcs-reader'))?plain(item.title).replace(new RegExp(' · WCS ' + id + '$'),''):plain(item.title),summary:'',type:type,category:'insights',status:'Published',tags:names.filter(function (name) {return typeof name === 'string' && name.startsWith('wcs-tag-');}).map(function (name) {return name.slice(8);}),updated:item.version?.when || null,version:item.version?.number || null,url:readerURL(id,names)}, card, {type:type});
         var terms = String(options.query || '').normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
         var haystack = [row.title,row.summary,row.searchText,row.tags.join(' ')].join(' ').normalize('NFKC').toLowerCase();
         if (!terms.every(function (term) { return haystack.includes(term); })) return null;
@@ -7320,6 +7335,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (!tree || !/^[1-9]\d{0,19}$/.test(String(nativePublication.insightsPageId || '')) || options.area) fail('Configure the Insights subtree.', 'CONFIGURATION');
         scope.subtreePageId = String(nativePublication.insightsPageId);
       }
+      if (tree && queryOptions.types.includes('Blog') && nativePublication.insightsPageId) scope.blogParentPageId = String(nativePublication.insightsPageId);
       search.buildCQL(queryOptions, scope);
       if (options.year != null && options.year !== '' && (!['string', 'number'].includes(typeof options.year) || !/^\d{4}$/.test(String(options.year)) || Number(options.year) < 1900 || Number(options.year) > 9998)) fail('Choose a four-digit year between 1900 and 9998.');
       scope.spaceKey = await waitForSearchSpace(options.signal);
@@ -7477,11 +7493,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           if (names.includes('wcs-reader')) normalized.url = readerURL(id,names);
           var area = names.find(function (name) { return /^wcs-area-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name); });
           normalized.category = checked.insightArea ? scope.additionalSubtreeCategory : Object.keys(mappings).find(function (key) { return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(key) && (id === String(mappings[key]) || ancestors.indexOf(String(mappings[key])) >= 0); }) || (ancestors.includes(String(nativePublication.insightsPageId || '')) ? 'insights' : area ? area.slice('wcs-area-'.length) : null);
-          normalized.type = typeof search.typeFromLabel === 'function' ? names.map(search.typeFromLabel).find(Boolean) || null : null;
+          normalized.type = typeof search.typeFromLabel === 'function' ? discoveryType(names, ancestors, search) : null;
           normalized.tags = names.filter(function (name) { return /^wcs-tag-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name); }).map(function (name) { return name.slice(8); });
           normalized.version = integer((item.version || {}).number) ? item.version.number : null;
           if (options.excerpt !== false) {
             var card = discoveryBody(item);
+            normalized.type = discoveryType(names, ancestors, search, card);
             if (card.summary) normalized.summary = card.summary;
             if (card.cover) normalized.cover = card.cover;
             if(card.documentKey)normalized.documentKey=card.documentKey;
@@ -7490,13 +7507,21 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         }
         return normalized;
       });
+      var filteredTypes = false;
+      if (scope.blogParentPageId) {
+        results = results.filter(function (item) {
+          var matches = queryOptions.types.includes(item.type);
+          if (!matches) filteredTypes = true;
+          return matches;
+        });
+      }
       var total = typeof search.resultTotal === 'function' ? search.resultTotal(response) : integer(response.totalSize, 0) ? response.totalSize : integer(response.totalCount, 0) ? response.totalCount : integer(response.total, 0) ? response.total : null;
       // A compatibility retry uses the identical CQL and authenticated session.
       // Preserve its indexed total if the Content endpoint omits count metadata.
       if (total == null && retriedContent) total = indexedTotal;
       // Continuation advances by consumed index rows, including unavailable ones.
       var nextContinuation = searchContinuation(response, response.results, cql, limit, position, total, contentTransport);
-      if (unavailableCount) total = null; // The index count includes unreadable rows.
+      if (unavailableCount || filteredTypes) total = null; // The index count includes omitted rows.
       if (nextContinuation && contentTransport) nextContinuation.transport = 'content';
       // A new article is readable before the CQL index catches up. Recover an
       // empty first page from the exact Insights parent, in bounded batches.
@@ -10617,5 +10642,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['entitlements'] = { version: '5a5c7935adf3' };
+  modules['entitlements'] = { version: '49d16709df30' };
 })();
