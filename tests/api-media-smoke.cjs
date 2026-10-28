@@ -1,0 +1,36 @@
+/* Run against WCS_MOCK_ACTOR=alex node mock-confluence.cjs. Local loopback only. */
+'use strict';
+const assert=require('node:assert/strict');
+const content=require('../editor-content.js');
+const api=require('../confluence.js');
+const search=require('../search.js');
+const workflow=require('../workflow.js');
+const governance=require('../governance.js');
+const {JSDOM}=require('jsdom');
+const DOMParser=new JSDOM('').window.DOMParser;
+const port=Number(process.env.WCS_MEDIA_TEST_PORT||4174);
+if(!Number.isInteger(port)||port<1024||port>65535)throw Error('Invalid local media test port.');
+const origin='http://127.0.0.1:'+port;
+const client=api.create({mode:'confluence',rootPageId:'100',contextPath:'/confluence',workspaceEndpoint:'/confluence/mock/workspace',workflowEndpoint:'/confluence/mock/actions',entitlementsPageId:'150',entitlementsEndpoint:'/confluence/mock/entitlements'}, {fetch,location:{href:origin+'/mock-live.html'},search,DOMParser});
+(async()=>{
+ let session=await client.load();assert.equal(session.actorId,'alex');
+ const id=workflow.newDocumentId();
+ const bytes=Buffer.from('# Example attachment\n\nSample data only.\n');
+ const fields={id,governance:governance.normalize({classification:'other-nhd',owningTeam:'WCS Learning',scope:'Media and training authoring verification.',audience:'Credit service colleagues',classificationRationale:'Descriptive learning support.'}),reference:'WCS-QA-'+Date.now(),type:'Training',area:session.data.areas[0].id,title:'Media API verification',summary:'Verify all authoring fields survive the Confluence command boundary.',ownerId:'alex',authorId:'alex',reviewerId:'jordan',approverId:'jordan',slug:id,bodyMarkdown:'## Learning\n\n<u>Review</u> the table.\n\n| Step | Owner |\n| --- | --- |\n| Review | Manager |\n\n![Sample](attachment:sample-image)\n\n[Example.md](attachment:sample-file)',assets:[{id:'sample-image',src:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==',alt:'Sample image'}],attachments:[{id:'sample-file',name:'Example.md',url:'data:text/markdown;base64,'+bytes.toString('base64'),mimeType:'text/markdown',size:bytes.length}],tags:['Quality'],processes:['Handover'],regions:['EMEA'],changeSummary:'Verify media persistence.'};
+ session=await client.submitAction({action:'create',fields,comment:fields.changeSummary,expectedAttachmentVersion:session.attachmentVersion});
+ let doc=session.data.documents.find(d=>d.id===id),v=workflow.currentVersion(doc);
+ for(const key of ['assets','attachments','tags','processes','regions','governance'])assert.deepEqual(v[key],fields[key]);
+ assert.match(content.render(v.bodyMarkdown,v),/<table>/);assert.match(content.toMarkdown(v),/data:text\/markdown;base64/);
+ session=await client.submitAction({action:'edit',docId:id,expectedVersion:v.version,expectedRevision:v.revision,expectedAuditLength:doc.audit.length,expectedAttachmentVersion:session.attachmentVersion,comment:'Add a regional tag.',changes:{regions:['EMEA','APAC']}});
+ doc=session.data.documents.find(d=>d.id===id);v=workflow.currentVersion(doc);assert.equal(v.revision,2);assert.deepEqual(v.regions,['EMEA','APAC']);
+ session=await client.submitAction({action:'submit',docId:id,expectedVersion:v.version,expectedRevision:v.revision,expectedAuditLength:doc.audit.length,expectedAttachmentVersion:session.attachmentVersion,comment:'Ready for the assigned reviewer.'});
+ doc=session.data.documents.find(d=>d.id===id);assert.equal(workflow.currentVersion(doc).status,'In review');assert.equal(workflow.publishedVersion(doc),null);
+ assert.ok(!workflow.allowedActions(doc,'alex',session.data.people).includes('edit'));
+ const deniedDelete={action:'delete',rootPageId:'100',docId:id,documentKey:id,confluencePageId:doc.confluencePageId,expectedPageVersion:session.nativePageVersions[id],expectedVersion:workflow.currentVersion(doc).version,expectedRevision:workflow.currentVersion(doc).revision,expectedAuditLength:doc.audit.length,expectedAttachmentVersion:session.attachmentVersion,expectedEntitlementRevision:session.entitlementPolicy.revision,comment:'Attempt a forged manager permission.',requestId:require('node:crypto').randomUUID(),actorId:'jordan',permissionContext:{actorId:'jordan',documentId:id,delete:true}};
+ const post=(route,command)=>fetch(origin+'/confluence/mock/'+route,{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','Idempotency-Key':command.requestId},body:JSON.stringify(command)});
+ assert.equal((await post('actions',deniedDelete)).status,403,'a fixed author session cannot impersonate a delete administrator');
+ const forbiddenAdmin={action:'add',rootPageId:'100',entitlementsPageId:'150',expectedRevision:session.entitlementPolicy.revision,comment:'Attempt a forged administrator permission.',record:{id:'forged-admin',soeid:'AM12345',displayName:'Alex Morgan',scope:id,permissions:['content.delete'],active:true},requestId:require('node:crypto').randomUUID(),actorId:'jordan',actorSOEID:'JL12345'};
+ assert.equal((await post('entitlements',forbiddenAdmin)).status,403,'entitlement administration derives from the signed-in server session');
+ assert.equal((await client.load()).data.documents.find(d=>d.id===id).deletedAt,undefined);
+ console.log('API media smoke passed: create → reload → edit → submit; all media/taxonomy preserved, draft remains unpublished; forged delete/admin authority rejected.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

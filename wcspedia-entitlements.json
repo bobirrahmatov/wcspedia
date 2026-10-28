@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "records": [
+    {
+      "id": "grant-alex-library",
+      "soeid": "AM12345",
+      "displayName": "Alex Morgan",
+      "scope": "*",
+      "permissions": [
+        "content.create",
+        "content.edit"
+      ],
+      "active": true
+    },
+    {
+      "id": "grant-jordan-admin",
+      "soeid": "JL12345",
+      "displayName": "Jordan Lee",
+      "scope": "*",
+      "permissions": [
+        "content.create",
+        "content.edit",
+        "content.delete",
+        "entitlements.view",
+        "entitlements.add",
+        "entitlements.edit",
+        "entitlements.revoke"
+      ],
+      "active": true
+    }
+  ],
+  "audit": []
+}

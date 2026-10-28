@@ -1,0 +1,6 @@
+/* Reading estimates and view counts share the existing content typography. */
+#wcspedia .feature-metrics{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:12px;margin:18px 0 0}
+#wcspedia .document-reading-time,#wcspedia .document-view-count{white-space:nowrap;font-variant-numeric:tabular-nums}
+#wcspedia .press-card-meta .document-reading-time,#wcspedia .press-card-meta .document-view-count{color:var(--navy)}
+#wcspedia .metrics-status{font-size:13px;color:var(--muted);padding:0 0 20px;max-width:740px;line-height:1.6}
+@media(max-width:600px){#wcspedia .feature-metrics{gap:6px 14px}#wcspedia .insights-byline{flex-wrap:wrap;row-gap:7px}}

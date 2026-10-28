@@ -1,0 +1,27 @@
+<!-- Approved HTML macro fragment, for Confluence Server/Data Center.
+Replace REPLACE_WITH_ASSET_PAGE_ID with the shared asset page ID.
+If these three assets already load globally, remove the repeated asset tags;
+keep the mount element and script. Content remains in the native page body.
+The shared configuration never supplies identity or grants permissions. -->
+<link rel="stylesheet" href="/confluence/download/attachments/REPLACE_WITH_ASSET_PAGE_ID/wcspedia-style.css?api=v2">
+<script src="/confluence/download/attachments/REPLACE_WITH_ASSET_PAGE_ID/native-confluence-config.js?api=v2"></script>
+<script src="/confluence/download/attachments/REPLACE_WITH_ASSET_PAGE_ID/wcspedia-native.js?api=v2"></script>
+<div id="wcs-native-document-controls" class="wcs-native-host" data-wcs-native-document-controls aria-label="Document controls"><p>Loading document controls…</p></div>
+<script>
+(function () {
+  'use strict';
+  function mount() {
+    var target = document.getElementById('wcs-native-document-controls');
+    if (!target) return;
+    if (!window.WCSNativeApp || !window.WCS_NATIVE_CONFIG) {
+      target.textContent = 'WCSpedia could not load. Please contact the page owner.';
+      return;
+    }
+    Promise.resolve().then(function () { return window.WCSNativeApp.mountDocumentControls(target, window.WCS_NATIVE_CONFIG); }).catch(function () {
+      target.textContent = 'WCSpedia could not load this view. Refresh the page or contact the page owner.';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
+  else mount();
+}());
+</script>

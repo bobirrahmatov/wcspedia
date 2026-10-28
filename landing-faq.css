@@ -1,0 +1,40 @@
+/* Compact landing and help layouts. Included in the one shared stylesheet. */
+#wcspedia .wcs-home .discovery-hero{text-align:center!important}
+#wcspedia .wcs-home .discovery-brand{justify-content:center!important;margin-inline:auto!important}
+#wcspedia .wcs-home .discovery-search-wrap{margin-inline:auto!important}
+#wcspedia .wcs-home>.discovery-container{max-width:none!important;padding-inline:0}
+#wcspedia .wcs-home .featured-section{padding:24px 0 40px;margin:0}
+#wcspedia .wcs-home .discovery-section-heading{display:flex;text-align:left;margin-bottom:20px;align-items:center;justify-content:space-between;position:relative;gap:16px;flex-wrap:nowrap}
+#wcspedia .wcs-home .discovery-section-heading>a{margin-inline-start:auto;flex-shrink:0;white-space:nowrap}
+#wcspedia .wcs-home .discovery-section-heading h2{font-size:24px;font-weight:400;margin:0;letter-spacing:-.4px}
+#wcspedia .wcs-home .featured-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px clamp(24px,4vw,56px);align-items:start}
+#wcspedia .wcs-home .featured-document{min-height:0;border:0;border-radius:0;overflow:visible;background:transparent;display:flex;flex-direction:column}
+#wcspedia .wcs-home .feature-media,#wcspedia .wcs-home .feature-cover{border-radius:20px;overflow:hidden}
+#wcspedia .wcs-home .feature-cover{width:100%;height:auto;aspect-ratio:1.55;object-fit:cover}
+#wcspedia .wcs-home .feature-body{padding:20px 4px 8px;flex:1;display:flex;flex-direction:column;min-width:0}
+#wcspedia .wcs-home .feature-area{font-size:10px;margin-bottom:10px;color:var(--muted)}
+#wcspedia .wcs-home .featured-document h3{font-size:20px;line-height:1.35;margin:0 0 10px;letter-spacing:-.2px}
+#wcspedia .wcs-home .featured-document h3 a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+#wcspedia .wcs-home .featured-document p{font-size:14px;line-height:1.55;margin:0 0 16px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+#wcspedia .wcs-home .feature-metrics{font-size:12px;line-height:1.6;gap:4px 12px;margin-top:auto}
+#wcspedia .wcs-home .feature-bottom{padding-top:10px;margin-top:8px;font-size:12px}
+#wcspedia .wcs-faq-page .library-workspace-search{display:block;margin:28px 0 16px;max-width:760px}
+#wcspedia .wcs-faq-page .library-workspace-search label{display:block;margin-bottom:8px;font-size:14px;color:var(--navy)}
+#wcspedia .wcs-faq-search-row{display:flex;gap:12px}
+#wcspedia .wcs-faq-search-row input{flex:1;min-width:0;width:100%;padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:var(--ds-surface,var(--wcs-theme-surface,#fff));color:var(--navy);font:inherit}
+#wcspedia .wcs-faq-page .library-count{font-size:13px;color:var(--muted);margin:0 0 20px}
+#wcspedia .wcs-help-item{border:1px solid var(--line);border-radius:12px;background:var(--ds-surface,var(--wcs-theme-surface,#fff));margin:0 0 14px;padding:0}
+#wcspedia .wcs-help-item[hidden]{display:none}
+#wcspedia .wcs-help-item summary{display:flex;align-items:center;justify-content:space-between;gap:20px;list-style:none;padding:22px 24px;font-size:18px;line-height:1.4;font-weight:700;color:var(--navy);border-radius:12px}
+#wcspedia .wcs-help-item summary::-webkit-details-marker{display:none}
+#wcspedia .wcs-help-item summary::marker{content:''}
+#wcspedia .wcs-help-item summary svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;transition:transform .18s ease}
+#wcspedia .wcs-help-item[open] summary svg{transform:rotate(180deg)}
+#wcspedia .wcs-help-item>div{padding:0 24px 24px}
+#wcspedia .wcs-help-item p{max-width:90ch;margin:0;color:var(--muted);font-size:15px;line-height:1.75}
+#wcspedia .wcs-faq-footer{margin:28px 0 40px;padding:24px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+#wcspedia .wcs-faq-footer p{margin:0;color:var(--muted)}
+#wcspedia .wcs-faq-empty{padding:28px;background:var(--pale);border-radius:12px;color:var(--navy)}
+@media(max-width:900px){#wcspedia .wcs-home .featured-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#wcspedia .wcs-home .featured-grid{grid-template-columns:1fr}#wcspedia .wcs-home .discovery-section-heading h2{font-size:22px}#wcspedia .wcs-help-item summary{padding:18px;font-size:16px}#wcspedia .wcs-help-item>div{padding:0 18px 18px}}
+@media(prefers-reduced-motion:reduce){#wcspedia .wcs-help-item summary svg{transition:none}}

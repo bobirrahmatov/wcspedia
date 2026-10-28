@@ -1,0 +1,37 @@
+/* Shared Citi table surface: entitlements, workspaces and suggestion queues. */
+#wcspedia .wcs-data-table-scroll{position:relative;height:auto!important;max-height:none!important;overflow-x:auto!important;overflow-y:hidden!important;border:1px solid var(--line,#d9e2ed);border-radius:14px;max-width:100%;background:var(--ds-surface,var(--wcs-theme-surface,#fff));overscroll-behavior-x:contain}
+#wcspedia .wcs-data-table-scroll:focus-visible{outline:2px solid var(--blue,#255be3);outline-offset:3px}
+#wcspedia .wcs-data-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px;line-height:1.55;color:var(--navy,#17355f)}
+#wcspedia .wcs-data-table th{background:var(--pale,#eff4f8);font-weight:600;padding:16px 18px;white-space:nowrap;color:var(--navy,#17355f)}
+#wcspedia .wcs-data-table td{padding:20px 18px;vertical-align:top;border-top:1px solid var(--line,#d9e2ed)}
+#wcspedia .wcs-data-table tbody tr:not(.wcs-data-table-state):hover{background:var(--ds-surface,var(--wcs-theme-surface,#fafcfe))}
+#wcspedia .wcs-data-table td>strong{display:block;font-weight:400;font-size:15px;color:var(--navy,#17355f)}
+#wcspedia .wcs-data-table code{display:block;font-family:inherit;font-size:12px;color:var(--muted,#62758b);margin-top:6px;overflow-wrap:anywhere}
+#wcspedia .wcs-data-table .wcs-data-table-action-cell{width:1%;text-align:right}
+#wcspedia .wcs-data-table-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;min-width:144px}
+#wcspedia .wcs-data-table-actions .link{font-size:12px;white-space:nowrap}
+#wcspedia .wcs-data-table-action-cell .wcs-data-table-actions>.button{width:100%}
+#wcspedia .wcs-data-table-frame{max-width:100%;min-width:0}
+#wcspedia .wcs-data-table-frame.has-state{border:1px solid var(--line,#d9e2ed);border-radius:14px;overflow:hidden;background:var(--ds-surface,var(--wcs-theme-surface,#fff))}
+#wcspedia .wcs-data-table-frame.has-state .wcs-data-table-scroll{border:0;border-radius:0}
+#wcspedia .wcs-data-table-state{text-align:center;padding:38px 24px;color:var(--muted,#62758b);border-top:1px solid var(--line,#d9e2ed);overflow-wrap:anywhere;max-width:100%;box-sizing:border-box}
+#wcspedia .wcs-data-table-state strong{font-size:17px;font-weight:400;color:var(--navy,#17355f)}
+#wcspedia .wcs-data-table-state p{font-size:13px;margin:8px 0;line-height:1.7}
+#wcspedia .wcs-data-table-state-action{margin-top:15px}
+#wcspedia .wcs-data-table-title{display:block;font-size:16px;font-weight:400;line-height:1.45;color:var(--navy,#17355f);text-decoration:none;overflow-wrap:anywhere}
+#wcspedia .wcs-data-table-title:hover{text-decoration:underline;text-underline-offset:3px}
+#wcspedia .wcs-data-table-kicker{display:block;color:var(--muted,#62758b);font-size:11px;margin-bottom:7px}
+#wcspedia .wcs-data-table-description{font-size:12px;line-height:1.65;color:var(--muted,#62758b);margin:7px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+#wcspedia .wcs-data-table-secondary{display:block;color:var(--muted,#62758b);font-size:11px;margin-top:5px}
+#wcspedia .wcs-workspace-table .wcs-table-document{min-width:260px;max-width:470px}
+#wcspedia .wcs-workspace-table .wcs-table-person{min-width:115px}
+#wcspedia .wcs-workspace-table .wcs-table-date{min-width:110px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#wcspedia .wcs-workspace-table .wcs-table-metrics{min-width:95px;font-size:12px}
+#wcspedia .wcs-workspace-table .wcs-table-metrics>span{display:block;margin-bottom:5px}
+#wcspedia .wcs-data-table .badge{white-space:nowrap}
+@media(max-width:760px){#wcspedia .wcs-data-table{font-size:12px}#wcspedia .wcs-data-table td,#wcspedia .wcs-data-table th{padding:15px}#wcspedia .wcs-data-table-title{font-size:15px}#wcspedia .wcs-data-table-state{padding:28px 20px}}
+
+#wcspedia .wcs-data-table-search{display:flex;gap:12px;align-items:center;max-width:760px;margin:24px 0 var(--section-gap)}
+#wcspedia .wcs-data-table-search input{flex:1;min-width:0;height:48px;padding:12px 15px;border:1px solid var(--ds-border,var(--wcs-theme-border,#bccbdc));border-radius:var(--control-radius);color:var(--navy);background:var(--ds-surface,var(--wcs-theme-surface,white));font-size:14px}
+#wcspedia .wcs-data-table-results-label{margin:0 0 16px;color:var(--muted);font-size:13px}
+@media(max-width:760px){#wcspedia .wcs-data-table-search{flex-wrap:wrap}#wcspedia .wcs-data-table-search input{font-size:14px;min-width:150px}#wcspedia .wcs-data-table-search .button{padding:12px 16px}}

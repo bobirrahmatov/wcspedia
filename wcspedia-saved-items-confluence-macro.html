@@ -1,0 +1,69 @@
+<!-- WCSpedia Saved items — content-only Confluence HTML macro.
+Replace all page ID placeholders in the pages map. Upload shared
+wcspedia-style.css, wcspedia.js, publication-config.js, wcspedia-logo.png and approved-only wcspedia-published.json to
+REPLACE_WITH_WCSPEDIA_PAGE_ID. Keep the full working JSON restricted.
+Configure trusted workspaceEndpoint, workflowEndpoint and suggestionEndpoint.
+Set the shared publication-config.js working root and eight business-area page IDs.
+Native saves require confirmed child-page receipts from the trusted workflow service.
+See NATIVE-PUBLICATION.md; placeholders block native writes without changing this interface.
+Deploy the governance checks in GOVERNANCE.md on that trusted service; browser checks are not authorization.
+Empty endpoints never report live decisions or suggestions as saved.
+Configure bookmarksEndpoint and healthEndpoint for personal saves and governed health.
+Empty endpoints show unavailable and never fall back to browser-only production records.
+Configure metricsEndpoint for shared document view totals; see METRICS.md.
+An empty metrics endpoint shows unavailable counts, never fabricated zeroes.
+For production charts, replace both charts URLs with same-origin minified
+Highcharts/accessibility attachments and set allowCDN:false. Core must load first.
+PDF/Word exports load version-pinned local libraries on demand. Upload citi-logo.png.
+The WCSpedia landing logo uses brandLogoUrl; see BRANDING.md for the shared attachment.
+The configured upload package supplies all library attachment URLs with allowCDN:false.
+See EXPORTS.md and exports-confluence-scripts.html for optional script tags.
+Saved items requires wcspedia-style.css to be loaded once by the global Confluence layout.
+This fragment deliberately adds no duplicate stylesheet link.
+
+-->
+
+<div id="wcspedia" role="main" aria-label="WCSpedia Saved items"></div>
+<script src="/confluence/download/attachments/REPLACE_WITH_WCSPEDIA_PAGE_ID/publication-config.js?api=v2"></script>
+<script>
+window.WCS_CONFIG = {
+  "mode": "confluence",
+  "contextPath": "/confluence",
+  "rootPageId": "REPLACE_WITH_WCSPEDIA_PAGE_ID",
+  "attachmentFilename": "wcspedia-published.json",
+  "pageRole": "saved",
+  "brandLogoUrl": "/confluence/download/attachments/REPLACE_WITH_WCSPEDIA_PAGE_ID/wcspedia-logo.png?api=v2",
+  "pages": {
+    "home": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_WCSPEDIA_PAGE_ID",
+    "mine": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_MY_WORKSPACE_PAGE_ID",
+    "review": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_REVIEWER_WORKSPACE_PAGE_ID",
+    "saved": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_SAVED_ITEMS_PAGE_ID",
+    "entitlements": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_ENTITLEMENTS_PAGE_ID",
+    "insights": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_INSIGHTS_PAGE_ID",
+    "faq": "/confluence/pages/viewpage.action?pageId=REPLACE_WITH_FAQ_PAGE_ID"
+  },
+  "workspaceEndpoint": "",
+  "workflowEndpoint": "",
+  "suggestionEndpoint": "",
+  "entitlementsEndpoint": "",
+  "metricsEndpoint": "",
+  "bookmarksEndpoint": "",
+  "healthEndpoint": "",
+  "charts": {
+    "highchartsSrc": "./vendor/highcharts-13.1.0.js",
+    "accessibilitySrc": "./vendor/highcharts-13.1.0-accessibility.js"
+  },
+  "exports": {
+    "pdfMakeUrl": "./vendor/pdfmake-0.2.20.min.js",
+    "pdfFontsUrl": "./vendor/pdfmake-0.2.20-vfs-fonts.js",
+    "docxUrl": "./vendor/docx-9.5.1.iife.js",
+    "logoUrl": "/confluence/download/attachments/REPLACE_WITH_WCSPEDIA_PAGE_ID/citi-logo.png?api=v2",
+    "logoDataUrl": "",
+    "loadTimeout": 20000,
+    "allowCDN": false,
+    "mdxTemplateUrl": "/confluence/download/attachments/REPLACE_WITH_WCSPEDIA_PAGE_ID/wcspedia-document.mdx?api=v2"
+  }
+};
+window.WCS_CONFIG.nativePublication = window.WCS_PUBLICATION_CONFIG || { enabled: true };
+</script>
+<script src="/confluence/download/attachments/REPLACE_WITH_WCSPEDIA_PAGE_ID/wcspedia.js?api=v2"></script>

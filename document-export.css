@@ -1,0 +1,5 @@
+/* Shared document actions use the same Citi controls in every host page. */
+.wcs .document-export-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.wcs .document-export-actions [aria-busy="true"]{cursor:progress;opacity:.7}
+.wcs .document-export-note{font-size:12px;color:var(--muted,#52667b);line-height:1.5}
+@media(max-width:600px){.wcs .document-export-actions{width:100%}.wcs .document-export-actions .btn{flex:1}}

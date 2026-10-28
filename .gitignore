@@ -1,0 +1,28 @@
+# Local tools and credentials
+.DS_Store
+node_modules/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+
+# Rebuildable bundles and old upload copies
+/confluence-ready/
+/confluence-upload/
+/confluence-upload */
+/WCSpedia*prototype.html
+*.zip
+*.zip.sha256
+
+# Keep the exact validated deployment snapshot with this initial release.
+!/WCSpedia-complete-2026-10-28-publication-fix.zip
+!/WCSpedia-complete-2026-10-28-publication-fix.zip.sha256
+
+# Local visual verification outputs
+/previews/
+/*-preview.png
+/preview-*.jpg

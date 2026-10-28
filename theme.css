@@ -1,0 +1,37 @@
+/* Follow the host's Data Center design tokens; never change its theme choice.
+   Fallbacks cover data-color-mode hosts whose token stylesheet loads later.
+   Original/light mode retains each component's existing Citi fallback colour. */
+:root { --wcs-color-scheme:light; }
+:root[data-color-mode="dark"],body[data-color-mode="dark"] {
+  --wcs-color-scheme:dark;
+  --wcs-theme-text:#dee4ea;
+  --wcs-theme-muted:#aebbc9;
+  --wcs-theme-link:#85b8ff;
+  --wcs-theme-surface:#25282c;
+  --wcs-theme-subtle:#2d3239;
+  --wcs-theme-border:#505966;
+  --wcs-theme-focus:#85b8ff;
+  --wcs-theme-selected:#1c3b60;
+  --wcs-theme-success:#7ee2b8;
+  --wcs-theme-successBg:#183c30;
+  --wcs-theme-warning:#f5cd47;
+  --wcs-theme-warningBg:#44391d;
+  --wcs-theme-danger:#ff9b91;
+  --wcs-theme-dangerBg:#4b292a;
+}
+#wcspedia,.wcs-native-article,.wcs-article-discussion,.wcs-loading-overlay,.wcs-add-document-popover {
+  color-scheme:var(--wcs-color-scheme,normal);
+}
+#wcspedia :is(input,textarea)::placeholder,.wcs-article-discussion textarea::placeholder {
+  color:var(--ds-text-subtlest,var(--wcs-theme-muted,#62758b));opacity:1;
+}
+.wcs-native-article :is(h2,h3,h4,h5,h6,th,dt,strong) { color:var(--ds-text,var(--wcs-theme-text,#17365d)); }
+.wcs-native-article :is(pre,code) { background:var(--ds-background-neutral,var(--wcs-theme-subtle,#f0f4f9));color:var(--ds-text,var(--wcs-theme-text,#17365d)); }
+.wcs-native-article :is(td,th) { border-color:var(--ds-border,var(--wcs-theme-border,#dce4ec)); }
+.wcs-native-article .wcs-native-article-body a { color:var(--ds-link,var(--wcs-theme-link,#255be3)); }
+/* Highcharts SVG text/tooltip follows the host immediately, without rebuilding
+   charts or fetching data when the theme changes. Data series retain their colours. */
+#wcspedia .highcharts-container :is(.highcharts-title,.highcharts-legend-item text,.highcharts-tooltip text) { fill:var(--ds-text,var(--wcs-theme-text,#17355f))!important;color:var(--ds-text,var(--wcs-theme-text,#17355f))!important; }
+#wcspedia .highcharts-container :is(.highcharts-subtitle,.highcharts-axis-labels text,.highcharts-axis-title) { fill:var(--ds-text-subtle,var(--wcs-theme-muted,#5b6c7e))!important; }
+#wcspedia .highcharts-tooltip-box { fill:var(--ds-surface-overlay,var(--wcs-theme-surface,#fff))!important;stroke:var(--ds-border,var(--wcs-theme-border,#dce4ec))!important; }
+#wcspedia .highcharts-grid-line { stroke:var(--ds-border,var(--wcs-theme-border,#dce4ec))!important; }

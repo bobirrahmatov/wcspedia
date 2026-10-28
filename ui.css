@@ -1,0 +1,90 @@
+/* One shared Citi surface for menus, calendars, tooltips and dialogs. */
+#wcspedia .wcs-ui-layer{position:relative;z-index:var(--wcs-overlay-z-index,4000)}
+#wcspedia .wcs-ui-backdrop{position:fixed;inset:0;background:rgba(13,37,68,.42);backdrop-filter:blur(3px);z-index:var(--wcs-overlay-z-index,4000);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+#wcspedia .wcs-ui-dialog{background:var(--ds-surface,var(--wcs-theme-surface,#fff));color:var(--ink);border:1px solid var(--ds-border,var(--wcs-theme-border,#dce5ef));border-radius:16px;box-shadow:0 24px 80px rgba(13,37,68,.23);width:min(560px,100%);max-height:calc(100dvh - 48px);overflow:auto;position:relative;outline:none}
+#wcspedia .wcs-ui-dialog.is-wide{width:min(900px,100%)}
+#wcspedia .wcs-ui-dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:25px 28px 21px;border-bottom:1px solid var(--line)}
+#wcspedia .wcs-ui-dialog-heading h2{font-weight:400;font-size:25px;letter-spacing:-.4px;line-height:1.3;color:var(--navy)}
+#wcspedia .wcs-ui-dialog-heading p{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6}
+#wcspedia .wcs-ui-dialog-body{padding:24px 28px 28px}
+#wcspedia .wcs-ui-close{display:grid;place-items:center;width:32px;height:32px;border:0;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3f9));color:var(--navy);border-radius:50%;flex:none}
+#wcspedia .wcs-ui-close:hover{background:var(--ds-background-neutral,var(--wcs-theme-subtle,#dce8f5))}#wcspedia .wcs-ui-close:disabled{opacity:.5;cursor:wait}
+#wcspedia .wcs-ui-dialog .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:25px;border-top:1px solid var(--line);padding-top:20px}
+#wcspedia .wcs-ui-dialog input:not([type=checkbox]):not([type=radio]):not([type=file]),#wcspedia .wcs-ui-dialog textarea{width:100%;border:1px solid var(--ds-border,var(--wcs-theme-border,#c7d3e0));background:var(--ds-surface,var(--wcs-theme-surface,#fff));color:var(--navy);border-radius:5px;padding:11px 12px;min-height:44px}
+#wcspedia .wcs-ui-dialog textarea{resize:vertical;min-height:100px}#wcspedia .wcs-ui-dialog label{font-size:13px;color:var(--navy)}
+#wcspedia .wcs-ui-dialog .form-group,#wcspedia .wcs-ui-dialog .editor-field{margin-bottom:18px}#wcspedia .wcs-ui-dialog .form-group>label{display:block;margin-bottom:7px}
+#wcspedia .wcs-ui-popover{position:fixed;z-index:calc(var(--wcs-overlay-z-index,4000) + 10);min-width:180px;border:1px solid var(--ds-border,var(--wcs-theme-border,#cfdae6));background:var(--ds-surface,var(--wcs-theme-surface,#fff));color:var(--navy);border-radius:10px;box-shadow:0 12px 38px rgba(23,53,95,.18);padding:8px;overflow:auto;overscroll-behavior:contain}
+#wcspedia .wcs-ui-select{display:inline-flex;min-width:0;max-width:100%;width:100%;vertical-align:middle}
+#wcspedia .wcs-ui-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-width:0;min-height:44px;background:var(--ds-surface,var(--wcs-theme-surface,#fff));border:1px solid var(--ds-border,var(--wcs-theme-border,#c7d3e0));border-radius:5px;padding:9px 11px;color:var(--navy);text-align:left;font-size:13px;line-height:1.5}
+#wcspedia .editor-field .wcs-ui-select-trigger{min-height:44px;font-size:14px;line-height:1.6;padding:10px 12px}
+#wcspedia .wcs-ui-select-trigger:hover:not(:disabled){border-color:var(--ds-border,var(--wcs-theme-border,#7595bd));background:var(--ds-surface,var(--wcs-theme-surface,#f8fbff))}#wcspedia .wcs-ui-select-trigger[aria-expanded=true]{border-color:var(--blue);box-shadow:0 0 0 2px #e4edff}#wcspedia .wcs-ui-select-trigger:disabled{cursor:not-allowed;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#f3f6f9));color:var(--ds-text-subtle,var(--wcs-theme-muted,#66778a));opacity:.85}
+#wcspedia .wcs-ui-select-trigger svg{width:16px;height:16px;flex:none}#wcspedia .wcs-ui-select-value{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#wcspedia .wcs-ui-options{padding:5px;max-height:320px}#wcspedia .wcs-ui-option{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;line-height:1.5;padding:10px 11px;border-radius:5px;cursor:pointer;overflow-wrap:anywhere}
+#wcspedia .wcs-ui-option.is-active,#wcspedia .wcs-ui-option:hover{background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3ff));color:var(--ds-link,var(--wcs-theme-link,#174bc5))}#wcspedia .wcs-ui-option[aria-selected=true]{color:var(--ds-link,var(--wcs-theme-link,#174bc5));font-weight:700}#wcspedia .wcs-ui-option[aria-disabled=true]{opacity:.45;cursor:not-allowed}#wcspedia .wcs-ui-option svg{width:16px;height:16px}
+#wcspedia .role-switch .wcs-ui-select{width:190px}#wcspedia .role-switch .wcs-ui-select-trigger{font-size:11px;min-height:32px;padding:6px 8px}
+#wcspedia .press-filter .wcs-ui-select-trigger{border:0;border-bottom:1px solid var(--ds-border,var(--wcs-theme-border,#b8c6d4));border-radius:0;background:transparent;padding:5px 0;min-height:32px}
+#wcspedia .discovery-results-toolbar .wcs-ui-select{width:145px}#wcspedia .discovery-results-toolbar .wcs-ui-select-trigger{border:0;min-height:32px;padding:5px;background:transparent}
+#wcspedia .audit-toolbar .wcs-ui-select{width:auto;min-width:160px;margin-right:8px}#wcspedia .editor-toolbar .wcs-ui-select{width:140px;flex:none}#wcspedia .editor-toolbar .wcs-ui-select-trigger{border:0;background:transparent;min-height:34px;padding:5px 8px;font-size:12px}
+#wcspedia .wcs-ui-date{display:block;position:relative;width:100%;min-width:0;margin:0;isolation:isolate}
+#wcspedia .wcs-ui-date>input{display:block;width:100%;min-width:0;min-height:44px;margin:0;padding-right:48px!important}
+#wcspedia .wcs-ui-date-trigger{position:absolute;top:50%;right:5px;transform:translateY(-50%);width:34px;height:34px;min-height:0;margin:0;padding:0;display:grid;place-items:center;border:0;background:transparent;border-radius:4px;color:var(--navy);line-height:1}
+#wcspedia .wcs-ui-date-trigger svg{width:18px;height:18px;pointer-events:none}
+#wcspedia .wcs-ui-date-trigger:hover:not(:disabled),#wcspedia .wcs-ui-date-trigger[aria-expanded=true]{background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3fb));color:var(--ds-link,var(--wcs-theme-link,#255be3))}
+#wcspedia .wcs-ui-date-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:0;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3fb))}
+#wcspedia .wcs-ui-date-trigger:disabled{opacity:.45;cursor:not-allowed}
+#wcspedia .wcs-ui-field-error{display:block;color:var(--ds-text-danger,var(--wcs-theme-danger,#993d2e));font-size:12px;margin-top:5px}#wcspedia .wcs-ui-calendar{width:304px;min-width:270px;padding:15px}
+#wcspedia .wcs-ui-calendar-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}#wcspedia .wcs-ui-calendar-heading strong{font-size:14px;font-weight:700}#wcspedia .wcs-ui-calendar-heading button{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:5px;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3fb));color:var(--navy)}
+#wcspedia .wcs-ui-calendar-week,#wcspedia .wcs-ui-calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}#wcspedia .wcs-ui-calendar-week span{text-align:center;font-size:11px;color:var(--muted);padding:5px 0}
+#wcspedia .wcs-ui-day{display:grid;place-items:center;min-height:33px;border:1px solid transparent;border-radius:5px;background:var(--ds-surface,var(--wcs-theme-surface,#fff));color:var(--navy);font-size:12px;padding:3px}
+#wcspedia .wcs-ui-day.is-other{color:var(--ds-text-subtle,var(--wcs-theme-muted,#8191a4))}#wcspedia .wcs-ui-day:hover:not(:disabled){background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3ff))}#wcspedia .wcs-ui-day[aria-current=date]{border-color:var(--ds-border,var(--wcs-theme-border,#b3c8e7))}#wcspedia .wcs-ui-day.is-selected{color:white;background:var(--blue)}#wcspedia .wcs-ui-day:disabled{opacity:.3;cursor:not-allowed}
+#wcspedia .wcs-ui-calendar-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:10px}#wcspedia .wcs-ui-calendar-actions button,#wcspedia .wcs-ui-calendar-actions span{font-size:11px}#wcspedia .wcs-ui-calendar-actions span{color:var(--muted)}
+#wcspedia [data-tooltip]{position:relative}#wcspedia [data-tooltip]:hover:after,#wcspedia [data-tooltip]:focus-visible:after{content:attr(data-tooltip);position:absolute;left:50%;top:calc(100% + 9px);transform:translateX(-50%);z-index:calc(var(--wcs-overlay-z-index,4000) + 50);width:max-content;max-width:230px;padding:7px 10px;background:#17355f;color:#fff;border-radius:5px;box-shadow:0 5px 15px #17355f22;white-space:normal;text-align:center;font-size:11px;font-weight:400;line-height:1.4;pointer-events:none}
+@media(max-width:600px){#wcspedia .wcs-ui-backdrop{padding:12px;align-items:center}#wcspedia .wcs-ui-dialog{max-height:calc(100dvh - 24px);border-radius:12px}#wcspedia .wcs-ui-dialog-heading{padding:20px 18px 16px}#wcspedia .wcs-ui-dialog-heading h2{font-size:22px}#wcspedia .wcs-ui-dialog-body{padding:19px 18px 22px}#wcspedia .wcs-ui-dialog .modal-actions{flex-wrap:wrap}#wcspedia .wcs-ui-dialog .modal-actions .button{flex:1}#wcspedia .role-switch .wcs-ui-select{width:165px}}
+/* Horizon installation: loading feedback intentionally remains animated even
+   when the remote desktop reports reduced motion. Decorative motion still
+   respects that preference. No timers or page-wide motion override.
+   One actual pending action, one spinner. Disabled permission controls never
+   acquire a spinner. Scope overrides to WCSpedia, not Confluence's buttons. */
+:is(#wcspedia,.wcs-add-document,.wcs-article-discussion,.wcs-article-engagement,[data-wcs-article-discussion-host]) button[aria-busy="true"] {
+  cursor: progress !important;
+}
+:is(#wcspedia,.wcs-add-document,.wcs-article-discussion,.wcs-article-engagement,[data-wcs-article-discussion-host]) button[aria-busy="true"]:not([data-wcs-busy-indicator])::after {
+  content: "" !important;
+  display: inline-block !important;
+  width: 1em !important;
+  height: 1em !important;
+  min-width: 1em !important;
+  box-sizing: border-box !important;
+  margin-inline-start: .5em !important;
+  border: 2px solid currentColor !important;
+  border-inline-end-color: transparent !important;
+  border-radius: 50% !important;
+  vertical-align: -.12em !important;
+  animation: wcs-button-spin .7s linear infinite !important;
+}
+@keyframes wcs-button-spin { to { transform: rotate(360deg); } }
+
+/* A real element avoids collisions with Confluence tooltip/tab pseudo-elements. */
+:is(#wcspedia,.wcs-add-document,.wcs-article-discussion,.wcs-article-engagement,[data-wcs-article-discussion-host]) button > .wcs-button-spinner {
+  display:inline-block!important;position:static!important;flex:0 0 16px!important;width:16px!important;height:16px!important;min-width:16px!important;margin:0 0 0 8px!important;padding:0!important;box-sizing:border-box!important;border:2px solid currentColor!important;border-right-color:transparent!important;border-radius:50%!important;background:transparent!important;opacity:1!important;vertical-align:middle!important;pointer-events:none!important;animation:wcs-button-spin .7s linear infinite!important;
+}
+:is(#wcspedia,.wcs-add-document,.wcs-article-discussion,.wcs-article-engagement,[data-wcs-article-discussion-host]) button[aria-busy="true"]{opacity:1!important}
+#wcspedia button.button[aria-busy="true"]:not(.secondary):not(.danger){background:var(--blue,#255be3)!important;color:#fff!important;border-color:var(--blue,#255be3)!important}
+
+/* An icon-only FAB occupies one grid cell, including either spinner mechanism. */
+:is(#wcspedia,.wcs-add-document) button.wcs-add-document-trigger > svg,
+:is(#wcspedia,.wcs-add-document) button.wcs-add-document-trigger > .wcs-button-spinner,
+:is(#wcspedia,.wcs-add-document) button.wcs-add-document-trigger[aria-busy="true"]::after {
+  grid-area:1 / 1!important; margin:0!important; align-self:center!important; justify-self:center!important;
+}
+:is(#wcspedia,.wcs-add-document) button.wcs-add-document-trigger[aria-busy="true"] > svg { visibility:hidden!important; }
+
+/* Shared right drawer: native top layer, scrollable body, rounded inset surface. */
+#wcspedia dialog.wcs-ui-drawer-backdrop{box-sizing:border-box;margin:0;width:100%;height:100dvh;max-width:none;max-height:none;border:0;padding:16px;justify-content:flex-end;align-items:stretch;overflow:hidden;color:inherit;font:inherit}
+#wcspedia dialog.wcs-ui-drawer-backdrop::backdrop{background:transparent}
+#wcspedia .wcs-ui-dialog.wcs-ui-drawer{width:min(500px,100%);max-height:none;height:100%;border-radius:20px;display:flex;flex-direction:column;overflow:visible;box-sizing:border-box}
+#wcspedia .wcs-ui-drawer .wcs-ui-dialog-heading{flex:none;padding:24px;border-radius:20px 20px 0 0}
+#wcspedia .wcs-ui-drawer .wcs-ui-dialog-body{min-height:0;flex:1;padding:0;display:flex;flex-direction:column}
+#wcspedia .wcs-ui-drawer-scroll{min-height:0;overflow:auto;overscroll-behavior:contain;flex:1;padding:24px}
+#wcspedia .wcs-ui-drawer-footer{flex:none;padding:18px 24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+@media(max-width:600px){#wcspedia dialog.wcs-ui-drawer-backdrop{padding:8px}#wcspedia .wcs-ui-drawer .wcs-ui-dialog-heading{padding:20px}#wcspedia .wcs-ui-drawer-scroll{padding:20px}#wcspedia .wcs-ui-drawer-footer{padding:16px 20px}}

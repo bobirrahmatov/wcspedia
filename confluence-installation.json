@@ -1,0 +1,33 @@
+{
+  "spaceKey": "wcspedia",
+  "attachmentPageId": "3962195316",
+  "pageIds": {
+    "home": "3954553300",
+    "mine": "3961735744",
+    "review": "3961735749",
+    "saved": "3961735759",
+    "entitlements": "3961735763",
+    "faq": "3973992401"
+  },
+  "workingRootPageId": "3961735834",
+  "areaPageIds": {
+    "credit-approval-control": "3961735771",
+    "credit-information-management": "3961735776",
+    "credit-management-reporting": "3961735781",
+    "deal-closing": "3961735791",
+    "documentation-pledging": "3961735795",
+    "emea-credit-admin": "3961735800",
+    "loan-management": "3961735803",
+    "regional-operating-manuals": "3961735808"
+  },
+  "services": {
+    "workspaceEndpoint": "",
+    "workflowEndpoint": "",
+    "suggestionEndpoint": "",
+    "entitlementsEndpoint": "",
+    "metricsEndpoint": "",
+    "bookmarksEndpoint": "",
+    "healthEndpoint": ""
+  },
+  "insightsPageId": "3961735728"
+}

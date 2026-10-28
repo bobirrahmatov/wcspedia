@@ -1,0 +1,49 @@
+<!-- WCSpedia shared-header Add document widget — Covenants-style loading.
+Paste this whole fragment into the existing header page's HTML macro.
+Upload wcspedia-add-document.js and wcspedia-add-documentHTMLPage.js to the
+shared attachments page. The existing global wcspedia-style.css styles it.
+Edit the IDs below and BOTH attachment URLs. No extra header, font, CSS link,
+application root, or page WCS_CONFIG is created here. Keep this div in the
+existing header action row. Startup places it before native Create. For a
+custom Create control, mark its button group with data-wcs-create-anchor.
+If neither target exists, the div stays where you place it.
+-->
+<div data-wcs-header-add-document aria-label="Add a WCSpedia document"><div class="wcs-add-document"><button type="button" class="wcs-add-document-trigger" disabled title="Checking access…">Add document</button></div></div>
+<script>
+window.WCSAddDocumentUnavailable = function (message) {
+  var hosts = Array.from(document.querySelectorAll('[data-wcs-header-add-document]'));
+  var host = hosts.find(function (node) { return node.dataset.wcsHeaderWidgetStarted; }) ||
+    hosts.find(function (node) { return node.closest('#navHeader,#navBar'); }) || hosts[0];
+  hosts.forEach(function (duplicate) { if (duplicate !== host && !duplicate.contains(host)) duplicate.remove(); });
+  // A failed duplicate include must not replace an already mounted widget's
+  // DOM, leaving its event handlers attached to a detached button.
+  if (host && !host.dataset.wcsHeaderWidgetStarted) {
+    var shell = document.createElement('div'), button = document.createElement('button');
+    shell.className = 'wcs-add-document'; button.className = 'wcs-add-document-trigger';
+    button.type = 'button'; button.disabled = true; button.textContent = 'Add document'; button.title = message;
+    shell.append(button); host.replaceChildren(shell); host.hidden = false; host.style.removeProperty('display');
+    host.dataset.wcsAddState = 'error'; host.dataset.wcsAddMessage = message;
+  }
+  console.warn('[WCSpedia Add document] ' + message);
+};
+window.WCS_ADD_DOCUMENT_CONFIG = {
+  mode: 'confluence',
+  authoringMode: 'confluence-session',
+  spaceKey: 'wcspedia',
+  nativePublication: {
+    enabled: true,
+    workingRootPageId: 'REPLACE_WITH_RESTRICTED_WORKING_ROOT_PAGE_ID',
+    insightsPageId: 'REPLACE_WITH_INSIGHTS_PAGE_ID'
+  },
+  contextPath: '/confluence',
+  attachmentPageId: 'REPLACE_WITH_ATTACHMENTS_PAGE_ID', // Hosts the scripts and entitlements.json.
+  rootPageId: 'REPLACE_WITH_WCSPEDIA_PAGE_ID',
+  workspacePageId: 'REPLACE_WITH_MY_WORKSPACE_PAGE_ID',
+  workflowEndpoint: '',
+  workspaceEndpoint: '',
+  accessTimeoutMs: 12000,
+  types: ['Job aid', 'Knowledge sharing', 'Blog', 'Training', 'Reference', 'Report', 'Guide', 'Playbook', 'Checklist', 'Template', 'FAQ']
+};
+</script>
+<script src="/confluence/download/attachments/REPLACE_WITH_ATTACHMENTS_PAGE_ID/wcspedia-add-document.js?api=v2" onerror="window.WCSAddDocumentUnavailable('Could not load wcspedia-add-document.js. Check the attachment page ID, filename and access.');"></script>
+<script src="/confluence/download/attachments/REPLACE_WITH_ATTACHMENTS_PAGE_ID/wcspedia-add-documentHTMLPage.js?api=v2" onerror="window.WCSAddDocumentUnavailable('Could not load wcspedia-add-documentHTMLPage.js. Check the attachment page ID, filename and access.');"></script>

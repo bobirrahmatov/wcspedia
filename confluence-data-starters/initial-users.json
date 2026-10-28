@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "users": [
+    {
+      "id": "person-br47149",
+      "soeid": "BR47149",
+      "displayName": "BR47149",
+      "workflowRole": "Manager",
+      "entitlementAdmin": true,
+      "permissions": [
+        "content.create",
+        "content.edit",
+        "content.delete",
+        "entitlements.view",
+        "entitlements.add",
+        "entitlements.edit",
+        "entitlements.revoke"
+      ],
+      "confluenceUserKey": ""
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+d5f97cde0d798f1b878b71105304f7de2deb591c88978df94c4dfc7e09318b47  README.md
+df35cc8f5ed9d5e76ecfa3d9995eae49f2daa3190bee6aafdd8bfca25be39768  wcspedia-page-style-flags-header.html
+36047cc60a83a16e07bc4e375a4673c26f5c97646e0a2bd7e195e70a5b343f7d  wcspedia-page-style-flags-marker.html
+6779cab735e0c5d3679d26b92a1b1a8632ce5a98e9963ea51a4d95725e2d7fd9  wcspedia-page-style-flags.js

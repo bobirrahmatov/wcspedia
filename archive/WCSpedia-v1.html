@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WCSpedia · Wealth Credit Services knowledge base</title></head><body style="margin:0"><!-- WCSpedia prototype: paste into the same approved HTML-macro environment used by LPTM. -->
+<style>
+/* All application styles stay within the Confluence macro root. */
+#wcspedia{--blue:#255be3;--navy:#10264b;--ink:#182b48;--muted:#62728a;--line:#e1e7ef;--pale:#edf3ff;--surface:#f7f9fc;--white:#fff;--shadow:0 7px 24px rgba(27,61,111,.06);font-family:"Citi-Sans-Text-Regular","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--white);font-size:15px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+#wcspedia *{box-sizing:border-box}#wcspedia button,#wcspedia input,#wcspedia select{font:inherit}#wcspedia button,#wcspedia a,#wcspedia input,#wcspedia select{ -webkit-tap-highlight-color:transparent}#wcspedia button{cursor:pointer}#wcspedia a{text-decoration:none;color:inherit}#wcspedia button{color:inherit}#wcspedia h1,#wcspedia h2,#wcspedia h3,#wcspedia p{margin:0}#wcspedia svg{width:20px;height:20px;flex-shrink:0;vertical-align:middle}#wcspedia button:focus-visible,#wcspedia a:focus-visible,#wcspedia select:focus-visible,#wcspedia input:focus-visible{outline:3px solid #91b5ff;outline-offset:4px}#wcspedia .sr-only{position:absolute;clip:rect(0,0,0,0);width:1px;height:1px;overflow:hidden}#wcspedia .container{width:calc(100% - 96px);max-width:1184px;margin:0 auto}#wcspedia .muted{color:var(--muted)}#wcspedia .eyebrow{font-size:11px;letter-spacing:1.7px;text-transform:uppercase;font-weight:650;color:var(--muted)}#wcspedia .blue{color:var(--blue)}#wcspedia .btn{display:inline-flex;justify-content:center;align-items:center;gap:9px;background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:8px;font-size:14px;font-weight:600;min-height:44px;padding:10px 20px;transition:background .15s,transform .15s}#wcspedia .btn:hover{background:#1648c7;transform:translateY(-1px)}#wcspedia .btn.secondary{background:#fff;color:var(--ink);border-color:var(--line)}#wcspedia .btn.secondary:hover{background:var(--surface);border-color:#b8c9e4}#wcspedia .text-link{display:inline-flex;gap:8px;align-items:center;color:var(--blue);font-size:13px;font-weight:600;background:none;border:0;padding:4px 0}#wcspedia .text-link:hover{text-decoration:underline}#wcspedia .text-link svg{width:16px}#wcspedia .icon-button{display:inline-flex;align-items:center;justify-content:center;width:35px;height:35px;background:transparent;border:1px solid transparent;border-radius:7px;color:var(--muted)}#wcspedia .icon-button:hover{background:var(--pale);color:var(--blue)}#wcspedia .icon-button.is-saved{color:var(--blue);background:var(--pale)}#wcspedia .icon-button.is-saved svg{fill:#dce7ff}#wcspedia .sample-note{position:absolute;right:32px;top:18px;display:flex;gap:6px;align-items:center;font-size:10px;letter-spacing:.25px;color:#718099}#wcspedia .sample-note i{width:5px;height:5px;background:#91a6c9;border-radius:50%}
+#wcspedia .hero{position:relative;z-index:2;text-align:center;isolation:isolate;overflow:visible;background:linear-gradient(180deg,#f2f6fe 0%,#f8faff 72%,#fff 100%);padding:63px 24px 48px}#wcspedia .hero:before{content:"";position:absolute;inset:0;z-index:-1;background-image:radial-gradient(#96b3e3 .6px,transparent .7px);background-size:17px 17px;mask-image:linear-gradient(90deg,#0000,#0005 6%,#0000 29%,#0000 71%,#0005 94%,#0000)}#wcspedia .wordmark{display:inline-flex;gap:9px;align-items:center;color:var(--navy);font-size:23px;letter-spacing:-.9px;font-weight:650}#wcspedia .wordmark b{font-weight:400;color:var(--blue)}#wcspedia .brand-icon{height:29px;width:29px;display:grid;place-items:center;background:var(--blue);color:#fff;border-radius:8px;margin-right:2px}#wcspedia .brand-icon svg{width:19px;height:19px}#wcspedia .brand-description{margin-top:7px;font-size:10px;letter-spacing:2.3px;text-transform:uppercase;color:#62728a}#wcspedia .hero h1{font-size:clamp(42px,4.3vw,58px);font-weight:530;letter-spacing:-1.7px;line-height:1.12;margin:27px 0 16px;color:var(--navy)}#wcspedia .hero h1 span{color:var(--blue)}#wcspedia .hero .intro{font-size:15px;color:var(--muted);line-height:1.75;max-width:580px;margin:0 auto}#wcspedia .search-wrap{position:relative;width:100%;max-width:760px;margin:29px auto 0;text-align:left}#wcspedia .search-form{display:flex;align-items:center;gap:13px;padding:7px 7px 7px 20px;background:#fff;border:1px solid #d7e1ef;border-radius:11px;box-shadow:0 4px 7px #17355f04,0 8px 28px #17355f0b;min-height:65px}#wcspedia .search-form>svg{color:#8190a7}#wcspedia .search-form:focus-within{border-color:#7da3f4;box-shadow:0 0 0 3px #255be30c}#wcspedia .search-form input{border:0;outline:none!important;box-shadow:none;background:transparent;min-width:0;flex:1;height:44px;color:var(--ink);font-size:14px}#wcspedia .search-form input::placeholder{color:#7e8ba0}#wcspedia .search-form .btn{height:48px;min-width:118px}#wcspedia .search-form kbd{font-family:inherit;font-size:11px;background:#f7f9fc;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:#7888a1;white-space:nowrap}#wcspedia .suggestions{position:absolute;top:calc(100% + 7px);left:0;right:0;border:1px solid var(--line);background:#fff;border-radius:10px;box-shadow:0 16px 38px #10264b20;z-index:10;overflow:hidden;padding:7px}#wcspedia .suggestions a{display:flex;align-items:center;gap:11px;padding:11px;border-radius:6px;font-size:13px}#wcspedia .suggestions a:hover,#wcspedia .suggestions a:focus{background:var(--pale)}#wcspedia .suggestions a svg{color:var(--blue);width:17px}#wcspedia .suggestions .suggestion-meta{margin-left:auto;color:var(--muted);font-size:10px}#wcspedia .suggest-label{padding:5px 11px;font-size:10px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}#wcspedia .trending{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:17px;font-size:11px;color:var(--muted)}#wcspedia .trending a{border:1px solid #dce5f2;border-radius:20px;padding:3px 11px;background:#ffffffa8;color:#536781;transition:.15s}#wcspedia .trending a:hover{color:var(--blue);border-color:#a4bff5;background:#fff}#wcspedia .hero-shortcuts{display:flex;gap:25px;align-items:center;justify-content:center;margin-top:27px}#wcspedia .hero-shortcuts a{font-size:12px;color:#536781;display:flex;align-items:center;gap:7px}#wcspedia .hero-shortcuts svg{width:14px;height:14px}#wcspedia .hero-shortcuts a:hover{color:var(--blue)}#wcspedia .hero-shortcuts .divider{height:13px;width:1px;background:var(--line)}
+#wcspedia .section{padding:33px 0 17px}#wcspedia .section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:23px}#wcspedia .section-heading h2{font-size:25px;line-height:1.3;font-weight:550;letter-spacing:-.65px;color:var(--navy)}#wcspedia .section-heading p{font-size:12px;color:var(--muted);margin-top:6px}#wcspedia .category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}#wcspedia .category-card{display:flex;align-items:flex-start;gap:17px;position:relative;border:1px solid var(--line);border-radius:10px;padding:23px 22px;background:#fff;transition:transform .15s,border-color .15s,box-shadow .15s}#wcspedia .category-card:hover{transform:translateY(-3px);border-color:#9ebbf5;box-shadow:var(--shadow)}#wcspedia .category-icon{display:grid;place-items:center;background:#eef3ff;color:var(--blue);width:43px;height:43px;border-radius:10px;flex-shrink:0}#wcspedia .category-icon svg{width:22px;height:22px}#wcspedia .category-card:nth-child(2) .category-icon{background:#edf6f6;color:#328079}#wcspedia .category-card:nth-child(3) .category-icon{background:#f0edfc;color:#7762be}#wcspedia .category-card:nth-child(4) .category-icon{background:#eaf4fb;color:#3d7d9f}#wcspedia .category-card:nth-child(5) .category-icon{background:#fcf1e8;color:#b37e45}#wcspedia .category-card:nth-child(6) .category-icon{background:#f2eef8;color:#8c6caa}#wcspedia .category-card h3{font-size:14px;font-weight:650;margin:0 0 5px;letter-spacing:-.15px}#wcspedia .category-card p{font-size:12px;color:var(--muted);line-height:1.7;max-width:245px;min-height:40px}#wcspedia .category-meta{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#7a8aa1;margin-top:12px}#wcspedia .category-meta svg{height:14px;width:14px;color:var(--blue)}#wcspedia .category-copy{flex:1}#wcspedia .popular-section{padding-top:42px;padding-bottom:37px}#wcspedia .section-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:24px}#wcspedia .section-tabs button{border:0;background:none;padding:0 0 12px;font-size:12px;color:var(--muted);position:relative}#wcspedia .section-tabs button.active{color:var(--blue);font-weight:600}#wcspedia .section-tabs button.active:after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--blue)}#wcspedia .article-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}#wcspedia .article-card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;transition:.15s}#wcspedia .article-card:hover{border-color:#adc5f2;box-shadow:var(--shadow);transform:translateY(-2px)}#wcspedia .article-art{height:142px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:16px;background:linear-gradient(125deg,#ecf3ff,#e3ecfc);color:#2e60bd}#wcspedia .article-art:before{content:"";position:absolute;width:180px;height:180px;right:-35px;top:-92px;border:1px solid #b7ccef;border-radius:50%;box-shadow:0 0 0 24px #b7ccef1f,0 0 0 48px #b7ccef1a}#wcspedia .article-art .art-sheet{height:90px;width:73px;padding:15px 12px;background:#fff;border-radius:6px;box-shadow:0 7px 20px #31579416;transform:rotate(-7deg);position:relative}#wcspedia .art-sheet svg{width:25px;height:25px;margin-bottom:6px}#wcspedia .art-sheet i{display:block;height:3px;background:#d7e4fb;margin:6px 0;border-radius:1px}#wcspedia .art-sheet i:last-child{width:65%}#wcspedia .art-label{font-size:11px;font-weight:600;line-height:1.7;letter-spacing:2px;text-transform:uppercase;position:relative}#wcspedia .article-art.tone-1{background:linear-gradient(120deg,#eaf3f4,#deedef);color:#448780}#wcspedia .article-art.tone-1 .art-sheet{transform:rotate(6deg)}#wcspedia .article-art.tone-2{background:linear-gradient(120deg,#f1effb,#e6e4f7);color:#7c6bbe}#wcspedia .article-card-body{padding:21px}#wcspedia .card-topline{display:flex;align-items:center;justify-content:space-between;margin:-5px 0 7px;gap:5px}#wcspedia .type-label{color:var(--blue);font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase}#wcspedia .article-card h3{font-size:16px;line-height:1.45;letter-spacing:-.2px;font-weight:600;margin-bottom:9px}#wcspedia .article-card h3 a:hover{color:var(--blue)}#wcspedia .article-card p{font-size:12px;line-height:1.75;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#wcspedia .card-meta{display:flex;gap:8px;font-size:10px;color:#718099;align-items:center;margin-top:18px}#wcspedia .card-meta span:last-child{margin-left:auto}#wcspedia .getting-started{margin:8px 0 50px;background:#f5f8fd;border:1px solid #e4ebf5;border-radius:11px;padding:27px 31px;display:flex;align-items:center;gap:20px}#wcspedia .getting-started .category-icon{background:#fff;width:49px;height:49px;border:1px solid #e3eaf7}#wcspedia .getting-started h3{font-size:17px;font-weight:550;margin-bottom:3px}#wcspedia .getting-started p{font-size:12px;color:var(--muted)}#wcspedia .getting-started .text-link{margin-left:auto;white-space:nowrap}
+#wcspedia .subpage{padding-top:27px;padding-bottom:60px}#wcspedia .breadcrumbs{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:26px}#wcspedia .breadcrumbs a:hover{color:var(--blue)}#wcspedia .breadcrumbs svg{width:12px;height:12px;color:#a0aec1}#wcspedia .breadcrumbs .home-crumb{color:var(--blue);font-weight:600}#wcspedia .page-intro{margin:0 0 28px}#wcspedia .page-intro h1{font-size:34px;font-weight:550;line-height:1.25;letter-spacing:-1.2px;color:var(--navy)}#wcspedia .page-intro p{color:var(--muted);margin-top:9px;font-size:14px}#wcspedia .results-header{background:#f7f9fd;padding:27px 0 31px;border-bottom:1px solid var(--line)}#wcspedia .results-header .breadcrumbs{margin-bottom:22px}#wcspedia .results-header h1{font-size:28px;font-weight:550;letter-spacing:-.8px;margin-bottom:19px}#wcspedia .results-header .search-wrap{max-width:none;margin:0}#wcspedia .results-header .search-form{min-height:57px;box-shadow:none;border-radius:9px}#wcspedia .results-header .search-form .btn{height:42px}#wcspedia .results-header .search-form input{height:38px}#wcspedia .results-layout{display:grid;grid-template-columns:218px minmax(0,1fr);gap:42px;padding-top:32px}#wcspedia .filter-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}#wcspedia .filter-title h2{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}#wcspedia .filter-title svg{width:17px}#wcspedia .filter-title button{font-size:11px;color:var(--blue);border:0;background:none}#wcspedia .filter-group{border:0;border-top:1px solid var(--line);padding:19px 0 16px;margin:0;min-width:0}#wcspedia .filter-group legend{float:left;width:100%;font-size:10px;letter-spacing:1.2px;font-weight:600;text-transform:uppercase;margin:0 0 12px;color:var(--muted)}#wcspedia .check-label{display:flex;align-items:center;gap:9px;clear:both;font-size:12px;cursor:pointer;padding:6px 0}#wcspedia .check-label input{accent-color:var(--blue);width:14px;height:14px;margin:0;flex-shrink:0}#wcspedia .check-label .count{margin-left:auto;font-size:10px;color:#8794a8}#wcspedia .filter-select{width:100%;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:6px;color:var(--ink);height:37px;padding:0 9px}#wcspedia .filter-tip{margin-top:8px;background:#f6f8fc;border-radius:8px;padding:15px;font-size:11px;line-height:1.8;color:var(--muted)}#wcspedia .filter-tip svg{width:15px;color:var(--blue);margin-bottom:7px;display:block}#wcspedia .results-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:17px}#wcspedia .results-count{font-size:12px;color:var(--muted)}#wcspedia .results-count strong{color:var(--ink);font-weight:600}#wcspedia .sort-control{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}#wcspedia .sort-control select{font-size:11px;max-width:145px;border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px;color:var(--ink)}#wcspedia .active-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}#wcspedia .filter-chip{display:inline-flex;align-items:center;gap:7px;font-size:11px;background:#edf3ff;color:#2758b6;border:1px solid #d8e4fd;border-radius:5px;padding:4px 8px}#wcspedia .filter-chip svg{width:12px;height:12px}#wcspedia .result-card{padding:22px 22px 19px;margin-bottom:12px;border:1px solid var(--line);border-radius:10px;transition:border-color .15s,box-shadow .15s;background:#fff}#wcspedia .result-card:hover{border-color:#a9c2f2;box-shadow:var(--shadow)}#wcspedia .result-card-top{display:flex;align-items:flex-start;gap:13px}#wcspedia .document-icon{width:37px;height:41px;border-radius:7px;background:var(--pale);color:var(--blue);display:grid;place-items:center;flex-shrink:0;border:1px solid #e2eafb}#wcspedia .document-icon svg{width:20px}#wcspedia .result-body{flex:1;min-width:0}#wcspedia .result-card h2{font-size:17px;font-weight:600;line-height:1.4;margin:3px 0 7px;letter-spacing:-.25px;color:var(--navy)}#wcspedia .result-card h2 a:hover{color:var(--blue)}#wcspedia .result-card p{font-size:12px;color:var(--muted);line-height:1.85;max-width:710px;margin:9px 0 13px}#wcspedia .result-path{font-size:10px;color:#78879c;display:flex;gap:5px;align-items:center}#wcspedia .result-path svg{width:10px;height:10px}#wcspedia .result-tags{display:flex;gap:6px;flex-wrap:wrap}#wcspedia .tag{font-size:10px;background:#f5f7fb;color:#62728a;border:1px solid #e8ecf3;padding:2px 8px;border-radius:4px}#wcspedia .result-bottom{display:flex;align-items:center;gap:13px;border-top:1px solid #edf0f5;margin-top:15px;padding-top:12px;font-size:10px;color:#7a879b}#wcspedia .result-bottom .type-pill{font-size:10px;color:#41639b;background:#f0f4fc;border-radius:4px;padding:2px 7px}#wcspedia .result-bottom a{margin-left:auto;color:var(--blue);display:flex;align-items:center;gap:5px;font-weight:600}#wcspedia .result-bottom a svg{width:13px;height:13px}#wcspedia mark{background:#e7efff;color:#1e4da3;border-radius:2px;padding:0 1px}#wcspedia .pagination{display:flex;justify-content:space-between;align-items:center;margin-top:26px;font-size:11px;color:var(--muted);gap:15px}#wcspedia .page-buttons{display:flex;gap:5px}#wcspedia .page-buttons button{min-width:32px;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:11px}#wcspedia .page-buttons button.current{background:var(--blue);color:#fff;border-color:var(--blue)}#wcspedia button:disabled{opacity:.4;cursor:not-allowed;transform:none}#wcspedia .page-buttons svg{width:14px;height:14px}#wcspedia .empty-state{text-align:center;padding:67px 25px;background:#f8faff;border:1px dashed #cfdcf0;border-radius:10px}#wcspedia .empty-state>svg{height:37px;width:37px;color:#8ca8d5;margin-bottom:14px}#wcspedia .empty-state h2{font-size:21px;font-weight:550;margin-bottom:8px}#wcspedia .empty-state p{font-size:13px;color:var(--muted);max-width:380px;margin:0 auto 23px}#wcspedia .mobile-filter-button{display:none}
+#wcspedia .topic-hero{display:flex;align-items:center;gap:50px;padding:44px 48px;background:linear-gradient(105deg,#f1f6ff,#f9fbff);border:1px solid #e0e9f9;border-radius:13px;margin-bottom:35px;position:relative;overflow:hidden}#wcspedia .topic-hero .eyebrow{color:var(--blue)}#wcspedia .topic-hero h1{font-size:39px;line-height:1.2;font-weight:550;letter-spacing:-1.3px;margin:10px 0 15px;color:var(--navy)}#wcspedia .topic-hero p{color:var(--muted);font-size:14px;max-width:590px}#wcspedia .topic-meta{display:flex;gap:19px;color:#627da4;font-size:11px;margin-top:20px}#wcspedia .topic-illustration{display:grid;place-items:center;width:170px;height:170px;flex-shrink:0;margin-left:auto;border:1px solid #d5e2f7;border-radius:50%;position:relative;background:#fff6;box-shadow:0 0 0 23px #d6e4fb30,0 0 0 47px #d6e4fb20}#wcspedia .topic-illustration svg{height:67px;width:67px;stroke-width:1;color:#3d6fca}#wcspedia .topic-main{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:35px}#wcspedia .topic-main .section-heading h2{font-size:22px}#wcspedia .sidebar-panel{border:1px solid var(--line);border-radius:10px;padding:23px;margin-bottom:18px}#wcspedia .sidebar-panel h2{font-size:13px;font-weight:600;margin-bottom:16px}#wcspedia .sidebar-panel p{font-size:12px;color:var(--muted)}#wcspedia .sidebar-link{display:flex;gap:11px;align-items:center;padding:11px 0;font-size:12px;border-bottom:1px solid #edf0f5}#wcspedia .sidebar-link:last-child{border:0;padding-bottom:0}#wcspedia .sidebar-link:hover{color:var(--blue)}#wcspedia .sidebar-link>svg:first-child{width:16px;color:#7294cb}#wcspedia .sidebar-link>svg:last-child{width:13px;margin-left:auto}#wcspedia .search-landing .hero{padding-top:51px;padding-bottom:49px}#wcspedia .search-landing .hero h1{font-size:48px}#wcspedia .search-landing-body{max-width:760px;margin:10px auto 55px}#wcspedia .discovery-columns{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin:28px 0 37px}#wcspedia .discovery-columns h2{font-size:14px;font-weight:600;margin-bottom:10px}#wcspedia .discovery-columns .sidebar-link{font-size:12px;padding:12px 0}#wcspedia .search-guide{display:flex;align-items:center;gap:15px;border:1px solid var(--line);border-radius:9px;padding:19px 21px;background:#fafbfe;color:var(--muted);font-size:12px}#wcspedia .search-guide svg{color:var(--blue)}
+#wcspedia .article-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:70px;max-width:1100px;margin:0 auto}#wcspedia .article-heading .type-label{display:inline-flex;padding:4px 9px;border-radius:4px;background:var(--pale);font-size:10px;margin:3px 0 17px}#wcspedia .article-heading h1{font-size:40px;line-height:1.17;font-weight:550;letter-spacing:-1.4px;color:var(--navy);margin-bottom:17px}#wcspedia .article-summary{color:var(--muted);font-size:15px;line-height:1.85;margin-bottom:21px!important}#wcspedia .article-byline{display:flex;align-items:center;gap:12px;padding-bottom:25px;border-bottom:1px solid var(--line);margin-bottom:28px}#wcspedia .owner-avatar{width:35px;height:35px;border-radius:50%;background:#edf3ff;display:grid;place-items:center;color:var(--blue);font-size:10px;letter-spacing:.3px}#wcspedia .article-byline strong{font-size:12px;font-weight:600;display:block}#wcspedia .article-byline small{font-size:10px;color:var(--muted);display:block;margin-top:1px}#wcspedia .read-time{margin-left:auto;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}#wcspedia .read-time svg{width:14px;height:14px}#wcspedia .article-callout{background:#eff5ff;border-left:3px solid var(--blue);padding:17px 20px;border-radius:0 7px 7px 0;font-size:12px;color:#4c658b;line-height:1.9;margin:0 0 30px}#wcspedia .article-callout strong{display:block;color:#254e8d;margin-bottom:3px;font-weight:600}#wcspedia .article-section{margin:30px 0;scroll-margin-top:25px}#wcspedia .article-section h2{font-size:23px;font-weight:550;letter-spacing:-.5px;margin-bottom:14px;color:var(--navy)}#wcspedia .article-section p{font-size:14px;color:#526078;line-height:1.95;margin:0 0 13px}#wcspedia .article-section ul{padding-left:20px;margin:13px 0;color:#526078;font-size:14px}#wcspedia .article-section li{padding-left:5px;margin:9px 0;line-height:1.85}#wcspedia .article-section li::marker{color:var(--blue)}#wcspedia .article-sidebar{padding-top:3px}#wcspedia .sticky-panel{position:sticky;top:25px}#wcspedia .article-actions{display:flex;gap:8px;margin-bottom:21px}#wcspedia .article-actions button{flex:1;padding:9px;font-size:11px;gap:7px;min-height:38px}#wcspedia .article-actions button svg{width:15px;height:15px}#wcspedia .toc{padding-bottom:18px;margin-bottom:21px;border-bottom:1px solid var(--line)}#wcspedia .toc h2{font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted);margin:0 0 12px;font-weight:600}#wcspedia .toc a{display:block;padding:8px 0 8px 14px;border-left:2px solid #e5eaf2;font-size:12px;color:#61738f;line-height:1.7}#wcspedia .toc a:hover{border-color:var(--blue);color:var(--blue)}#wcspedia .detail-row{display:flex;justify-content:space-between;gap:10px;font-size:11px;margin:12px 0}#wcspedia .detail-row span{color:var(--muted)}#wcspedia .detail-row strong{font-weight:500;text-align:right}#wcspedia .related-list a{display:block;border-bottom:1px solid #e7edf5;padding:12px 0;font-size:12px;line-height:1.7}#wcspedia .related-list a:last-child{border:0;padding-bottom:0}#wcspedia .related-list a:hover{color:var(--blue)}#wcspedia .related-list small{display:block;color:var(--muted);font-size:10px;margin-top:4px}#wcspedia .article-disclaimer{font-size:10px;color:#8c98aa;margin-top:20px;line-height:1.8}#wcspedia .feedback{margin-top:36px;border-top:1px solid var(--line);padding-top:24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}#wcspedia .feedback span{font-size:12px;margin-right:auto}#wcspedia .feedback button{border:1px solid var(--line);border-radius:6px;background:#fff;padding:6px 12px;font-size:11px;display:flex;align-items:center;gap:6px}#wcspedia .feedback button svg{width:14px;height:14px}#wcspedia .feedback button.selected{color:var(--blue);background:var(--pale);border-color:#abc4f4}#wcspedia .feedback small{flex-basis:100%;font-size:11px;color:var(--muted)}#wcspedia .toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:100;padding:11px 20px;background:#17355f;color:#fff;border-radius:8px;box-shadow:0 8px 25px #10264b25;font-size:12px;display:flex;gap:9px;align-items:center;max-width:90vw}#wcspedia .toast svg{width:16px;height:16px}#wcspedia [hidden]{display:none!important}#wcspedia .fade-in{animation:none}@keyframes wcs-enter{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:1500px){#wcspedia .hero{padding-top:77px;padding-bottom:59px}#wcspedia .hero h1{font-size:62px}}@media(max-width:1000px){#wcspedia .container{width:calc(100% - 56px)}#wcspedia .category-card{padding:19px 16px;gap:12px}#wcspedia .category-icon{width:35px;height:35px}#wcspedia .category-grid{gap:12px}#wcspedia .category-card h3{font-size:13px}#wcspedia .results-layout{gap:25px;grid-template-columns:190px minmax(0,1fr)}#wcspedia .article-layout{gap:35px;grid-template-columns:minmax(0,1fr) 235px}#wcspedia .article-heading h1{font-size:34px}#wcspedia .topic-main{grid-template-columns:minmax(0,1fr) 240px;gap:25px}#wcspedia .topic-hero{padding:34px;gap:20px}#wcspedia .topic-illustration{width:130px;height:130px}#wcspedia .article-card-body{padding:17px}}
+@media(max-width:760px){#wcspedia .container{width:calc(100% - 36px)}#wcspedia .hero{padding:56px 18px 32px}#wcspedia .sample-note{right:18px;top:14px;font-size:9px}#wcspedia .hero h1{font-size:40px;letter-spacing:-1.4px;margin-top:24px}#wcspedia .hero .intro{font-size:13px;max-width:400px}#wcspedia .search-form{padding-left:14px;gap:9px;min-height:58px}#wcspedia .search-form kbd{display:none}#wcspedia .search-form .btn{min-width:80px;padding:10px 13px;height:43px;font-size:12px}#wcspedia .search-form .btn svg{display:none}#wcspedia .search-form input{font-size:12px}#wcspedia .search-wrap{margin-top:24px}#wcspedia .category-grid{grid-template-columns:repeat(2,1fr)}#wcspedia .category-card{padding:18px 14px;display:block}#wcspedia .category-icon{margin-bottom:12px}#wcspedia .category-card p{font-size:11px}#wcspedia .section-heading h2{font-size:23px}#wcspedia .section-heading p{font-size:11px}#wcspedia .section-heading{gap:10px}#wcspedia .section-heading>.text-link{font-size:11px;text-align:right}#wcspedia .article-grid{grid-template-columns:1fr;gap:14px}#wcspedia .article-card{display:grid;grid-template-columns:120px minmax(0,1fr)}#wcspedia .article-art{height:100%;min-height:170px;display:flex;flex-direction:column;gap:15px;padding:20px 10px}#wcspedia .article-art .art-sheet{height:73px;width:59px;padding:9px}#wcspedia .art-label{font-size:8px;letter-spacing:1px;text-align:center}#wcspedia .article-card h3{font-size:15px}#wcspedia .article-card-body{padding:14px}#wcspedia .card-meta{margin-top:12px;font-size:9px;gap:5px}#wcspedia .getting-started{padding:20px;gap:13px;flex-wrap:wrap}#wcspedia .getting-started .category-icon{margin:0}#wcspedia .getting-started h3{font-size:15px}#wcspedia .getting-started>div:nth-child(2){flex:1}#wcspedia .getting-started .text-link{margin-left:62px}#wcspedia .results-header{padding:22px 0 25px}#wcspedia .results-header h1{font-size:25px}#wcspedia .results-layout{display:block;padding-top:20px}#wcspedia .results-sidebar{display:none;margin-bottom:20px;padding:18px;background:#f8faff;border:1px solid var(--line);border-radius:8px}#wcspedia .results-sidebar.is-open{display:block}#wcspedia .mobile-filter-button{display:inline-flex;margin-top:20px;margin-bottom:0;min-height:38px;font-size:12px}#wcspedia .results-toolbar{align-items:flex-start;gap:10px}#wcspedia .sort-control>span{display:none}#wcspedia .results-count{font-size:11px;padding-top:6px}#wcspedia .result-card{padding:17px 15px}#wcspedia .result-card h2{font-size:16px}#wcspedia .result-card p{font-size:12px}#wcspedia .result-bottom{gap:9px;flex-wrap:wrap}#wcspedia .result-bottom .result-owner{display:none}#wcspedia .result-card-top{gap:10px}#wcspedia .document-icon{width:30px;height:34px}#wcspedia .result-path{font-size:9px}#wcspedia .result-bottom a{font-size:10px}#wcspedia .topic-hero{padding:27px 24px}#wcspedia .topic-hero h1{font-size:31px}#wcspedia .topic-hero p{font-size:13px}#wcspedia .topic-illustration{display:none}#wcspedia .topic-main{display:block}#wcspedia .topic-side{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:15px}#wcspedia .sidebar-panel{padding:18px}#wcspedia .search-landing .hero h1{font-size:38px}#wcspedia .search-landing-body{padding:0 18px}#wcspedia .discovery-columns{gap:30px}#wcspedia .article-layout{display:block}#wcspedia .article-heading h1{font-size:34px}#wcspedia .article-summary{font-size:14px}#wcspedia .article-sidebar{margin-top:30px}#wcspedia .sticky-panel{position:static;display:grid;grid-template-columns:1fr 1fr;gap:16px}#wcspedia .article-actions{grid-column:1/-1;margin:0}#wcspedia .toc{grid-column:1/-1;margin:0}#wcspedia .article-disclaimer{grid-column:1/-1;margin:0}#wcspedia .article-section h2{font-size:22px}#wcspedia .article-section p,#wcspedia .article-section ul{font-size:13px}#wcspedia .suggestion-meta{display:none}}
+@media(max-width:400px){#wcspedia .hero h1{font-size:35px}#wcspedia .hero-shortcuts{gap:14px}#wcspedia .hero-shortcuts a{font-size:10px}#wcspedia .category-card{padding:16px 12px}#wcspedia .article-card{grid-template-columns:95px minmax(0,1fr)}#wcspedia .article-card p{font-size:11px}#wcspedia .card-meta span:last-child{display:none}#wcspedia .topic-side,#wcspedia .sticky-panel{display:block}#wcspedia .toc{margin-top:25px}#wcspedia .discovery-columns{gap:20px}#wcspedia .read-time{font-size:9px}#wcspedia .read-time svg{display:none}}
+@media(prefers-reduced-motion:reduce){#wcspedia *,#wcspedia *:before{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media print{#wcspedia .article-sidebar,#wcspedia .breadcrumbs,#wcspedia .feedback,#wcspedia .toast{display:none}#wcspedia .article-layout{display:block}#wcspedia .container{width:100%}}
+
+</style>
+<div id="wcspedia" role="main" aria-label="WCSpedia knowledge base"></div>
+<script>
+/* WCSpedia prototype content. All articles and usage figures are illustrative. */
+window.WCSData = {
+  isDemo: true,
+  categories: [
+    { id: 'credit-lending', title: 'Credit & lending', description: 'Products, facilities and the fundamentals of wealth lending.', icon: 'briefcase' },
+    { id: 'credit-risk', title: 'Credit risk', description: 'Credit reviews, collateral, covenants and risk monitoring.', icon: 'shield' },
+    { id: 'operations', title: 'Operations', description: 'Practical steps for the entire lending lifecycle.', icon: 'workflow' },
+    { id: 'platforms', title: 'Platforms & tools', description: 'Get more from LPTM, PAL and portfolio reporting.', icon: 'layers' },
+    { id: 'governance', title: 'Governance', description: 'Approvals, documentation and ownership of our knowledge.', icon: 'book' },
+    { id: 'learning', title: 'Learning', description: 'Start here, build your knowledge and find quick answers.', icon: 'compass' }
+  ],
+  articles: [
+    {
+      id: 'securities-backed-lending',
+      title: 'Securities-backed lending: an overview',
+      summary: 'Understand how a securities-backed facility works, the role of collateral and the key steps from assessment to ongoing monitoring.',
+      category: 'credit-lending', type: 'Guide', updated: '2026-10-14', owner: 'Credit Solutions', readTime: 6, views: 1248,
+      tags: ['Securities-backed lending', 'Collateral', 'Credit facilities', 'Getting started'],
+      sections: [
+        { id: 'overview', title: 'What is securities-backed lending?', paragraphs: ['A securities-backed lending facility allows a client to borrow against an eligible investment portfolio pledged as collateral. The facility can provide liquidity while the client retains exposure to the investments, subject to the agreed terms.', 'The credit assessment considers the borrower, the purpose of the facility and the quality of the collateral together. A strong collateral position does not replace an assessment of the borrower’s ability to meet their obligations.'], bullets: [] },
+        { id: 'how-it-works', title: 'How the facility works', paragraphs: ['An agreed collateral framework determines which assets can support the facility and how their lending value is calculated. The approved facility limit and the current collateral lending value are different measures; available capacity depends on the applicable terms and existing utilisation.'], bullets: ['Assess the borrowing need and proposed repayment approach.', 'Review the portfolio and confirm which assets are eligible.', 'Document approval, security arrangements and conditions before use.', 'Monitor utilisation, collateral and required actions throughout the life of the facility.'] },
+        { id: 'collateral', title: 'Understanding the collateral', paragraphs: ['A portfolio’s market value is the starting point, rather than a promise of borrowing capacity. Eligibility, valuation adjustments, concentration and currency mismatches can all affect the value recognised for lending.', 'Market movements or changes in the portfolio can reduce collateral coverage. A client may then need to provide additional collateral or reduce borrowing, depending on the contractual terms.'], bullets: ['Check the valuation date and the source of prices.', 'Review issuer, asset-class and currency concentrations.', 'Confirm that pledged assets and security records are complete.'] },
+        { id: 'monitoring', title: 'What to monitor', paragraphs: ['Ongoing monitoring connects the current exposure to the latest collateral position, contractual requirements and the borrower’s circumstances. Review the status of any exceptions alongside the headline numbers.'], bullets: ['Utilisation and available capacity.', 'Collateral coverage and material portfolio changes.', 'Covenants, upcoming review dates and unresolved actions.', 'Changes to ownership, documentation or the agreed purpose.'] },
+        { id: 'next-steps', title: 'Where to go next', paragraphs: ['For a practical sequence of activities, open the lending lifecycle guide. Use the collateral eligibility article to understand the assessment inputs, and the annual credit review article when preparing an existing facility for review.', 'Product availability, permitted purposes and operational requirements depend on the relevant jurisdiction and facility documentation. Confirm those details with the responsible product and credit teams.'], bullets: [] }
+      ]
+    },
+    {
+      id: 'lending-lifecycle', title: 'The lending lifecycle, from request to repayment',
+      summary: 'A shared view of the stages, handoffs and key records that connect a lending request to the ongoing management of a facility.',
+      category: 'credit-lending', type: 'Guide', updated: '2026-10-10', owner: 'Credit Solutions', readTime: 5, views: 842,
+      tags: ['Lending lifecycle', 'Onboarding', 'Credit review', 'Handoffs'],
+      sections: [
+        { id: 'assessment', title: 'Start with a complete request', paragraphs: ['The initial request brings together the client’s purpose, proposed structure, repayment approach and supporting information. Clear ownership at this stage prevents gaps from moving into the approval process.'], bullets: ['Identify the borrower and connected parties.', 'Set out the proposed terms and supporting collateral.', 'Record information gaps and the team responsible for closing them.'] },
+        { id: 'activation', title: 'Move from approval to activation', paragraphs: ['An approval records the decision and its conditions. Activation follows when the required documentation, security and operational checks are complete. Keep evidence of the handoff so that operations can see what has been approved and what remains outstanding.'], bullets: ['Reconcile the facility setup to the approval.', 'Check conditions that must be met before the first drawdown.', 'Confirm the servicing team and monitoring responsibilities.'] },
+        { id: 'servicing', title: 'Manage the facility over time', paragraphs: ['Once active, a facility moves through monitoring, servicing and periodic review. Changes in terms, collateral or the borrower’s circumstances may require a new assessment. The final stage is repayment and controlled closure of the associated records.'], bullets: ['Track covenants, review dates and client actions.', 'Record amendments and renewals against the current facility.', 'Complete repayment reconciliation before releasing security.'] }
+      ]
+    },
+    {
+      id: 'collateral-eligibility', title: 'Collateral eligibility and lending value',
+      summary: 'Learn why market value, eligible collateral and recognised lending value are different, and which inputs to check first.',
+      category: 'credit-lending', type: 'Reference', updated: '2026-10-08', owner: 'Collateral Management', readTime: 4, views: 985,
+      tags: ['Collateral', 'Eligibility', 'Lending value', 'Valuation'],
+      sections: [
+        { id: 'definitions', title: 'Three values to distinguish', paragraphs: ['Market value reflects the value of the assets at a point in time. Eligible collateral is the subset accepted under the applicable framework. Lending value is the amount recognised after the relevant adjustments and constraints.', 'These measures can change independently. An asset may retain a market price while its eligibility or recognised lending value changes.'], bullets: [] },
+        { id: 'inputs', title: 'Inputs to the assessment', paragraphs: ['Eligibility can depend on the asset, the holding structure and the ability to establish and enforce the required security. The relevant product and credit teams determine the applicable assessment.'], bullets: ['Asset type, issuer and market liquidity.', 'Currency, pricing source and valuation date.', 'Portfolio concentration and restrictions.', 'Custody, ownership and security arrangements.'] },
+        { id: 'checks', title: 'Before using a collateral figure', paragraphs: ['Check whether the figure refers to the complete portfolio or only the eligible portion. Reconcile the timestamp and currency with the exposure you are comparing it to, then review any adjustments or exclusions.'], bullets: ['Do not treat a historic valuation as a current one.', 'Investigate missing prices or unexpected eligibility changes.', 'Keep the calculation and supporting evidence with the review record.'] }
+      ]
+    },
+    {
+      id: 'facility-structures', title: 'Understanding common credit facility structures',
+      summary: 'Compare revolving facilities, term facilities and uncommitted arrangements, with the questions to ask when reading a facility record.',
+      category: 'credit-lending', type: 'Reference', updated: '2026-10-03', owner: 'Credit Solutions', readTime: 4, views: 574,
+      tags: ['Credit facilities', 'Revolving credit', 'Term lending', 'Documentation'],
+      sections: [
+        { id: 'structures', title: 'Read the structure before the balance', paragraphs: ['The structure describes how a facility can be used, repaid and, where permitted, drawn again. A revolving facility generally supports repeated drawings within its terms. A term facility follows the agreed drawdown and repayment arrangements.', 'Whether an arrangement is committed or uncommitted is a separate question from whether it is revolving or term. The facility documentation governs the lender’s obligations.'], bullets: [] },
+        { id: 'terms', title: 'Terms that shape the facility', paragraphs: ['A headline limit only tells part of the story. Currency, maturity, purpose, security and conditions can affect how the facility is used and managed.'], bullets: ['Approved amount and permitted currencies.', 'Availability period, maturity and repayment profile.', 'Purpose restrictions and conditions for drawing.', 'Security, guarantees and covenant requirements.'] },
+        { id: 'records', title: 'Connect the documents and the system record', paragraphs: ['The operational record should reflect the current documented position, including effective amendments. If the record and the documents disagree, identify the source of the discrepancy before relying on either in a downstream action.'], bullets: ['Confirm which agreement and amendment are current.', 'Check that effective dates are recorded consistently.', 'Escalate unclear terms to the responsible team.'] }
+      ]
+    },
+    {
+      id: 'annual-credit-review', title: 'Preparing an annual credit review',
+      summary: 'Bring the borrower, facility, collateral and monitoring record together for a clear and complete credit review.',
+      category: 'credit-risk', type: 'Procedure', updated: '2026-10-13', owner: 'Credit Risk', readTime: 7, views: 1106,
+      tags: ['Credit review', 'Annual review', 'Collateral', 'Covenants'],
+      sections: [
+        { id: 'prepare', title: 'Establish the review scope', paragraphs: ['Start with the current borrower and facility structure, including connected exposures and any recent amendments. Confirm the review date, responsible owner and information needed to assess the position.', 'The review should explain what has changed since the previous decision. Carrying forward earlier wording without checking the underlying facts can hide emerging risks.'], bullets: ['Confirm the current approved terms and outstanding exposure.', 'Identify information that is missing or no longer current.', 'Review prior conditions, exceptions and open actions.'] },
+        { id: 'assess', title: 'Build the assessment', paragraphs: ['Bring the borrower’s circumstances, repayment approach and collateral position into one narrative. Distinguish observed facts from assumptions and explain material changes rather than listing data without context.'], bullets: ['Describe the financial position and repayment sources.', 'Assess collateral eligibility, valuation and concentration.', 'Review covenant performance and monitoring outcomes.', 'Explain the impact of changes to the facility or its purpose.'] },
+        { id: 'complete', title: 'Make the outcome actionable', paragraphs: ['A useful review gives the decision maker a clear recommendation, the evidence supporting it and the actions that follow. After the decision, make sure the operational records and the next review date reflect the approved outcome.'], bullets: ['Record the decision, conditions and responsible owners.', 'Set due dates for each follow-up action.', 'Link the supporting documents to the review record.', 'Confirm the handoff to the teams carrying out the actions.'] }
+      ]
+    },
+    {
+      id: 'monitoring-covenants', title: 'Covenant monitoring: evidence, dates and actions',
+      summary: 'A practical guide to maintaining a complete covenant record and responding when evidence or compliance status needs attention.',
+      category: 'credit-risk', type: 'Guide', updated: '2026-10-12', owner: 'Credit Monitoring', readTime: 5, views: 964,
+      tags: ['Covenants', 'Monitoring', 'PAL', 'Evidence'],
+      sections: [
+        { id: 'record', title: 'Create a clear monitoring record', paragraphs: ['A covenant record connects an obligation in the facility documentation to a practical monitoring activity. It should make the requirement, timing, evidence and responsible team easy to understand.'], bullets: ['Reference the relevant agreement and requirement.', 'Distinguish the reporting period from the evidence due date.', 'Record who provides, reviews and follows up the evidence.'] },
+        { id: 'evidence', title: 'Review the evidence', paragraphs: ['Receipt of a document does not by itself establish compliance. Check that the evidence covers the required period, uses the applicable definition and supports the recorded conclusion.', 'When a calculation is needed, retain the inputs and the method alongside the result so another reviewer can follow the assessment.'], bullets: ['Check completeness and the reporting period.', 'Reconcile material inputs to their source.', 'Record the review outcome and any unresolved questions.'] },
+        { id: 'actions', title: 'Manage outstanding items', paragraphs: ['Missing evidence, an approaching deadline and a potential breach are different situations. Use the appropriate status and escalation route for each, and keep the next action visible.'], bullets: ['Assign an owner and a realistic next action.', 'Record agreed follow-up dates and relevant communications.', 'Keep the original obligation visible when a waiver or amendment is considered.'] }
+      ]
+    },
+    {
+      id: 'collateral-shortfalls', title: 'Responding to a collateral shortfall',
+      summary: 'The information to validate, the teams to involve and the records to maintain when collateral coverage requires attention.',
+      category: 'credit-risk', type: 'Procedure', updated: '2026-10-07', owner: 'Collateral Management', readTime: 5, views: 731,
+      tags: ['Collateral', 'Shortfall', 'Escalation', 'Monitoring'],
+      sections: [
+        { id: 'validate', title: 'Validate the position', paragraphs: ['Before acting on a shortfall indicator, confirm the exposure, collateral valuation and relevant contractual measure. A stale price, an unmatched transaction or an incorrect currency conversion can distort the apparent position.'], bullets: ['Align exposure and collateral timestamps.', 'Check prices, currency conversion and eligibility changes.', 'Review pending transactions and recent amendments.'] },
+        { id: 'coordinate', title: 'Coordinate the response', paragraphs: ['When the shortfall is confirmed, involve the responsible credit, collateral and client teams. The agreed response depends on the facility terms and the facts of the case; it may involve additional eligible collateral, a reduction in borrowing or another approved action.'], bullets: ['Confirm who owns the response and client communication.', 'Record the applicable contractual requirements.', 'Track the agreed action and completion date.'] },
+        { id: 'close', title: 'Keep the record complete', paragraphs: ['Retain the position that triggered the review, the validation performed and the actions taken. Close the item only when the outcome has been checked and the responsible team has recorded its conclusion.'], bullets: ['Recalculate the position after the action completes.', 'Document remaining exceptions or follow-up requirements.', 'Include material events in the next credit review.'] }
+      ]
+    },
+    {
+      id: 'concentration-risk', title: 'Recognising concentration in a collateral portfolio',
+      summary: 'Look beyond individual holdings to understand shared issuer, sector, asset-class and currency exposures.',
+      category: 'credit-risk', type: 'Guide', updated: '2026-10-02', owner: 'Credit Risk', readTime: 4, views: 612,
+      tags: ['Concentration', 'Collateral', 'Portfolio', 'Credit risk'],
+      sections: [
+        { id: 'patterns', title: 'Look for common drivers', paragraphs: ['A portfolio can contain many holdings and still depend on a small number of risk drivers. Securities from related issuers or businesses in the same sector may react similarly to an event.'], bullets: ['Group exposures by issuer and related entities.', 'Review sector, asset-class and geographic patterns.', 'Consider currency exposure against the facility currency.'] },
+        { id: 'context', title: 'Add the lending context', paragraphs: ['Concentration matters alongside liquidity, valuation and the role of the collateral in the facility. A position that dominates the eligible collateral may matter more than its share of the total investment portfolio suggests.'], bullets: ['Compare concentration in market value and recognised lending value.', 'Check whether excluded assets change the picture.', 'Explain material changes since the previous assessment.'] },
+        { id: 'communicate', title: 'Write a useful conclusion', paragraphs: ['Explain the risk driver and why it matters to the facility. Where action is needed, identify the responsible owner and the next step. Apply the relevant approved framework rather than inventing a threshold for the report.'], bullets: ['Use consistent grouping definitions across periods.', 'Include the valuation date and data source.', 'Connect the finding to monitoring or review actions.'] }
+      ]
+    },
+    {
+      id: 'client-onboarding', title: 'Credit onboarding: a practical checklist',
+      summary: 'Organise the information and handoffs needed to move a new lending relationship from request to operational readiness.',
+      category: 'operations', type: 'Procedure', updated: '2026-10-14', owner: 'Credit Operations', readTime: 6, views: 1023,
+      tags: ['Onboarding', 'Client setup', 'Documentation', 'Handoffs'],
+      sections: [
+        { id: 'organise', title: 'Organise the request', paragraphs: ['Create one record that connects the client request, proposed facility and responsible teams. Confirm the identities and legal entities involved before collecting documents so information is requested for the correct parties.'], bullets: ['Identify the borrower, guarantors and security providers.', 'Record the relationship and operational contacts.', 'List required information and the owner of each item.'] },
+        { id: 'readiness', title: 'Confirm operational readiness', paragraphs: ['Onboarding connects several separate processes. Completion of one does not automatically satisfy the others. Track the relevant client checks, credit approval, documents and account setup explicitly.'], bullets: ['Confirm the status of applicable client due diligence.', 'Check the approved facility terms and conditions.', 'Reconcile signed documents to the required parties.', 'Validate account and facility identifiers.'] },
+        { id: 'handoff', title: 'Complete a clear handoff', paragraphs: ['The receiving team should be able to identify what is ready, what remains open and who owns the next action. Keep the evidence in the designated record instead of relying on a single email thread.'], bullets: ['Record unresolved items and whether they prevent activation.', 'Confirm monitoring responsibilities and key dates.', 'Acknowledge the handoff with the servicing team.'] }
+      ]
+    },
+    {
+      id: 'drawdown-checklist', title: 'Before a drawdown: checks and handoffs',
+      summary: 'A sequence for checking a request against the current facility position and recording the operational outcome.',
+      category: 'operations', type: 'Procedure', updated: '2026-10-09', owner: 'Credit Operations', readTime: 4, views: 708,
+      tags: ['Drawdown', 'Utilisation', 'Credit facilities', 'Operations'],
+      sections: [
+        { id: 'request', title: 'Validate the request details', paragraphs: ['Confirm that the request identifies the correct borrower and facility, with the amount, currency, date and settlement instructions needed for processing. Follow the applicable controls for authenticating instructions.'], bullets: ['Check the requesting party and instruction channel.', 'Confirm the facility and account identifiers.', 'Resolve ambiguous or incomplete instructions before processing.'] },
+        { id: 'capacity', title: 'Check the current facility position', paragraphs: ['Review the request against current approved terms, available capacity and any conditions that apply to drawings. Consider pending activity so the assessment is based on the position that will exist when the request is processed.'], bullets: ['Review existing utilisation and pending transactions.', 'Confirm relevant collateral and covenant status.', 'Check maturity, availability and purpose restrictions.'] },
+        { id: 'complete', title: 'Record the outcome', paragraphs: ['After the request is processed, reconcile the resulting transaction and update the relevant records. If processing is paused, state the reason and the information or action needed to continue.'], bullets: ['Retain the instruction and evidence of completed checks.', 'Confirm the value date and transaction reference.', 'Communicate the outcome to the responsible team.'] }
+      ]
+    },
+    {
+      id: 'facility-renewal', title: 'Planning a facility renewal or amendment',
+      summary: 'Separate the proposed change from the existing terms, then coordinate assessment, documentation and implementation.',
+      category: 'operations', type: 'Guide', updated: '2026-10-06', owner: 'Credit Operations', readTime: 5, views: 489,
+      tags: ['Renewal', 'Amendment', 'Credit review', 'Documentation'],
+      sections: [
+        { id: 'scope', title: 'Describe the proposed change', paragraphs: ['A renewal or amendment should be clear about what is changing and why. Start with the current effective terms, then identify the proposed difference and the requested timing.'], bullets: ['List the terms affected by the request.', 'Identify linked facilities, security or guarantees.', 'Confirm whether further credit assessment is needed.'] },
+        { id: 'coordinate', title: 'Coordinate the dependencies', paragraphs: ['Credit assessment, documentation and operational setup may depend on one another. A shared schedule helps teams identify the critical path and avoid assuming that a proposed change is already effective.'], bullets: ['Assign owners for approval, documents and system updates.', 'Track conditions and required client actions.', 'Confirm how the existing arrangement is managed before effectiveness.'] },
+        { id: 'implement', title: 'Implement the effective change', paragraphs: ['Update the operational position only when the applicable approval and documentation requirements are satisfied. Retain the previous terms and the effective date so the record remains understandable over time.'], bullets: ['Reconcile the final documents to the approved change.', 'Check the system record after implementation.', 'Update monitoring dates, covenants and team responsibilities.'] }
+      ]
+    },
+    {
+      id: 'closing-a-facility', title: 'Closing a credit facility',
+      summary: 'Bring balances, pending activity, security and system records to an agreed end state.',
+      category: 'operations', type: 'Procedure', updated: '2026-10-01', owner: 'Credit Operations', readTime: 4, views: 364,
+      tags: ['Closure', 'Repayment', 'Security', 'Reconciliation'],
+      sections: [
+        { id: 'confirm', title: 'Confirm the closure scope', paragraphs: ['Identify whether the request closes the entire facility or only a component of the relationship. Review connected obligations and security arrangements before planning the final actions.'], bullets: ['Confirm the relevant facility and account identifiers.', 'Identify linked facilities and shared collateral.', 'Record the requested closure date and responsible owner.'] },
+        { id: 'reconcile', title: 'Reconcile the final position', paragraphs: ['Check outstanding principal, applicable interest and charges, and pending transactions. A zero balance in one view may not represent a fully settled position across all relevant records.'], bullets: ['Reconcile balances and pending activity.', 'Confirm the treatment of remaining obligations.', 'Obtain the required confirmation before security release.'] },
+        { id: 'records', title: 'Close the operational record', paragraphs: ['Once the closure conditions are met, update the system status and retain evidence of the final reconciliation and approvals. Remove future monitoring tasks only when their underlying obligations have ended.'], bullets: ['Record the effective closure date.', 'Confirm the outcome to relevant teams.', 'Retain documents according to the applicable records schedule.'] }
+      ]
+    },
+    {
+      id: 'lptm-portfolio-analytics', title: 'Getting started with LPTM portfolio analytics',
+      summary: 'Use portfolio views to move from a high-level trend to the underlying facilities, then turn the finding into a useful follow-up.',
+      category: 'platforms', type: 'Guide', updated: '2026-10-13', owner: 'Portfolio Analytics', readTime: 5, views: 1182,
+      tags: ['LPTM', 'Portfolio analytics', 'Dashboards', 'Reporting'],
+      sections: [
+        { id: 'scope', title: 'Start with the reporting scope', paragraphs: ['Before interpreting a chart, check the reporting date, selected population and active filters. The same metric can describe very different portfolios when the scope changes.', 'Use the overview to identify patterns, then examine the underlying records to understand what is driving the result. A summary figure is the start of the investigation.'], bullets: ['Confirm the reporting date and currency.', 'Review entity, product and portfolio filters.', 'Check whether the view includes closed or inactive records.'] },
+        { id: 'explore', title: 'Move from a trend to the records', paragraphs: ['When a measure changes, compare like-for-like populations and look for the facilities contributing most to the movement. Separate genuine portfolio changes from changes in classification or data coverage.'], bullets: ['Inspect the records behind a material movement.', 'Compare the current and prior reporting periods.', 'Check for new, renewed, amended or closed facilities.', 'Validate unusual values against the source record.'] },
+        { id: 'share', title: 'Share a reproducible finding', paragraphs: ['A useful portfolio finding states the scope, observation and possible explanation, with a clear next action. Keep the date and filters with any exported view so another colleague can reproduce the analysis.'], bullets: ['Include the reporting date and selected filters.', 'Distinguish confirmed causes from working hypotheses.', 'Assign follow-up where data or interpretation needs checking.'] }
+      ]
+    },
+    {
+      id: 'pal-covenant-monitoring', title: 'Using PAL for covenant monitoring',
+      summary: 'Read covenant status, find upcoming deadlines and maintain a clear trail from requirement to review outcome.',
+      category: 'platforms', type: 'Guide', updated: '2026-10-11', owner: 'Credit Monitoring', readTime: 5, views: 936,
+      tags: ['PAL', 'Covenants', 'Monitoring', 'Due dates'],
+      sections: [
+        { id: 'find', title: 'Find the right monitoring population', paragraphs: ['Begin with the portfolio, facility or covenant population relevant to your task. Review the active filters and reporting date before using the displayed totals to plan your work.'], bullets: ['Confirm the selected portfolio and facility status.', 'Check the period used for upcoming and overdue items.', 'Open the covenant record to understand the requirement.'] },
+        { id: 'review', title: 'Read status with its context', paragraphs: ['A status summarises the current record, but the supporting dates and evidence explain what it means. Distinguish evidence received from evidence reviewed, and check whether the recorded outcome relates to the correct reporting period.'], bullets: ['Review due dates and the latest evidence period.', 'Check the owner and next action.', 'Read notes explaining exceptions or unresolved items.'] },
+        { id: 'update', title: 'Keep the follow-up visible', paragraphs: ['Use the designated workflow to record evidence, assessment and next actions. When an item moves between teams, make the handoff explicit so the monitoring record remains understandable.'], bullets: ['Link the supporting evidence to the relevant requirement.', 'Record the review conclusion and date.', 'Assign the next action and confirm closure when complete.'] }
+      ]
+    },
+    {
+      id: 'data-quality-checks', title: 'Checking data quality before using a report',
+      summary: 'A compact set of checks for completeness, timeliness and consistency across portfolio and facility reporting.',
+      category: 'platforms', type: 'Procedure', updated: '2026-10-05', owner: 'Data & Reporting', readTime: 4, views: 655,
+      tags: ['Data quality', 'Reporting', 'LPTM', 'PAL'],
+      sections: [
+        { id: 'scope', title: 'Check freshness and coverage', paragraphs: ['A report is useful only when its scope and timing are understood. Check the source update date and the population included before drawing a conclusion from a total or trend.'], bullets: ['Confirm the data date and refresh status.', 'Look for missing facilities or unexpected exclusions.', 'Review currency and entity coverage.'] },
+        { id: 'consistency', title: 'Look for inconsistent records', paragraphs: ['Unexpected blanks, duplicates or incompatible dates can signal a data problem. Investigate the records that affect the decision you are making, and avoid correcting a downstream report without understanding the source.'], bullets: ['Check identifiers and duplicate rows.', 'Review impossible or inconsistent date sequences.', 'Compare material totals to an appropriate source.'] },
+        { id: 'resolve', title: 'Record and resolve the issue', paragraphs: ['Describe the observed issue with enough context for the responsible team to reproduce it. Keep the affected scope and any interim limitation visible until the source and downstream views have been checked.'], bullets: ['Include the report, date, filters and affected record identifiers.', 'Assign the issue to the relevant data owner.', 'Confirm that the correction appears in the next relevant view.'] }
+      ]
+    },
+    {
+      id: 'reporting-glossary', title: 'Portfolio reporting: key measures explained',
+      summary: 'A reference for reading facility limits, utilisation, available capacity and collateral measures without mixing their meanings.',
+      category: 'platforms', type: 'Reference', updated: '2026-10-04', owner: 'Data & Reporting', readTime: 3, views: 527,
+      tags: ['Glossary', 'Portfolio analytics', 'Utilisation', 'Collateral'],
+      sections: [
+        { id: 'facility', title: 'Facility measures', paragraphs: ['The approved limit describes the facility amount under the current approval. Utilisation describes the amount used under the reporting definition. Available capacity reflects what remains usable after the relevant constraints and existing activity are considered.', 'Do not assume that available capacity always equals limit minus utilisation. Collateral conditions, currency treatment or other restrictions may affect the result.'], bullets: [] },
+        { id: 'collateral', title: 'Collateral measures', paragraphs: ['Collateral market value and recognised lending value answer different questions. Market value reflects the asset valuation, while lending value incorporates the applicable eligibility and valuation treatment.'], bullets: ['Check the valuation date and reporting currency.', 'Confirm whether the measure covers all assets or eligible assets.', 'Use the report definition when comparing coverage measures.'] },
+        { id: 'comparisons', title: 'Comparing measures over time', paragraphs: ['A change in a total can reflect new business, repayment, market movement or a change in reporting scope. Keep the definition and population consistent before interpreting a movement as a business trend.'], bullets: ['Align reporting dates and currency treatment.', 'Check whether definitions changed between periods.', 'Explain material movements using the underlying records.'] }
+      ]
+    },
+    {
+      id: 'credit-approval-record', title: 'What makes a complete credit approval record?',
+      summary: 'Capture the decision, approved terms, conditions and supporting evidence so the outcome can be implemented and reviewed.',
+      category: 'governance', type: 'Reference', updated: '2026-10-12', owner: 'Credit Governance', readTime: 4, views: 761,
+      tags: ['Approval', 'Governance', 'Audit trail', 'Documentation'],
+      sections: [
+        { id: 'decision', title: 'Make the decision explicit', paragraphs: ['A complete record states what was decided, by whom and when, within the applicable authority framework. It connects the final decision to the request and assessment that informed it.'], bullets: ['Identify the borrower and facilities in scope.', 'Record the decision date and approving authority.', 'Retain the final approved version of the request.'] },
+        { id: 'conditions', title: 'Translate the outcome into actions', paragraphs: ['Approved terms and conditions need to be specific enough for the receiving teams to implement. Separate requirements that apply before activation from ongoing obligations and later follow-up actions.'], bullets: ['State the approved amount, structure and relevant dates.', 'Identify conditions, owners and completion evidence.', 'Make exceptions and their treatment visible.'] },
+        { id: 'traceability', title: 'Preserve traceability', paragraphs: ['Keep supporting evidence and subsequent amendments connected to the original decision. A reader should be able to understand the effective position without searching through unrelated files or relying on individual memory.'], bullets: ['Link the supporting analysis and documents.', 'Record effective dates for changes.', 'Maintain the history of decisions and completed actions.'] }
+      ]
+    },
+    {
+      id: 'managing-policy-exceptions', title: 'Documenting and following up an exception',
+      summary: 'Describe the requirement, explain the exception and track the approved treatment through to review or resolution.',
+      category: 'governance', type: 'Procedure', updated: '2026-10-08', owner: 'Credit Governance', readTime: 4, views: 543,
+      tags: ['Exceptions', 'Governance', 'Approval', 'Review'],
+      sections: [
+        { id: 'describe', title: 'Describe the exception precisely', paragraphs: ['Start with the requirement and the specific way the proposed or current position differs. Explain the reason and the affected scope so the decision maker can assess the exception in context.'], bullets: ['Reference the applicable requirement.', 'Identify the facilities, parties and period affected.', 'Explain the reason and relevant supporting facts.'] },
+        { id: 'assess', title: 'Record the assessment and decision', paragraphs: ['Set out the risks, proposed mitigants and recommended treatment. Use the relevant approval route and retain the decision, including any conditions or time limits imposed.'], bullets: ['Distinguish proposed mitigants from actions already completed.', 'Record the responsible approving authority.', 'Assign owners for any required conditions.'] },
+        { id: 'follow-up', title: 'Track the ongoing treatment', paragraphs: ['An approved exception still needs a clear review or resolution path. Keep due dates and evidence visible, and reassess the position when the underlying facts change.'], bullets: ['Record the next review or expiry date where applicable.', 'Track the action needed to resolve or reassess the exception.', 'Document closure or a subsequent decision.'] }
+      ]
+    },
+    {
+      id: 'document-retention', title: 'Keeping credit documents organised and traceable',
+      summary: 'Use clear naming, version history and access controls to make the current credit record easy to find and understand.',
+      category: 'governance', type: 'Guide', updated: '2026-10-06', owner: 'Records Management', readTime: 3, views: 418,
+      tags: ['Documentation', 'Records', 'Version control', 'Access'],
+      sections: [
+        { id: 'organise', title: 'Create an understandable record', paragraphs: ['A document should be identifiable without opening it. Use the agreed naming approach and connect it to the relevant borrower, facility or decision record. Store documents in the designated location so colleagues can find the current material.'], bullets: ['Include a meaningful document title and relevant date.', 'Use the correct borrower or facility reference.', 'Separate drafts from final or executed documents.'] },
+        { id: 'versions', title: 'Preserve version history', paragraphs: ['Keep the current version clear while retaining the history required to explain how the record changed. An amendment should point to the document it modifies and its effective date.'], bullets: ['Identify the final approved or executed version.', 'Avoid ambiguous names such as final-new-latest.', 'Connect amendments and supporting approvals.'] },
+        { id: 'access', title: 'Apply the relevant handling rules', paragraphs: ['Access and retention depend on the content and the applicable records framework. Use the designated permissions and retention schedule, and check with the responsible records team when the treatment is unclear.'], bullets: ['Share access through the approved location.', 'Avoid unnecessary copies of sensitive material.', 'Follow the applicable retention and disposal process.'] }
+      ]
+    },
+    {
+      id: 'knowledge-ownership', title: 'Keeping WCSpedia articles current',
+      summary: 'A simple ownership and review model for knowledge that stays useful after it is published.',
+      category: 'governance', type: 'Guide', updated: '2026-10-02', owner: 'Knowledge Management', readTime: 3, views: 392,
+      tags: ['WCSpedia', 'Content ownership', 'Review', 'Confluence'],
+      sections: [
+        { id: 'ownership', title: 'Give every article an owner', paragraphs: ['The article owner is the team accountable for its accuracy and usefulness. Ownership should stay clear when roles change, which is why a team name is often more durable than an individual contact alone.'], bullets: ['Identify the responsible subject-matter team.', 'Record the last review date.', 'Provide a clear route for readers to flag an issue.'] },
+        { id: 'review', title: 'Review when the underlying work changes', paragraphs: ['A change in a process, tool or source requirement is a reason to review related articles. Check the instructions, examples and linked material together so the article does not describe a mixture of old and new behaviour.'], bullets: ['Confirm the process with its current owner.', 'Update related terms, labels and supporting examples.', 'Check that the article can still be found in the right category.'] },
+        { id: 'retire', title: 'Retire content deliberately', paragraphs: ['When an article is superseded, direct readers to the current material and make the old status explicit. Preserve history according to the applicable records approach while avoiding duplicate guidance in search results.'], bullets: ['Identify the replacement article where one exists.', 'Update incoming links and related reading.', 'Review labels and search visibility for archived material.'] }
+      ]
+    },
+    {
+      id: 'new-to-wcs', title: 'New to Wealth Credit Services? Start here',
+      summary: 'A short reading path through lending fundamentals, day-to-day workflows and the tools used to understand the portfolio.',
+      category: 'learning', type: 'Guide', updated: '2026-10-14', owner: 'Learning & Enablement', readTime: 4, views: 1357,
+      tags: ['Getting started', 'Onboarding', 'WCS', 'Learning'],
+      sections: [
+        { id: 'foundations', title: 'Build the foundations', paragraphs: ['Start with the lending lifecycle to understand how a request moves through assessment, documentation, servicing and repayment. Then read the securities-backed lending overview and the guide to common facility structures.'], bullets: ['Learn how approval, documentation and activation connect.', 'Distinguish the borrower, guarantor and security provider.', 'Get comfortable with limits, utilisation and collateral lending value.'] },
+        { id: 'workflows', title: 'Understand the recurring work', paragraphs: ['The annual credit review and covenant monitoring articles explain how a facility is assessed over time. The onboarding and drawdown checklists show how information and responsibilities move between teams.'], bullets: ['Read the annual credit review procedure.', 'Explore covenant dates, evidence and actions.', 'Follow a practical onboarding or drawdown example with your team.'] },
+        { id: 'tools', title: 'Connect the work to the tools', paragraphs: ['Use the LPTM portfolio analytics and PAL covenant monitoring guides to understand the questions each view can help answer. Always check the reporting scope and date before relying on a dashboard figure.'], bullets: ['Explore portfolio measures and the reporting glossary.', 'Learn how to identify the source record behind a result.', 'Ask the relevant team when a term or workflow is unclear.'] }
+      ]
+    },
+    {
+      id: 'credit-glossary', title: 'The WCS glossary: everyday credit terms',
+      summary: 'Plain-language definitions for the terms that appear across credit assessments, facility records and monitoring.',
+      category: 'learning', type: 'Reference', updated: '2026-10-10', owner: 'Learning & Enablement', readTime: 5, views: 883,
+      tags: ['Glossary', 'Getting started', 'Collateral', 'Covenants'],
+      sections: [
+        { id: 'parties', title: 'The parties and the facility', paragraphs: ['Borrower: the party with the repayment obligation under the facility. Guarantor: a party providing a guarantee under the relevant documents. Security provider: a party granting security over assets; this may be different from the borrower.', 'Facility: the agreed lending arrangement. Utilisation: the amount used under that arrangement, as defined in the relevant record or report. Maturity: the date on which the relevant repayment obligation falls due under the agreed terms.'], bullets: [] },
+        { id: 'security', title: 'Collateral and security', paragraphs: ['Collateral: assets supporting an obligation under the relevant security arrangements. Eligibility: whether an asset can be recognised under the applicable collateral framework. Lending value: the amount recognised for lending after the relevant adjustments.', 'Concentration: dependence on a particular exposure or common risk driver. A portfolio can have many holdings while remaining concentrated in an issuer, sector or currency.'], bullets: [] },
+        { id: 'monitoring', title: 'Review and monitoring', paragraphs: ['Covenant: a contractual undertaking that may require an action, reporting or compliance with a specified condition. Credit review: an assessment of the current credit position and proposed treatment. Exception: a documented departure from a requirement that needs the applicable assessment and approval.', 'Terms can have more precise definitions in an agreement, policy or report. Use the definition from the relevant source when making an operational or credit decision.'], bullets: [] }
+      ]
+    },
+    {
+      id: 'frequently-asked-questions', title: 'Finding your way around WCSpedia',
+      summary: 'Quick answers about searching, browsing topics and finding the owner of an article.',
+      category: 'learning', type: 'FAQ', updated: '2026-10-09', owner: 'Knowledge Management', readTime: 3, views: 608,
+      tags: ['WCSpedia', 'Search', 'Getting started', 'Confluence'],
+      sections: [
+        { id: 'search', title: 'How do I find an article?', paragraphs: ['Start with a topic, task or tool name, such as collateral, annual credit review or LPTM. Narrow the results by category or content type when you know the kind of answer you need.', 'If the first search is too specific, try a shorter phrase or a related term. Browsing a category is useful when you are learning a topic and do not yet know the exact terminology.'], bullets: [] },
+        { id: 'types', title: 'Which kind of article should I use?', paragraphs: ['A guide explains a topic or workflow. A procedure provides an ordered way to carry out a task. A reference helps you look up a definition or specific concept, while an FAQ answers common questions.', 'Use the article owner and last updated date to understand the context, and consult the authoritative source when an operational decision depends on exact requirements.'], bullets: [] },
+        { id: 'feedback', title: 'What if something is missing or unclear?', paragraphs: ['Look for the owning team on the article and describe what needs clarification. Include the title, the passage or task involved, and the question you were trying to answer so the owner can make a useful update.'], bullets: ['Suggest a clearer title if the article was difficult to find.', 'Flag outdated steps or terms.', 'Identify a related topic that would help the next reader.'] }
+      ]
+    },
+    {
+      id: 'writing-a-knowledge-article', title: 'Write a knowledge article people can use',
+      summary: 'Turn a recurring question or task into a concise article with a clear title, useful structure and an accountable owner.',
+      category: 'learning', type: 'Guide', updated: '2026-10-03', owner: 'Knowledge Management', readTime: 4, views: 447,
+      tags: ['Writing', 'WCSpedia', 'Confluence', 'Knowledge sharing'],
+      sections: [
+        { id: 'purpose', title: 'Start with the reader’s task', paragraphs: ['Choose one question or task the article will help with. Use the words a colleague would search for in the title, and open with a short description of what the reader will learn or be able to do.'], bullets: ['Name the topic and intended outcome.', 'Explain any prerequisite information.', 'Keep the scope focused enough to be useful.'] },
+        { id: 'structure', title: 'Make the content easy to follow', paragraphs: ['Use descriptive headings and short paragraphs. For a procedure, explain the sequence and the evidence of completion. For a reference, organise definitions so the reader can find a specific answer quickly.'], bullets: ['Explain unfamiliar terms on first use.', 'Keep essential context beside the relevant instruction.', 'Use examples that clarify the task without exposing client information.'] },
+        { id: 'publish', title: 'Prepare it for discovery and maintenance', paragraphs: ['Choose the relevant category and a small set of useful labels. Ask the responsible subject-matter team to check the content, then record ownership and the review date so it can be maintained after publication.'], bullets: ['Check the title against likely search phrases.', 'Link to related concepts without duplicating whole articles.', 'Verify the steps with someone who performs the task.'] }
+      ]
+    }
+  ]
+};
+
+</script>
+<script>
+(function (root, factory) {
+  'use strict';
+  var api = factory(root);
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.WCSSearch = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  'use strict';
+
+  // CQL references:
+  // https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/
+  // https://developer.atlassian.com/cloud/confluence/performing-text-searches-using-cql/
+  // https://developer.atlassian.com/cloud/confluence/rest/v1/api-group-search/
+  var TYPES = ['Guide', 'Procedure', 'Policy', 'Reference', 'FAQ'];
+  var WINDOWS = { any: 0, week: 7, month: 30, quarter: 90 };
+  var SORTS = ['relevance', 'updated', 'newest', 'title', 'popular'];
+  var DAY = 86400000;
+
+  function text(value) { return typeof value === 'string' ? value : ''; }
+  function fold(value) { return text(value).normalize('NFKC').toLowerCase(); }
+  function queryTokens(query) {
+    if (query == null) query = '';
+    if (typeof query !== 'string') throw new TypeError('Search query must be text.');
+    if (query.length > 500) throw new RangeError('Use a search query of 500 characters or fewer.');
+    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(query)) {
+      throw new TypeError('Search query contains unsupported control characters.');
+    }
+    var tokens = fold(query).trim().split(/\s+/).filter(Boolean);
+    if (tokens.length > 30) throw new RangeError('Use 30 search terms or fewer.');
+    return Array.from(new Set(tokens));
+  }
+
+  function list(value, name, validate) {
+    if (value == null) return [];
+    if (!Array.isArray(value)) throw new TypeError(name + ' must be an array.');
+    return Array.from(new Set(value.map(function (item) {
+      if (typeof item !== 'string' || !validate(item)) throw new TypeError('Invalid ' + name + ' value.');
+      return item;
+    })));
+  }
+
+  function optionsFor(options) {
+    options = options || {};
+    var updated = options.updated || 'any';
+    var sort = options.sort || 'relevance';
+    if (!Object.prototype.hasOwnProperty.call(WINDOWS, updated)) throw new TypeError('Invalid update filter.');
+    if (SORTS.indexOf(sort) === -1) throw new TypeError('Invalid sort order.');
+    return {
+      tokens: queryTokens(options.query),
+      categories: list(options.categories, 'category', function (value) { return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value); }),
+      types: list(options.types, 'article type', function (value) { return TYPES.indexOf(value) !== -1; }),
+      updated: updated,
+      sort: sort
+    };
+  }
+
+  function timestamp(value) {
+    var parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : -Infinity;
+  }
+
+  function filterArticles(articles, options) {
+    if (!Array.isArray(articles)) throw new TypeError('Articles must be an array.');
+    options = options || {};
+    var filters = optionsFor(options);
+    var saved = new Set((options.savedIds || []).map(String));
+    var days = WINDOWS[filters.updated];
+    var now = new Date(options.now == null ? Date.now() : options.now);
+    if (!Number.isFinite(now.getTime())) throw new TypeError('Invalid search date.');
+    var cutoff = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - days * DAY;
+    var phrase = filters.tokens.join(' ');
+    var ranked = articles.map(function (article, index) {
+      if (filters.categories.length && filters.categories.indexOf(article.category) === -1) return null;
+      if (filters.types.length && filters.types.indexOf(article.type) === -1) return null;
+      if (days && timestamp(article.updated) < cutoff) return null;
+      if (options.savedOnly && !saved.has(String(article.id))) return null;
+      var title = fold(article.title);
+      var summary = fold(article.summary);
+      var tags = (article.tags || []).map(fold).join(' ');
+      var sections = (article.sections || []).map(function (section) {
+        return [section.title].concat(section.paragraphs || [], section.bullets || []).map(fold).join(' ');
+      }).join(' ');
+      var searchable = [title, summary, tags, sections].join(' ');
+      if (!filters.tokens.every(function (token) { return searchable.indexOf(token) !== -1; })) return null;
+      var score = filters.tokens.reduce(function (total, token) {
+        return total + (title.includes(token) ? 12 : 0) + (tags.includes(token) ? 7 : 0) +
+          (summary.includes(token) ? 4 : 0) + (sections.includes(token) ? 1 : 0);
+      }, 0);
+      if (phrase && title.includes(phrase)) score += 20;
+      if (phrase && title === phrase) score += 30;
+      return { article: article, score: score, index: index };
+    }).filter(Boolean);
+
+    ranked.sort(function (a, b) {
+      var difference = 0;
+      if (filters.sort === 'title') difference = text(a.article.title).localeCompare(text(b.article.title));
+      else if (filters.sort === 'popular') difference = (Number(b.article.views) || 0) - (Number(a.article.views) || 0);
+      else if (filters.sort === 'updated' || filters.sort === 'newest') {
+        difference = timestamp(b.article.updated) - timestamp(a.article.updated);
+      } else difference = b.score - a.score;
+      return difference || a.index - b.index;
+    });
+    return ranked.map(function (entry) { return entry.article; });
+  }
+
+  function quoteCQL(value) {
+    return '"' + value.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  }
+
+  function literalLuceneTerm(value) {
+    // Each token is a Lucene phrase. Escape Lucene first, then the enclosing
+    // CQL string, so operators, wildcards and quotes remain search text.
+    return '"' + value.replace(/[+\-&|!(){}\[\]^"~*?:\\/]/g, '\\$&') + '"';
+  }
+
+  function pageID(value) {
+    if (typeof value === 'number' && !Number.isSafeInteger(value)) throw new TypeError('Invalid root page ID.');
+    if (!/^[1-9]\d{0,19}$/.test(String(value == null ? '' : value))) {
+      throw new TypeError('Set a valid wcspedia root page ID before connecting Confluence search.');
+    }
+    return String(value);
+  }
+
+  function buildCQL(options, config) {
+    config = config || {};
+    var id = pageID(config.rootPageId); // Fail closed: never fall back to a whole-space search.
+    var filters = optionsFor(options);
+    if (config.directChildren != null && typeof config.directChildren !== 'boolean') {
+      throw new TypeError('directChildren must be a boolean.');
+    }
+    var clauses = ['type = page', (config.directChildren ? 'parent' : 'ancestor') + ' = ' + id];
+    if (config.spaceKey != null) {
+      if (typeof config.spaceKey !== 'string' || !/^[A-Za-z0-9~][A-Za-z0-9_.~\-]{0,254}$/.test(config.spaceKey)) {
+        throw new TypeError('Invalid Confluence space key.');
+      }
+      clauses.push('space = ' + quoteCQL(config.spaceKey));
+    }
+    if (filters.tokens.length) {
+      clauses.push('(' + filters.tokens.map(function (token) {
+        return 'text ~ ' + quoteCQL(literalLuceneTerm(token));
+      }).join(' AND ') + ')');
+    }
+    if (filters.categories.length) clauses.push('label IN (' + filters.categories.map(function (category) {
+      return quoteCQL('wcs-topic-' + category);
+    }).join(', ') + ')');
+    if (filters.types.length) clauses.push('label IN (' + filters.types.map(function (type) {
+      return quoteCQL('wcs-type-' + type.toLowerCase());
+    }).join(', ') + ')');
+    if (WINDOWS[filters.updated]) clauses.push('lastmodified >= startOfDay("-' + WINDOWS[filters.updated] + 'd")');
+    var cql = clauses.join(' AND ');
+    if (filters.sort === 'updated' || filters.sort === 'newest') cql += ' ORDER BY lastmodified DESC';
+    if (filters.sort === 'title') cql += ' ORDER BY title ASC';
+    if (filters.sort === 'popular') throw new TypeError('Popularity sorting is available in the local prototype only.');
+    return cql;
+  }
+
+  function integerOption(value, fallback, min, max, name) {
+    if (value == null) return fallback;
+    if (!Number.isInteger(value) || value < min || value > max) throw new RangeError('Invalid ' + name + '.');
+    return value;
+  }
+
+  function contextURL(config) {
+    if (!root.location || !/^https?:$/.test(root.location.protocol)) {
+      throw new Error('Live search must run inside Confluence over HTTP or HTTPS.');
+    }
+    var origin = root.location.origin;
+    var base = new URL(config.baseUrl || '/', origin);
+    if (base.origin !== origin || base.username || base.password || base.search || base.hash) {
+      throw new TypeError('Confluence baseUrl must be a same-origin context path, without credentials, query or fragment.');
+    }
+    return new URL(base.pathname.replace(/\/+$/, '') + '/rest/api/search', origin);
+  }
+
+  function plainText(value) {
+    // Confluence excerpts can contain highlight markup. Return text, never HTML.
+    // Consumers should still use textContent / escapeHTML when displaying strings.
+    return text(value).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+      .replace(/<[^>]*>/g, '').replace(/@@@(?:end)?hl@@@/g, '')
+      .replace(/&(amp|lt|gt|quot|apos|nbsp);|&#(\d+);|&#x([\da-f]+);/gi, function (match, named, decimal, hex) {
+        if (named) return ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' })[named.toLowerCase()];
+        var code = parseInt(decimal || hex, decimal ? 10 : 16);
+        return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : '';
+      }).replace(/\s+/g, ' ').trim();
+  }
+
+  function safeResultURL(value, endpoint, basePath) {
+    if (!value) return null;
+    try {
+      // Search URLs are often relative to the Confluence context, e.g. /spaces/...
+      var path = value;
+      if (basePath && value.startsWith('/') && !value.startsWith('//') && !value.startsWith(basePath + '/')) path = basePath + value;
+      var url = new URL(path, endpoint.origin + basePath + '/');
+      if (url.origin !== endpoint.origin || url.username || url.password || !/^https?:$/.test(url.protocol)) return null;
+      return url.href;
+    } catch (_) { return null; }
+  }
+
+  function normalizeResult(result, endpoint, basePath) {
+    var content = result.content || {};
+    var labels = ((content.metadata || {}).labels || {}).results || [];
+    var names = labels.map(function (label) { return text(label.name || label.label); });
+    var category = names.find(function (name) { return /^wcs-topic-[a-z0-9-]+$/.test(name); });
+    var kind = names.find(function (name) { return /^wcs-type-[a-z]+$/.test(name); });
+    var type = TYPES.find(function (candidate) { return 'wcs-type-' + candidate.toLowerCase() === kind; }) || 'Reference';
+    return {
+      id: String(content.id || result.id || ''),
+      title: plainText(result.title || content.title),
+      summary: plainText(result.excerpt),
+      category: category ? category.slice('wcs-topic-'.length) : '',
+      type: type,
+      updated: text(result.lastModified || (content.version || {}).when),
+      tags: names.filter(function (name) { return !name.startsWith('wcs-topic-') && !name.startsWith('wcs-type-'); }),
+      sections: [],
+      views: null,
+      readTime: null,
+      url: safeResultURL(result.url || (content._links || {}).webui, endpoint, basePath)
+    };
+  }
+
+  async function searchConfluence(options, config, request) {
+    options = options || {};
+    config = config || {};
+    request = request || {};
+    var cql = buildCQL(options, config);
+    if (options.savedOnly) throw new TypeError('Saved article filtering is available in the local prototype only.');
+    var endpoint = contextURL(config);
+    var basePath = endpoint.pathname.slice(0, -'/rest/api/search'.length);
+    var params = new URLSearchParams({
+      cql: cql,
+      limit: String(integerOption(options.limit, 20, 1, 100, 'result limit')),
+      expand: 'content.metadata.labels,content.version',
+      excerpt: 'highlight'
+    });
+    if (options.cursor != null) {
+      if (typeof options.cursor !== 'string' || !options.cursor || options.cursor.length > 4096) throw new TypeError('Invalid search cursor.');
+      params.set('cursor', options.cursor);
+    } else params.set('start', String(integerOption(options.start, 0, 0, Number.MAX_SAFE_INTEGER, 'result offset')));
+    endpoint.search = params.toString();
+    var response = await root.fetch(endpoint.href, {
+      method: 'GET', credentials: 'same-origin', mode: 'same-origin', redirect: 'error',
+      headers: { Accept: 'application/json' }, signal: request.signal
+    });
+    if (!response.ok) {
+      var error = new Error('Confluence search failed (' + response.status + ').');
+      error.status = response.status;
+      throw error;
+    }
+    var payload = await response.json();
+    if (!payload || !Array.isArray(payload.results)) throw new Error('Confluence returned an unexpected search response.');
+    var next = null;
+    var nextLink = (payload._links || {}).next || payload.next;
+    if (typeof nextLink === 'string') {
+      var nextURL = safeResultURL(nextLink, endpoint, basePath);
+      if (nextURL) {
+        var continuation = new URL(nextURL);
+        if (continuation.pathname === endpoint.pathname) {
+          var cursor = continuation.searchParams.get('cursor');
+          var start = continuation.searchParams.get('start');
+          if (cursor && cursor.length <= 4096) next = { cursor: cursor };
+          else if (/^\d+$/.test(start || '') && Number.isSafeInteger(Number(start))) next = { start: Number(start) };
+        }
+      }
+    }
+    var total = Number.isFinite(payload.totalSize) ? payload.totalSize : Number.isFinite(payload.total) ? payload.total : null;
+    return { results: payload.results.map(function (result) { return normalizeResult(result, endpoint, basePath); }), total: total, next: next, cql: cql };
+  }
+
+  return Object.freeze({ filterArticles: filterArticles, buildCQL: buildCQL, searchConfluence: searchConfluence });
+});
+
+</script>
+<script>
+(function () {
+  'use strict';
+  const root = document.getElementById('wcspedia');
+  if (!root || root.dataset.mounted) return;
+  root.dataset.mounted = 'true';
+  const {categories, articles} = window.WCSData;
+  const search = window.WCSSearch;
+  const config = Object.assign({mode:'demo', rootPageId:'', baseUrl:''}, window.WCSConfig || {});
+  if (!config.spaceKey) delete config.spaceKey;
+  const TYPES = ['Guide', 'Procedure', 'Policy', 'Reference', 'FAQ'];
+  const perPage = 6;
+  let popularTab = 'popular';
+  let mobileFilters = false;
+  let toastTimer;
+  let remoteAbort;
+  let remoteHistory = [];
+  let remoteNext = null;
+  let remoteOptions = {};
+  let remoteSignature = '';
+  const paths = {
+    search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    arrow:'<path d="M4 12h15m-6-6 6 6-6 6"/>',
+    chevron:'<path d="m9 5 7 7-7 7"/>',
+    left:'<path d="m15 5-7 7 7 7"/>',
+    book:'<path d="M12 5v15m0-15C8 2 4 3 2 4v15c3-1.5 7-1 10 1 3-2 7-2.5 10-1V4c-3-1-7-2-10 1Z"/>',
+    file:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8m-8 4h5"/>',
+    bookmark:'<path d="M6 4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17l-6-4-6 4Z"/>',
+    briefcase:'<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V4h8v3M3 12c5 3 13 3 18 0M10 13v3h4v-3"/>',
+    shield:'<path d="M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6Zm-4 10 3 3 5-6"/>',
+    workflow:'<rect x="8" y="2" width="8" height="6" rx="1"/><rect x="2" y="16" width="7" height="6" rx="1"/><rect x="15" y="16" width="7" height="6" rx="1"/><path d="M12 8v4m-7 4v-4h14v4"/>',
+    layers:'<path d="m12 3 10 5-10 5L2 8Zm-10 9 10 5 10-5M2 16l10 5 10-5"/>',
+    compass:'<circle cx="12" cy="12" r="9"/><path d="m16 8-2 6-6 2 2-6Z"/>',
+    grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/>',
+    filter:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="currentColor"/><circle cx="16" cy="17" r="2" fill="currentColor"/>',
+    close:'<path d="m6 6 12 12M6 18 18 6"/>',
+    bulb:'<path d="M9 18h6m-5 3h4M8 14a7 7 0 1 1 8 0c-1 1-1 2-1 2H9s0-1-1-2Z"/>',
+    link:'<path d="m9 15 6-6m-8 3-2 2a4 4 0 0 0 5 5l3-3m-2-8 3-3a4 4 0 0 1 5 5l-2 2"/>',
+    check:'<path d="m5 12 4 4L19 6"/>',
+    thumb:'<path d="M7 10v11H3V10Zm0 0 4-8c3 0 3 3 2 7h6c2 0 2 2 1 5l-2 7H7"/>',
+    down:'<path d="M7 14V3H3v11Zm0 0 4 8c3 0 3-3 2-7h6c2 0 2-2 1-5l-2-7H7"/>',
+    external:'<path d="M14 3h7v7m0-7L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>'
+  };
+  function icon(name, cls='') { return `<svg class="${cls}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${paths[name] || paths.file}</svg>`; }
+  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function readStorage(key, fallback) { try { return JSON.parse(localStorage.getItem('wcspedia.'+key)) ?? fallback; } catch { return fallback; } }
+  function writeStorage(key, value) { try { localStorage.setItem('wcspedia.'+key, JSON.stringify(value)); } catch {} }
+  let saved = readStorage('saved', []); if (!Array.isArray(saved)) saved=[];
+  let recent = readStorage('recent', []); if (!Array.isArray(recent)) recent=[];
+  let feedback = readStorage('feedback', {}); if (!feedback || typeof feedback !== 'object') feedback={};
+  function cat(id) { return categories.find(c=>c.id===id); }
+  function categoryTitle(id) { return cat(id)?.title || 'Knowledge article'; }
+  function date(value) { if(!value)return 'Date unavailable'; const parsed=new Date(/^\d{4}-\d{2}-\d{2}$/.test(value)?value+'T12:00:00':value);return Number.isNaN(parsed.getTime())?'Date unavailable':parsed.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+  function go(route) { if (location.hash===route) render(); else location.hash=route; }
+  function resultsUrl(query='',extra={}) { const p=new URLSearchParams(); if(query) p.set('q',query); Object.entries(extra).forEach(([k,v])=>{if(v!=='' && v!==false && v!=null)p.set(k,String(v));}); return '#/results'+(p.size?'?'+p.toString():''); }
+  function articleUrl(a) { return a.url || '#/article/'+encodeURIComponent(a.id); }
+  function routeState() { const raw=location.hash.slice(1)||'/';const [path,query='']=raw.split('?'); return {path, params:new URLSearchParams(query)}; }
+  function options(p) { return {query:p.get('q')||'', categories:(p.get('category')||'').split(',').filter(v=>cat(v)),types:(p.get('type')||'').split(',').filter(v=>TYPES.includes(v)), updated:['week','month','quarter'].includes(p.get('updated'))?p.get('updated'):'any',sort:['updated','title','popular'].includes(p.get('sort'))?p.get('sort'):'relevance',savedOnly:p.get('saved')==='true',savedIds:saved,now:new Date('2026-10-15T12:00:00Z')}; }
+  function updateParam(key,value,resetPage=true) {const {params}=routeState(); if(value && value!=='any')params.set(key,value);else params.delete(key);if(resetPage)params.delete('page');go('#/results'+(params.size?'?'+params:''));}
+  function saveButton(a) {const is=saved.includes(a.id);return `<button class="icon-button ${is?'is-saved':''}" data-action="save" data-id="${esc(a.id)}" aria-label="${is?'Unsave':'Save'} ${esc(a.title)}" aria-pressed="${is}">${icon('bookmark')}</button>`;}
+  function crumb(items=[]) {return `<nav class="breadcrumbs" aria-label="Breadcrumb"><a class="home-crumb" href="#/">WCSpedia</a>${items.map(([title,url])=>`${icon('chevron')}${url?`<a href="${esc(url)}">${esc(title)}</a>`:`<span aria-current="page">${esc(title)}</span>`}`).join('')}</nav>`;}
+  function wordmark(){return `<a class="wordmark" href="#/" aria-label="WCSpedia home"><span class="brand-icon">${icon('book')}</span><span>WCS<b>pedia</b></span></a><div class="brand-description">Wealth Credit Services · Knowledge Base</div>`;}
+  function sampleNote(){return `<div class="sample-note"><i></i> Interactive prototype · sample content</div>`;}
+  function searchForm(query='',placeholder='Search knowledge, find answers, explore topics…'){return `<div class="search-wrap"><form class="search-form" role="search"><label class="sr-only" for="wcs-query">Search WCSpedia</label>${icon('search')}<input id="wcs-query" name="q" type="search" value="${esc(query)}" placeholder="${esc(placeholder)}" autocomplete="off" maxlength="500" aria-controls="wcs-suggestions" aria-expanded="false"><kbd aria-hidden="true">⌘ K</kbd><button type="submit" class="btn">Search ${icon('arrow')}</button></form><div class="suggestions" id="wcs-suggestions" hidden></div></div>`;}
+  function trends(){return `<div class="trending"><span>Popular searches</span>${['Collateral','Credit review','LPTM','Onboarding'].map(q=>`<a href="${resultsUrl(q)}">${q}</a>`).join('')}</div>`;}
+  function categoryCard(c){return `<a class="category-card" href="${config.mode==='confluence'?resultsUrl('',{category:c.id}):'#/topic/'+c.id}"><span class="category-icon">${icon(c.icon)}</span><div class="category-copy"><h3>${esc(c.title)}</h3><p>${esc(c.description)}</p><div class="category-meta"><span>${config.mode==='demo'?articles.filter(a=>a.category===c.id).length+' articles':'Explore articles'}</span>${icon('arrow')}</div></div></a>`;}
+  function art(a,i){const label=categoryTitle(a.category).replace(' & ',' &<br>');return `<div class="article-art tone-${i%3}" aria-hidden="true"><div class="art-sheet">${icon(cat(a.category)?.icon)}<i></i><i></i><i></i></div><div class="art-label">${label}</div></div>`;}
+  function articleCard(a,i){return `<article class="article-card"><a href="${articleUrl(a)}" tabindex="-1" aria-hidden="true">${art(a,i)}</a><div class="article-card-body"><div class="card-topline"><span class="type-label">${esc(a.type)} · ${esc(categoryTitle(a.category))}</span>${saveButton(a)}</div><h3><a href="${articleUrl(a)}">${esc(a.title)}</a></h3><p>${esc(a.summary)}</p><div class="card-meta">${icon('clock')}<span>${a.readTime} min read</span><span>${date(a.updated)}</span></div></div></article>`;}
+  function highlight(text, query){const tokens=query.trim().split(/\s+/).filter(Boolean).sort((a,b)=>b.length-a.length).map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));if(!tokens.length)return esc(text);const pattern=new RegExp('('+tokens.join('|')+')','gi');return String(text).split(pattern).map((s,i)=>i%2?'<mark>'+esc(s)+'</mark>':esc(s)).join('');}
+  function resultCard(a,query=''){return `<article class="result-card"><div class="result-card-top"><div class="document-icon">${icon('file')}</div><div class="result-body"><div class="result-path"><span>WCSpedia</span>${icon('chevron')}<span>${esc(categoryTitle(a.category))}</span></div><h2><a href="${esc(articleUrl(a))}">${highlight(a.title,query)}</a></h2><p>${highlight(a.summary,query)}</p><div class="result-tags">${(a.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div>${a.url?'':saveButton(a)}</div><div class="result-bottom"><span class="type-pill">${esc(a.type || 'Page')}</span><span>Updated ${date(a.updated)}</span>${a.readTime?`<span>${a.readTime} min read</span>`:''}<span class="result-owner">${esc(a.owner || '')}</span><a href="${esc(articleUrl(a))}">${a.url?'Open page':'Read article'} ${icon(a.url?'external':'arrow')}</a></div></article>`;}
+  function home(){const list=search.filterArticles(articles,{sort:popularTab}).slice(0,3);return `<div class="fade-in"><section class="hero">${sampleNote()}${wordmark()}<h1>A world of knowledge.<br><span>One place to find it.</span></h1><p class="intro">Your everyday resource for Wealth Credit Services.<br>Explore guidance, understand our processes, and move forward with confidence.</p>${searchForm()}${trends()}<div class="hero-shortcuts"><a href="#/search">${icon('search')} Explore search</a><span class="divider"></span><a href="${resultsUrl()}">${icon('book')} All articles</a>${config.mode==='demo'?`<span class="divider"></span><a href="${resultsUrl('',{saved:true})}">${icon('bookmark')} Saved articles</a>`:''}</div></section><div class="container"><section class="section"><div class="section-heading"><div><h2>Find your starting point</h2><p>Knowledge organised around the work you do.</p></div><span class="eyebrow">6 knowledge areas</span></div><div class="category-grid">${categories.map(categoryCard).join('')}</div></section><section class="section popular-section"><div class="section-heading"><div><h2>A little knowledge goes a long way</h2><p>The essentials, the latest updates, and everything in between.</p></div><a class="text-link" href="${resultsUrl()}">Explore all articles ${icon('arrow')}</a></div><div class="section-tabs" aria-label="Featured articles"><button class="${popularTab==='popular'?'active':''}" data-action="tab" data-tab="popular" aria-pressed="${popularTab==='popular'}">Popular articles</button><button class="${popularTab==='updated'?'active':''}" data-action="tab" data-tab="updated" aria-pressed="${popularTab==='updated'}">Recently updated</button></div><div class="article-grid" id="wcs-popular">${list.map(articleCard).join('')}</div></section><aside class="getting-started"><div class="category-icon">${icon('compass')}</div><div><h3>New to Wealth Credit Services?</h3><p>Get your bearings with the people, processes, and tools behind our work.</p></div><a href="#/topic/learning" class="text-link">Start your learning journey ${icon('arrow')}</a></aside></div></div>`;}
+  function searchLanding(){const qs=recent.length?recent.slice(0,4):['Securities-backed lending','Collateral','Annual credit review'];return `<div class="search-landing fade-in"><section class="hero">${sampleNote()}${wordmark()}<h1>What would you<br><span>like to know?</span></h1><p class="intro">Search across guides, procedures, policies, and practical know-how.</p>${searchForm('', 'Ask a question or search by keyword…')}${trends()}</section><div class="search-landing-body"><div class="discovery-columns"><section><h2>${recent.length?'Your recent searches':'Try a search'}</h2>${qs.map(q=>`<a class="sidebar-link" href="${resultsUrl(q)}">${icon(recent.length?'clock':'search')}${esc(q)}${icon('arrow')}</a>`).join('')}${recent.length?'<button class="text-link" style="margin-top:10px" data-action="clear-recent">Clear recent searches</button>':''}</section><section><h2>Browse by knowledge area</h2>${categories.slice(0,4).map(c=>`<a class="sidebar-link" href="${config.mode==='confluence'?resultsUrl('',{category:c.id}):'#/topic/'+c.id}">${icon(c.icon)}${esc(c.title)}${icon('arrow')}</a>`).join('')}</section></div><div class="search-guide">${icon('bulb')}<span>Start with a topic or a few keywords. Use filters on the results page to narrow your search.</span></div><div style="text-align:center;margin-top:26px"><a class="text-link" href="#/">${icon('left')} Back to the knowledge home</a></div></div></div>`;}
+  function topicPage(id){const c=cat(id);if(!c)return missing();const list=articles.filter(a=>a.category===id);return `<div class="container subpage fade-in">${crumb([[c.title]])}<section class="topic-hero"><div><div class="eyebrow">Knowledge area</div><h1>${esc(c.title)}</h1><p>${esc(c.description)} Find practical guidance and shared knowledge to support your next step.</p><div class="topic-meta"><span>${list.length} articles</span><span>Curated by ${esc(list[0]?.owner||'Wealth Credit Services')}</span></div></div><div class="topic-illustration" aria-hidden="true">${icon(c.icon)}</div></section><div class="topic-main"><section><div class="section-heading"><div><h2>Explore ${esc(c.title.toLowerCase())}</h2><p>From the fundamentals to the finer details.</p></div><a class="text-link" href="${resultsUrl('',{category:id})}">Filter articles ${icon('filter')}</a></div>${list.map(a=>resultCard(a)).join('')}</section><aside class="topic-side"><div class="sidebar-panel"><h2>Other knowledge areas</h2>${categories.filter(x=>x.id!==id).map(x=>`<a class="sidebar-link" href="#/topic/${x.id}">${icon(x.icon)}${esc(x.title)}${icon('arrow')}</a>`).join('')}</div><div class="sidebar-panel" style="background:#f5f8ff"><span class="category-icon">${icon('search')}</span><h2 style="margin-top:13px">Looking for something specific?</h2><p>Search the knowledge base to find an answer across all topics.</p><a class="text-link" href="#/search" style="margin-top:16px">Search WCSpedia ${icon('arrow')}</a></div></aside></div></div>`;}
+  function facetCount(o){try{return search.filterArticles(articles,o).length;}catch{return 0;}}
+  function filters(o){return `<div class="filter-title"><h2>${icon('filter')} Filter results</h2><button data-action="clear-filters">Reset</button></div><fieldset class="filter-group"><legend>Knowledge area</legend>${categories.map(c=>`<label class="check-label"><input type="checkbox" name="category" value="${c.id}" ${o.categories.includes(c.id)?'checked':''}><span>${esc(c.title)}</span>${config.mode==='demo'?`<span class="count">${facetCount({...o,categories:[c.id]})}</span>`:''}</label>`).join('')}</fieldset><fieldset class="filter-group"><legend>Content type</legend>${TYPES.map(t=>`<label class="check-label"><input type="checkbox" name="type" value="${t}" ${o.types.includes(t)?'checked':''}><span>${t}</span>${config.mode==='demo'?`<span class="count">${facetCount({...o,types:[t]})}</span>`:''}</label>`).join('')}</fieldset><fieldset class="filter-group"><legend>Last updated</legend><label class="sr-only" for="wcs-updated">Last updated</label><select id="wcs-updated" class="filter-select" name="updated">${[['any','Any time'],['week','Past week'],['month','Past month'],['quarter','Past 3 months']].map(([v,n])=>`<option value="${v}" ${o.updated===v?'selected':''}>${n}</option>`).join('')}</select></fieldset>${config.mode==='demo'?`<fieldset class="filter-group"><legend>Your collection</legend><label class="check-label"><input type="checkbox" name="saved" ${o.savedOnly?'checked':''}><span>Saved articles only</span></label></fieldset>`:''}<div class="filter-tip">${icon('bulb')}A broader search can help you discover related guidance across knowledge areas.</div>`;}
+  function chips(o){return [...o.categories.map(v=>['category',v,categoryTitle(v)]),...o.types.map(v=>['type',v,v]),...(o.updated!=='any'?[['updated',o.updated,{week:'Past week',month:'Past month',quarter:'Past 3 months'}[o.updated]]]:[]),...(o.savedOnly?[['saved','true','Saved articles']]:[])].map(([key,v,label])=>`<button class="filter-chip" data-action="remove-filter" data-key="${key}" data-value="${v}" aria-label="Remove ${esc(label)} filter">${esc(label)} ${icon('close')}</button>`).join('');}
+  function empty(o){return `<div class="empty-state">${icon(o.savedOnly?'bookmark':'search')}<h2>${o.savedOnly?'Your saved collection starts here':'No articles found'}</h2><p>${o.savedOnly?'Save an article with the bookmark icon to keep useful knowledge close at hand.':'Try a different keyword or remove a filter to explore more of WCSpedia.'}</p><a class="btn secondary" href="${resultsUrl()}">Browse all articles ${icon('arrow')}</a></div>`;}
+  function resultsPage(p){const o=options(p);let list=[];let queryError='';try{if(config.mode==='demo')list=search.filterArticles(articles,o);}catch(error){queryError=error.message;}const total=list.length;const pages=Math.ceil(total/perPage);const page=Math.min(Math.max(1,parseInt(p.get('page'),10)||1),pages||1);const current=list.slice((page-1)*perPage,page*perPage);return `<div class="fade-in"><section class="results-header"><div class="container">${crumb([['Search','#/search'],[o.savedOnly?'Saved articles':'Results']])}<h1>${o.savedOnly?'Your saved knowledge':o.query?'A little closer to your answer.':'Explore the knowledge base.'}</h1>${searchForm(o.query)}</div></section><div class="container"><button class="btn secondary mobile-filter-button" data-action="mobile-filters" aria-expanded="${mobileFilters}">${icon('filter')} Filters</button><div class="results-layout"><aside class="results-sidebar ${mobileFilters?'is-open':''}" aria-label="Search filters">${filters(o)}</aside><section class="results-main" aria-label="Search results"><div class="results-toolbar"><p class="results-count" id="wcs-count" role="status">${config.mode==='demo'?`<strong>${total} ${total===1?'article':'articles'}</strong>${o.query?` for “${esc(o.query)}”`:' in your knowledge base'}`:'Searching Confluence…'}</p><label class="sort-control"><span>Sort by</span><select name="sort" aria-label="Sort search results">${[['relevance','Most relevant'],['updated','Recently updated'],['title','Title A–Z'],...(config.mode==='demo'?[['popular','Most read']]:[])].map(([v,label])=>`<option value="${v}" ${o.sort===v?'selected':''}>${label}</option>`).join('')}</select></label></div><div class="active-filters">${chips(o)}</div><div id="wcs-result-list">${queryError?`<div class="empty-state">${icon('search')}<h2>Let’s simplify your search</h2><p>${esc(queryError)}</p><a class="btn secondary" href="#/search">Start a new search</a></div>`:config.mode==='demo'?(current.length?current.map(a=>resultCard(a,o.query)).join(''):empty(o)):'<div class="empty-state" aria-busy="true">Loading knowledge articles…</div>'}</div><div id="wcs-pagination">${total>perPage?`<div class="pagination"><span>Showing ${(page-1)*perPage+1}–${Math.min(page*perPage,total)} of ${total}</span><div class="page-buttons"><button data-page="${page-1}" ${page===1?'disabled':''} aria-label="Previous page">${icon('left')}</button>${Array.from({length:pages},(_,i)=>`<button data-page="${i+1}" class="${page===i+1?'current':''}" ${page===i+1?'aria-current="page"':''}>${i+1}</button>`).join('')}<button data-page="${page+1}" ${page===pages?'disabled':''} aria-label="Next page">${icon('chevron')}</button></div></div>`:''}</div></section></div></div></div>`;}
+  async function remoteResults(p){const o=options(p);const signature=p.toString();if(signature!==remoteSignature){remoteHistory=[];remoteOptions={};remoteSignature=signature;}remoteAbort=new AbortController();const controller=remoteAbort;try{const response=await search.searchConfluence({...o,now:undefined,...remoteOptions,limit:perPage},config,{signal:controller.signal});if(controller.signal.aborted)return;remoteNext=response.next;root.querySelector('#wcs-count').innerHTML=`<strong>${response.total==null?response.results.length:response.total} articles</strong>${o.query?` for “${esc(o.query)}”`:''}`;root.querySelector('#wcs-result-list').innerHTML=response.results.length?response.results.map(a=>resultCard(a,o.query)).join(''):empty(o);root.querySelector('#wcs-pagination').innerHTML=`<div class="pagination"><span>Confluence search</span><div class="page-buttons"><button data-action="remote-prev" ${remoteHistory.length?'':'disabled'}>Previous</button><button data-action="remote-next" ${remoteNext?'':'disabled'}>Next</button></div></div>`;}catch(e){if(e.name==='AbortError')return;root.querySelector('#wcs-count').textContent='Search unavailable';root.querySelector('#wcs-result-list').innerHTML=`<div class="empty-state">${icon('search')}<h2>We couldn’t load these articles</h2><p>${esc(e.message)}</p><button class="btn secondary" data-action="retry">Try again</button></div>`;}}
+  function articlePage(id){const a=articles.find(a=>a.id===id);if(!a)return missing();const related=articles.filter(b=>b.category===a.category&&b.id!==id).slice(0,3);const is=saved.includes(id);return `<div class="container subpage fade-in">${crumb([[categoryTitle(a.category),'#/topic/'+a.category],['Article']])}<div class="article-layout"><article><div class="article-heading"><span class="type-label">${esc(a.type)} · ${esc(categoryTitle(a.category))}</span><h1>${esc(a.title)}</h1><p class="article-summary">${esc(a.summary)}</p><div class="article-byline"><div class="owner-avatar">WCS</div><div><strong>${esc(a.owner)}</strong><small>Updated ${date(a.updated)}</small></div><span class="read-time">${icon('clock')} ${a.readTime} min read</span></div></div><div class="article-callout"><strong>At a glance</strong>${esc(a.sections[0]?.paragraphs?.[0] || a.summary)}</div>${a.sections.map(s=>`<section class="article-section" id="section-${esc(s.id)}"><h2>${esc(s.title)}</h2>${(s.paragraphs||[]).map(p=>`<p>${esc(p)}</p>`).join('')}${s.bullets?.length?`<ul>${s.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`:''}</section>`).join('')}<div class="result-tags">${a.tags.map(t=>`<a href="${resultsUrl(t)}" class="tag">${esc(t)}</a>`).join('')}</div><div class="feedback"><span>Was this article helpful?</span><button data-action="feedback" data-id="${id}" data-vote="yes" class="${feedback[id]==='yes'?'selected':''}" aria-pressed="${feedback[id]==='yes'}">${icon('thumb')} Yes</button><button data-action="feedback" data-id="${id}" data-vote="no" class="${feedback[id]==='no'?'selected':''}" aria-pressed="${feedback[id]==='no'}">${icon('down')} Not quite</button><small>${feedback[id]?'Thanks — your feedback is saved in this prototype.':'Your feedback helps make shared knowledge better.'}</small></div></article><aside class="article-sidebar"><div class="sticky-panel"><div class="article-actions"><button class="btn secondary" data-action="save" data-id="${id}" aria-pressed="${is}">${icon('bookmark')} ${is?'Saved':'Save article'}</button><button class="btn secondary" data-action="copy">${icon('link')} Copy link</button></div><nav class="toc" aria-label="On this page"><h2>On this page</h2>${a.sections.map(s=>`<a href="#section-${esc(s.id)}" data-section="${esc(s.id)}">${esc(s.title)}</a>`).join('')}</nav><div class="sidebar-panel"><h2>About this article</h2><div class="detail-row"><span>Content type</span><strong>${esc(a.type)}</strong></div><div class="detail-row"><span>Knowledge area</span><strong>${esc(categoryTitle(a.category))}</strong></div><div class="detail-row"><span>Last updated</span><strong>${date(a.updated)}</strong></div><div class="detail-row"><span>Reading time</span><strong>${a.readTime} minutes</strong></div></div><div class="sidebar-panel" style="background:#f8faff"><h2>Continue exploring</h2><div class="related-list">${related.map(b=>`<a href="${articleUrl(b)}">${esc(b.title)}<small>${b.type} · ${b.readTime} min read</small></a>`).join('')}</div></div><p class="article-disclaimer">Illustrative content for design review. This prototype does not establish credit policy or replace approved procedures.</p></div></aside></div></div>`;}
+  function missing(){return `<div class="container subpage">${crumb([['Page not found']])}<div class="empty-state">${icon('file')}<h2>This page isn’t in the knowledge base</h2><p>Head back to WCSpedia or use search to find what you need.</p><a class="btn" href="#/">Back to home</a></div></div>`;}
+  function render({keepScroll=false}={}){const scroll=window.scrollY;const active=document.activeElement;const focusFilter=root.contains(active)&&['category','type','updated','sort','saved'].includes(active.name)?{name:active.name,value:active.value}:null;remoteAbort?.abort();const {path,params}=routeState();if(config.mode==='confluence'&&path.startsWith('/topic/')){go(resultsUrl('',{category:path.slice(7)}));return;}let html;let title;if(path==='/'){html=home();title='Knowledge home';}else if(path==='/search'){html=searchLanding();title='Search';}else if(path==='/results'){html=resultsPage(params);title=options(params).query?'Search: '+options(params).query:'All articles';}else if(path.startsWith('/topic/')){html=topicPage(path.slice(7));title=categoryTitle(path.slice(7));}else if(path.startsWith('/article/')){html=articlePage(path.slice(9));title=articles.find(a=>a.id===path.slice(9))?.title||'Article';}else{html=missing();title='Page not found';}root.innerHTML=html;if(config.mode==='confluence'){root.querySelector('.popular-section')?.remove();root.querySelector('.getting-started')?.remove();}document.title=title+' · WCSpedia';if(focusFilter){Array.from(root.querySelectorAll('[name]')).find(el=>el.name===focusFilter.name&&el.value===focusFilter.value)?.focus({preventScroll:true});keepScroll=true;}if(!keepScroll)window.scrollTo({top:0,behavior:'instant'});else window.scrollTo({top:scroll,behavior:'instant'});if(path==='/results'&&config.mode==='confluence')remoteResults(params);}
+  function toast(message){root.querySelector('.toast')?.remove();clearTimeout(toastTimer);const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.innerHTML=icon('check')+esc(message);root.append(el);toastTimer=setTimeout(()=>el.remove(),3000);}
+  function remember(q){if(!q)return;recent=[q,...recent.filter(x=>x!==q)].slice(0,5);writeStorage('recent',recent);}
+  function submitSearch(form){const input=form.querySelector('input');const q=input.value.trim();try{search.filterArticles([],{query:q});}catch(error){toast(error.message);input.focus();return;}remember(q);const state=routeState();const extra={};if(state.path==='/results'){for(const key of ['category','type','updated','sort','saved'])if(state.params.has(key))extra[key]=state.params.get(key);}go(resultsUrl(q,extra));}
+  root.addEventListener('submit',e=>{if(e.target.matches('.search-form')){e.preventDefault();submitSearch(e.target);}});
+  root.addEventListener('input',e=>{if(e.target.id!=='wcs-query')return;const q=e.target.value.trim();const box=root.querySelector('#wcs-suggestions');if(q.length<2||config.mode!=='demo'){box.hidden=true;e.target.setAttribute('aria-expanded','false');return;}let found;try{found=search.filterArticles(articles,{query:q}).slice(0,4);}catch(error){box.innerHTML='<div class="suggest-label">'+esc(error.message)+'</div>';box.hidden=false;e.target.setAttribute('aria-expanded','true');return;}box.innerHTML=`<div class="suggest-label">${found.length?'Suggested articles':'Search WCSpedia'}</div>${found.map(a=>`<a href="${articleUrl(a)}">${icon('file')}<span>${highlight(a.title,q)}</span><span class="suggestion-meta">${esc(a.type)}</span></a>`).join('')}<a href="${resultsUrl(q)}" data-search-term="${esc(q)}">${icon('search')}<span>See all results for “${esc(q)}”</span>${icon('arrow')}</a>`;box.hidden=false;e.target.setAttribute('aria-expanded','true');});
+  root.addEventListener('keydown',e=>{if(e.key==='Escape'){const box=root.querySelector('.suggestions');if(box)box.hidden=true;root.querySelector('#wcs-query')?.setAttribute('aria-expanded','false');}if(e.key==='ArrowDown'&&e.target.id==='wcs-query'){const link=root.querySelector('.suggestions:not([hidden]) a');if(link){e.preventDefault();link.focus();}}});
+  document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();const input=root.querySelector('#wcs-query');if(input)input.focus();else{go('#/search');setTimeout(()=>root.querySelector('#wcs-query')?.focus(),50);}}});
+  document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap')){const box=root.querySelector('.suggestions');if(box)box.hidden=true;root.querySelector('#wcs-query')?.setAttribute('aria-expanded','false');}});
+  root.addEventListener('change',e=>{const {name,value,checked}=e.target;if(name==='category'||name==='type'){const {params}=routeState();let values=(params.get(name)||'').split(',').filter(Boolean);values=checked?[...values,value]:values.filter(v=>v!==value);updateParam(name,values.join(','));}else if(name==='updated'||name==='sort'){updateParam(name,value);}else if(name==='saved'){updateParam('saved',checked?'true':'');}});
+  root.addEventListener('click',async e=>{const target=e.target.closest('[data-action],[data-page],[data-section],[data-search-term]');if(!target)return;if(target.dataset.searchTerm)remember(target.dataset.searchTerm);if(target.dataset.section){e.preventDefault();document.getElementById('section-'+target.dataset.section)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});return;}if(target.dataset.page){updateParam('page',target.dataset.page,false);return;}const {action,id}=target.dataset;if(action==='save'){const adding=!saved.includes(id);saved=adding?[...saved,id]:saved.filter(v=>v!==id);writeStorage('saved',saved);render({keepScroll:true});toast(adding?'Article saved to your collection':'Article removed from your collection');}else if(action==='tab'){popularTab=target.dataset.tab;root.querySelectorAll('[data-action="tab"]').forEach(b=>{const on=b.dataset.tab===popularTab;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));});root.querySelector('#wcs-popular').innerHTML=search.filterArticles(articles,{sort:popularTab}).slice(0,3).map(articleCard).join('');}else if(action==='clear-filters'){const {params}=routeState();go(resultsUrl(params.get('q')||'',{sort:params.get('sort')||''}));}else if(action==='remove-filter'){const {key,value}=target.dataset;const {params}=routeState();const current=(params.get(key)||'').split(',').filter(v=>v!==value);updateParam(key,current.join(','));}else if(action==='mobile-filters'){mobileFilters=!mobileFilters;root.querySelector('.results-sidebar').classList.toggle('is-open',mobileFilters);target.setAttribute('aria-expanded',String(mobileFilters));}else if(action==='clear-recent'){recent=[];writeStorage('recent',recent);render({keepScroll:true});}else if(action==='feedback'){feedback[id]=target.dataset.vote;writeStorage('feedback',feedback);render({keepScroll:true});}else if(action==='copy'){try{await navigator.clipboard.writeText(location.href);toast('Article link copied');}catch{const field=document.createElement('textarea');field.value=location.href;field.style.position='fixed';field.style.opacity='0';document.body.append(field);field.select();const ok=document.execCommand('copy');field.remove();toast(ok?'Article link copied':'Copy the article URL from your browser');}}else if(action==='retry'){render({keepScroll:true});}else if(action==='remote-next'&&remoteNext){remoteHistory.push(remoteOptions);remoteOptions=remoteNext;render();}else if(action==='remote-prev'&&remoteHistory.length){remoteOptions=remoteHistory.pop();render();}});
+  window.addEventListener('hashchange',()=>render());
+  render();
+})();
+
+</script>
+<noscript>This interactive prototype requires JavaScript.</noscript></body></html>

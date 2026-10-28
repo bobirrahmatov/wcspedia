@@ -1,0 +1,63 @@
+/* Optional DOM contract checks (no browser automation or production dependencies).
+ * Install jsdom@26.1.0 in a temporary developer directory, then run:
+ * NODE_PATH=/tmp/wcspedia-ui-tests/node_modules node tests/ui-dom.cjs
+ */
+const fs=require('fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM}=require('jsdom');
+const dom=new JSDOM('<!doctype html><main id="wcspedia"><div class="shell"><form id="f"><label for="s">Kind</label><select id="s" name="kind"><option value="a">Alpha</option><option value="b" disabled>Beta</option><option value="c">Charlie</option><option value="d">Delta</option></select><label for="d">Review date</label><input id="d" name="date" type="date" required min="2026-10-16" value="2026-11-01"><button id="other" type="button">Other</button></form></div></main>',{url:'http://localhost',runScripts:'outside-only',pretendToBeVisual:true});
+const w=dom.window,d=w.document;w.HTMLElement.prototype.getClientRects=function(){return this.hidden?[]:[{}];};w.HTMLElement.prototype.scrollIntoView=function(){};
+w.eval(fs.readFileSync(path.join(__dirname,'../ui.js'),'utf8'));
+const UI=w.WCSUI,root=d.getElementById('wcspedia'),select=d.getElementById('s'),date=d.getElementById('d');
+const key=(el,k,props={})=>el.dispatchEvent(new w.KeyboardEvent('keydown',{key:k,bubbles:true,...props}));
+const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+(async()=>{
+let count=0;const ok=(label,test)=>{test();count++;console.log('PASS',label)};
+UI.enhance(root);UI.enhance(root);
+ok('enhance is idempotent',()=>assert.equal(root.querySelectorAll('.wcs-ui-select-trigger').length,1));
+const trigger=root.querySelector('.wcs-ui-select-trigger');let changes=0;select.addEventListener('change',()=>changes++);
+ok('native field hidden but keeps form data',()=>{assert.equal(select.hidden,true);assert.equal(new w.FormData(d.getElementById('f')).get('kind'),'a');});
+trigger.click();key(trigger,'ArrowDown');key(trigger,'Enter');
+ok('keyboard skips disabled option and fires one change',()=>{assert.equal(select.value,'c');assert.equal(changes,1);assert.equal(trigger.getAttribute('aria-expanded'),'false');});
+trigger.click();key(trigger,'Home');key(trigger,'Enter');
+ok('Home chooses first enabled option',()=>assert.equal(select.value,'a'));
+trigger.click();key(trigger,'End');key(trigger,'Enter');
+ok('End chooses last enabled option',()=>assert.equal(select.value,'d'));
+key(trigger,'c');
+ok('closed typeahead selects matching option',()=>assert.equal(select.value,'c'));
+select.disabled=true;await tick();
+ok('disabled state follows native field mutation',()=>assert.equal(trigger.disabled,true));select.disabled=false;await tick();
+trigger.click();key(trigger,'Escape');
+ok('Escape closes select and restores trigger focus',()=>{assert.equal(trigger.getAttribute('aria-expanded'),'false');assert.equal(d.activeElement,trigger);});
+const newOption=d.createElement('option');newOption.value='e';newOption.textContent='Echo';select.append(newOption);await tick();trigger.click();
+ok('dynamic options update',()=>assert.equal(root.querySelectorAll('[role=option]').length,5));
+d.getElementById('other').dispatchEvent(new w.MouseEvent('pointerdown',{bubbles:true}));
+ok('outside pointer closes popover',()=>assert.equal(UI.hasPopup(),false));
+ok('date uses text entry instead of native popup',()=>{assert.equal(date.type,'text');assert.equal(date.value,'2026-11-01');});
+date.value='2026-02-31';date.dispatchEvent(new w.Event('blur'));
+ok('invalid calendar dates use inline error',()=>{assert.equal(date.checkValidity(),false);assert.match(root.querySelector('.wcs-ui-field-error').textContent,/valid date/);});
+date.value='2026-10-01';date.dispatchEvent(new w.Event('blur'));
+ok('date enforces minimum',()=>assert.match(root.querySelector('.wcs-ui-field-error').textContent,/2026-10-16/));
+date.value='2026-11-01';date.dispatchEvent(new w.Event('change',{bubbles:true}));root.querySelector('.wcs-ui-date-trigger').click();
+ok('date picker opens own calendar',()=>assert.equal(root.querySelectorAll('[data-wcs-date]').length,42));
+root.querySelector('[data-wcs-date="2026-11-02"]').click();
+ok('calendar selection preserves native value and form serialization',()=>{assert.equal(date.value,'2026-11-02');assert.equal(new w.FormData(d.getElementById('f')).get('date'),'2026-11-02');assert.equal(UI.hasPopup(),false);});
+const implicit=d.createElement('label');implicit.className='editor-field';implicit.innerHTML='<span>Last verified</span><input id="verified" type="date" name="verified" value="2026-11-02">';d.getElementById('f').append(implicit);UI.enhance(implicit);const verified=implicit.querySelector('input');
+ok('date inside a label keeps a distinct input and calendar name without changing its form value',()=>{assert.equal(verified.getAttribute('aria-label'),'Last verified');assert.equal(implicit.querySelector('button').getAttribute('aria-label'),'Choose last verified');assert.equal(new w.FormData(d.getElementById('f')).get('verified'),'2026-11-02');});
+UI.destroy(implicit);
+ok('date teardown restores the original accessible label and native field',()=>{assert.equal(verified.type,'date');assert.equal(verified.hasAttribute('aria-label'),false);assert.equal(implicit.querySelector('button'),null);assert.equal(verified.value,'2026-11-02');});implicit.remove();
+let mounted=false,reason;const dialog=UI.dialog({title:'Editor link',body:'<form><label>URL <input name="url" autofocus></label><button>Insert</button></form>',onMount(handle){mounted=!!handle.element.querySelector('input')},onClose(r){reason=r}});
+ok('dialog mounts shared surface, disables native validation and background',()=>{assert.equal(mounted,true);assert.equal(dialog.element.querySelector('form').noValidate,true);assert.equal(root.querySelector('.shell').inert,true);assert.equal(UI.hasPopup(),true);});
+dialog.setBusy(true);key(dialog.element,'Escape');ok('busy dialog cannot dismiss',()=>assert.equal(dialog.element.isConnected,true));dialog.setBusy(false);key(dialog.element,'Escape');
+ok('dialog Escape restores page state',()=>{assert.equal(dialog.element.isConnected,false);assert.equal(root.querySelector('.shell').inert,undefined);assert.equal(reason,'escape');});
+const second=UI.dialog({title:'Guarded',body:'<input>',onClose(){return false}});second.setBusy(true);UI.destroy(root);
+ok('navigation teardown clears busy vetoed dialog and native enhancements',()=>{assert.equal(UI.hasPopup(),false);assert.equal(root.querySelectorAll('.wcs-ui-backdrop').length,0);assert.equal(select.hidden,false);assert.equal(date.type,'date');assert.equal(root.querySelectorAll('.wcs-ui-select').length,0)});
+UI.enhance(root);root.innerHTML='<div class="shell">Replaced</div>';await tick();
+ok('detached enhanced fields cleanup is safe',()=>assert.equal(UI.hasPopup(),false));
+root.innerHTML='<div class="shell"><label>Relationship<select data-searchable><option value="">Search and select</option><option value="R0033">R0033 – Illustrative relationship 033</option><option value="R0001">R0001 – First client</option></select></label></div>';UI.enhance(root);
+const searchable=root.querySelector('select'),combo=root.querySelector('[role=combobox]');let selectedEvents=0;searchable.onchange=()=>selectedEvents++;
+combo.click();let query=d.querySelector('.wcs-searchable-select input');query.value='r0033';query.dispatchEvent(new w.Event('input'));ok('searchable select matches ID case-insensitively',()=>assert.equal(d.querySelectorAll('.wcs-searchable-select [role=option]').length,1));key(query,'Enter');ok('search result selects once and preserves native value',()=>{assert.equal(searchable.value,'R0033');assert.equal(selectedEvents,1);assert.equal(UI.hasPopup(),false);});
+combo.click();query=d.querySelector('.wcs-searchable-select input');query.value='First client';query.dispatchEvent(new w.Event('input'));key(query,'Enter');ok('searchable select matches relationship name',()=>assert.equal(searchable.value,'R0001'));
+combo.click();query=d.querySelector('.wcs-searchable-select input');query.value='no match';query.dispatchEvent(new w.Event('input'));key(query,'Enter');ok('empty search results preserve selection',()=>{assert.equal(searchable.value,'R0001');assert.match(d.querySelector('.wcs-searchable-select [role=status]').textContent,/No matching/);});key(query,'Escape');ok('searchable Escape restores trigger focus',()=>assert.equal(d.activeElement,combo));
+UI.destroy(root);ok('searchable teardown restores native select',()=>{assert.equal(searchable.hidden,false);assert.equal(root.querySelector('.wcs-ui-select'),null);});
+console.log(count+' UI behavior tests passed');dom.window.close();
+})().catch(error=>{console.error(error);dom.window.close();process.exitCode=1});
