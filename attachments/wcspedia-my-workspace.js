@@ -7374,7 +7374,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (records.some(function (label) { return !object(label) || typeof (label.name || label.label) !== 'string'; })) fail('Confluence returned invalid WCSpedia page label metadata.', 'INVALID_SCOPE');
         return records.map(function (label) { return label.name || label.label; });
       }
-      function checkScope(result, allowMissing) {
+      function checkScope(result, allowMissing, verifyEmptyAncestors) {
         if (!object(result)) fail('Confluence did not identify a page in the WCSpedia search scope.', 'INVALID_SCOPE');
         if (result.entityType && ['page', 'content'].indexOf(result.entityType) < 0) fail('Confluence returned a non-page search result.', 'INVALID_SCOPE');
         var item = itemFrom(result);
@@ -7387,8 +7387,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (object(item.space) && item.space.key != null && item.space.key !== scope.spaceKey) fail('Confluence returned a search result outside the WCSpedia space.', 'INVALID_SCOPE');
         var ancestorItems = Array.isArray(item.ancestors) ? item.ancestors : object(item.ancestors) && Array.isArray(item.ancestors.results) ? item.ancestors.results : null;
         var ancestors = ancestorItems && ancestorItems.map(function (ancestor) { return object(ancestor) ? String(ancestor.id) : ''; });
+        // An empty search expansion is inconclusive. Only an authenticated
+        // direct page read may establish ancestry; never infer it from labels.
+        if (verifyEmptyAncestors && ancestors && !ancestors.length && id && String(item.id || '') === id && kind === 'page' && object(item.space) && item.space.key === scope.spaceKey) return false;
         if (ancestors && ancestors.indexOf(pageId) < 0) {
-          fail('Confluence returned a page outside the selected WCSpedia page tree.', 'INVALID_SCOPE');
+          fail('Confluence could not verify page ' + id + ' beneath WCSpedia landing page ' + pageId + '. Returned ancestor IDs: ' + (ancestors.join(', ') || 'none') + '.', 'INVALID_SCOPE');
         }
         if (ancestors && scope.excludeAncestorIds && scope.excludeAncestorIds.some(function (excluded) { return ancestors.indexOf(String(excluded)) >= 0; })) fail('Confluence returned a page from an excluded WCSpedia administrative subtree.', 'INVALID_SCOPE');
         var insightArea = false;
@@ -7408,18 +7411,49 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         }
         return { item: item, id: id, ancestors: ancestors, insightArea: insightArea };
       }
+      async function verifyEmptySearchAncestors(payload) {
+        var pending = [], reads = new Map(), next = 0, stopped = false;
+        // Check the entire batch first. An explicit conflict must not launch
+        // compatibility reads for other rows in the same response.
+        payload.results.forEach(function (result, index) {
+          if (!checkScope(result, false, true)) pending.push(index);
+        });
+        async function worker() {
+          while (!stopped && next < pending.length) {
+            throwIfAborted(options.signal);
+            var index = pending[next++], id = String(itemFrom(payload.results[index]).id);
+            try {
+              if (!reads.has(id)) reads.set(id, (async function (pageID) {
+                var url = endpoint('/rest/api/content/' + pageID);
+                url.search = new URLSearchParams({expand: expanded}).toString();
+                var page = await json(await request(url, {signal: options.signal}));
+                throwIfAborted(options.signal);
+                if (!object(page) || String(page.id) !== pageID) fail('Confluence returned a different page while verifying WCSpedia search ancestry.', 'INVALID_SCOPE');
+                checkScope(page, false);
+                return page;
+              })(id));
+              // Use the verified page, including its current content/metadata,
+              // rather than combining it with a possibly stale indexed row.
+              payload.results[index] = await reads.get(id);
+            } catch (error) { stopped = true; throw error; }
+          }
+        }
+        // Bounded by this visible result batch, with at most three reads active.
+        // No recursive parent crawl, persistent permissions cache or wider CQL.
+        await Promise.all(Array.from({length: Math.min(3, pending.length)}, worker));
+      }
       var response = await fetchResults(contentTransport);
       var indexedTotal = typeof search.resultTotal === 'function' ? search.resultTotal(response) : null;
       var incomplete = false;
-      response.results.forEach(function (result) { if (!checkScope(result, !contentTransport)) incomplete = true; });
-      if (incomplete) {
-        // A single bounded Content query repeats the exact root/space/area CQL.
-        // Visible-card metadata stays in this batch; no per-page fetch or whole-space fallback.
+      response.results.forEach(function (result) { if (!checkScope(result, !contentTransport, true)) incomplete = true; });
+      var retriedContent = false;
+      if (incomplete && !contentTransport) {
+        // Repeat the exact root/space/area CQL once for indexed expansions.
         if (position.cursor) fail('Confluence omitted metadata on a cursor page. Restart this search.', 'INVALID_SCOPE');
         response = await fetchResults(true);
-        response.results.forEach(function (result) { checkScope(result, false); });
-        contentTransport = true; preferContentSearch = true;
+        contentTransport = true; preferContentSearch = true; retriedContent = true;
       }
+      if (incomplete) await verifyEmptySearchAncestors(response);
       var results = response.results.map(function (result) {
         var checked = checkScope(result, false), item = checked.item, id = checked.id, ancestors = checked.ancestors;
         var link = result.url || (item._links || {}).webui, href = null;
@@ -7453,7 +7487,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var total = typeof search.resultTotal === 'function' ? search.resultTotal(response) : integer(response.totalSize, 0) ? response.totalSize : integer(response.totalCount, 0) ? response.totalCount : integer(response.total, 0) ? response.total : null;
       // A compatibility retry uses the identical CQL and authenticated session.
       // Preserve its indexed total if the Content endpoint omits count metadata.
-      if (total == null && incomplete) total = indexedTotal;
+      if (total == null && retriedContent) total = indexedTotal;
       var nextContinuation = searchContinuation(response, results, cql, limit, position, total, contentTransport);
       if (nextContinuation && contentTransport) nextContinuation.transport = 'content';
       // A new article is readable before the CQL index catches up. Recover an
@@ -10565,5 +10599,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['mine'] = { version: '2a1ede0994e1' };
+  modules['mine'] = { version: 'c645a84536a4' };
 })();
