@@ -147,10 +147,14 @@
       // Callers can annotate their own page without changing another reader.
       return clone(result);
     }
-    async function writable(pageId, action, options, requireUpdate) {
+    function writableTarget(pageId, action) {
+      if (!id(pageId)) fail('Use a numeric page ID and native expansion names.', 'CONFIGURATION');
       // A dedicated JSON host can remain protected from page body/deletion
       // operations while explicitly accepting its managed property/file pair.
       if (protectedSet.has(pageId) && !(storageSet.has(pageId) && ['json.write', 'property.write'].includes(action))) fail('This page is protected from WCSpedia storage writes.', 'FORBIDDEN');
+    }
+    async function writable(pageId, action, options, requireUpdate) {
+      writableTarget(pageId, action);
       var nativePage = await page(pageId, '', options);
       if (requireUpdate && (!Array.isArray(nativePage.operations) || !nativePage.operations.some(function (op) { return op.operation === 'update' && op.targetType === 'page'; }))) fail('Native Confluence edit permission is required for this storage page.', 'FORBIDDEN');
       if (config.authorize && await config.authorize({ action: action, pageId: pageId, page: clone(nativePage) }) !== true) fail('The configured WCSpedia policy does not permit this write.', 'FORBIDDEN');
@@ -224,8 +228,11 @@
     async function putProperty(pageId, key, value, expectedVersion, options) {
       options = options || {}; keyCheck(key); var encoded = jsonBytes(value, MAX_PROPERTY_BYTES);
       if (expectedVersion !== null && !integer(expectedVersion, 1)) fail('Use null to create a property or its current CAS version to update it.', 'CONFIGURATION');
-      await writable(pageId, 'property.write', options, true);
-      var previous = await getProperty(pageId, key, options), nextVersion = expectedVersion === null ? 1 : expectedVersion + 1;
+      writableTarget(pageId, 'property.write');
+      // Both checks are fresh reads. Overlap their network latency; the CAS
+      // mutation still waits for native permission and the expected revision.
+      var checks = await Promise.all([writable(pageId, 'property.write', options, true), getProperty(pageId, key, options)]);
+      var previous = checks[1], nextVersion = expectedVersion === null ? 1 : expectedVersion + 1;
       if ((previous ? previous.version.number : null) !== expectedVersion) fail('The content property changed. Reload before writing.', 'CONFLICT');
       var payload = { key: key, value: JSON.parse(encoded.text), version: { number: nextVersion } };
       if (previous) payload.id = previous.id;
@@ -326,10 +333,13 @@
       options = options || {}; fileCheck(filename); keyCheck(pointerKey);
       var encoded = jsonBytes(data, MAX_BYTES), hash = await digest(encoded.bytes), requestId = options.requestId;
       if (!integer(options.expectedRevision) || !integer(options.expectedAttachmentVersion) || typeof requestId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId)) fail('Provide the original request ID and expected JSON/native revisions.', 'CONFIGURATION');
-      await writable(pageId, 'json.write', options, true);
-      var currentUser = await user({ signal: options.signal }), actor = currentUser && currentUser.type === 'known' && (currentUser.userKey ? 'key:' + currentUser.userKey : currentUser.accountId ? 'account:' + currentUser.accountId : currentUser.username ? 'user:' + currentUser.username.toUpperCase() : null);
+      writableTarget(pageId, 'json.write');
+      // These independent reads must all succeed before reserving or uploading.
+      // No account, permission or JSON revision is reused from an earlier save.
+      var checks = await Promise.all([writable(pageId, 'json.write', options, true), user({ signal: options.signal }), snapshot(pageId, filename, pointerKey, options)]);
+      var currentUser = checks[1], actor = currentUser && currentUser.type === 'known' && (currentUser.userKey ? 'key:' + currentUser.userKey : currentUser.accountId ? 'account:' + currentUser.accountId : currentUser.username ? 'user:' + currentUser.username.toUpperCase() : null);
       if (!actor) fail('A signed-in native Confluence account is required.', 'AUTH_REQUIRED');
-      var before = await snapshot(pageId, filename, pointerKey, options), pointer = before.pointer;
+      var before = checks[2], pointer = before.pointer;
       function matches(receipt) { return receipt && receipt.requestId === requestId && receipt.sha256 === hash && receipt.actor === actor && receipt.expectedRevision === options.expectedRevision && receipt.expectedAttachmentVersion === options.expectedAttachmentVersion; }
       if (pointer && pointer.lastWrite && pointer.lastWrite.requestId === requestId) {
         if (!matches(pointer.lastWrite) || !same(before.baseline, pointer.attachment)) fail('This request ID was already used or its attachment has since changed. Reload the latest JSON.', 'CONFLICT');
