@@ -288,5 +288,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: '49d16709df30' };
+  modules['faq'] = { version: 'b3c0c5f49085' };
 })();

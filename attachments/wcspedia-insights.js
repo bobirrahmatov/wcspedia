@@ -3769,7 +3769,7 @@
     if (!origin || base.origin !== origin || base.protocol !== 'https:' || base.username || base.password || base.search || base.hash || !/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context || '/') || typeof fetcher !== 'function' || !crypto || !crypto.subtle || typeof crypto.getRandomValues !== 'function') fail('Use the signed-in HTTPS Confluence origin with Web Crypto and fetch.', 'CONFIGURATION');
     var spaceKey = config.spaceKey, roots = [config.rootPageId].concat(config.extraRootPageIds || []), allowed = config.allowedPageIds || [], protectedIds = config.protectedPageIds || [], storageIds = config.storagePageIds || [];
     if (typeof spaceKey !== 'string' || !spaceKey.trim() || !Array.isArray(roots) || !roots.length || roots.some(function (v) { return !id(v); }) || !Array.isArray(allowed) || !Array.isArray(protectedIds) || !Array.isArray(storageIds) || allowed.concat(protectedIds, storageIds).some(function (v) { return !id(v); }) || config.authorize != null && typeof config.authorize !== 'function') fail('Configure the exact space key, roots and permitted page IDs.', 'CONFIGURATION');
-    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds);
+    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds), pendingPageReads = new Map();
     async function digest(bytes) { var hash = await crypto.subtle.digest('SHA-256', bytes); return Array.from(new Uint8Array(hash), function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function token() { var bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function route(path) {
@@ -3799,6 +3799,9 @@
     async function transport(path, init) {
       init = init || {}; var url = route(path), method = (init.method || 'GET').toUpperCase(), mutation = !['GET', 'HEAD'].includes(method);
       checkAbort(init.signal);
+      // Never reuse a pre-write scope/permission read for a later operation.
+      // Entries otherwise exist only while that exact read is in flight.
+      if (mutation) pendingPageReads.clear();
       var headers = new Headers(init.headers || {});
       if (['authorization', 'cookie', 'proxy-authorization'].some(function (key) { return headers.has(key); })) fail('Use the current Confluence session; do not supply credentials.', 'CONFIGURATION');
       headers.set('Accept', 'application/json'); if (mutation) headers.set('X-Requested-With', 'XMLHttpRequest');
@@ -3851,11 +3854,25 @@
       if (object(expand)) { options = expand; expand = ''; } options = options || {};
       if (!id(pageId) || expand != null && (typeof expand !== 'string' || !/^[A-Za-z0-9.,]*$/.test(expand))) fail('Use a numeric page ID and native expansion names.', 'CONFIGURATION');
       var expansions = Array.from(new Set(['space', 'ancestors', 'operations', 'version'].concat((expand || '').split(',')).filter(Boolean))).join(',');
-      var result = await transport('/rest/api/content/' + pageId + '?expand=' + encodeURIComponent(expansions), { signal: options.signal });
+      checkAbort(options.signal);
+      var readKey = pageId + ':' + expansions, group = pendingPageReads.get(readKey), signal = options.signal || null;
+      if (!group) { group = []; pendingPageReads.set(readKey, group); }
+      var entry = group.find(function (pending) { return pending.signal === signal; });
+      if (!entry) {
+        entry = { signal: signal, promise: transport('/rest/api/content/' + pageId + '?expand=' + encodeURIComponent(expansions), { signal: options.signal }) };
+        group.push(entry);
+      }
+      var result;
+      try { result = await entry.promise; }
+      finally {
+        var index = group.indexOf(entry); if (index >= 0) group.splice(index, 1);
+        if (!group.length && pendingPageReads.get(readKey) === group) pendingPageReads.delete(readKey);
+      }
       checkAbort(options.signal);
       if (!object(result) || String(result.id) !== pageId || result.type !== 'page' || result.status != null && result.status !== 'current' || !result.space || result.space.key !== spaceKey || !Array.isArray(result.ancestors) || result.ancestors.some(function (ancestor) { return !object(ancestor) || !id(String(ancestor.id)); })) fail('The page is not a current page in the configured WCSpedia space.', 'SCOPE');
       if (!rootSet.has(pageId) && !allowedSet.has(pageId) && !result.ancestors.some(function (ancestor) { return rootSet.has(String(ancestor.id)); })) fail('The page is outside the configured WCSpedia roots.', 'SCOPE');
-      return result;
+      // Callers can annotate their own page without changing another reader.
+      return clone(result);
     }
     async function writable(pageId, action, options, requireUpdate) {
       // A dedicated JSON host can remain protected from page body/deletion
@@ -4090,9 +4107,13 @@
         var found = await getProperty(pageId, pointerKey, {});
         if (!found || !same(found.value, committed)) throw error;
       }
-      var finalState = await snapshot(pageId, filename, pointerKey, {});
-      if (!finalState.pointer || !matches(finalState.pointer.lastWrite) || !same(finalState.baseline, committed.attachment)) fail('Another JSON change committed before this confirmation was read. Reload the current state.', 'CONFLICT');
-      return exposed(finalState);
+      // The exact uploaded version was downloaded and SHA-256 checked above.
+      // Reuse those bytes only within this write; confirm its live pointer and
+      // native revision instead of downloading the same attachment again.
+      var finalReads = await Promise.all([getProperty(pageId, pointerKey, {}), metadata(pageId, filename, {})]);
+      var finalProperty = finalReads[0];
+      if (!finalProperty || finalProperty.version.number !== reservation.version.number + 1 || !same(finalProperty.value, committed) || !same(finalReads[1], uploaded)) fail('Another JSON change committed before this confirmation was read. Reload the current state.', 'CONFLICT');
+      return exposed({ data: JSON.parse(encoded.text), revision: finalProperty.version.number, attachmentId: uploaded.id, attachmentVersion: uploaded.version, pointer: committed, baseline: committed.attachment });
     }
     return Object.freeze({ request: request, page: page, user: user, property: property, putProperty: putProperty, readJSON: readJSON, writeJSON: writeJSON, inspectJSON:inspectJSON, reconcileJSON:reconcileJSON, maxBytes: MAX_BYTES });
   }
@@ -4796,7 +4817,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     var origin=deps.origin||(root.location&&root.location.origin),context=(config.contextPath||'/confluence').replace(/\/$/,'');
     if(config.baseUrl){var base=new URL(config.baseUrl,origin);origin=base.origin;context=base.pathname.replace(/\/$/,'');}
     var Form=deps.FormData||root.FormData,BlobType=deps.Blob||root.Blob,lastContext=null;
-    var singlePages=new Map();
+    var singlePages=new Map(),summaryExpansionSupported=true;
     var maxPages=Number.isSafeInteger(config.workspaceMaxPages)?Math.min(1000,Math.max(1,config.workspaceMaxPages)):200;
     async function hashBytes(bytes){if(!crypto||!crypto.subtle)fail('Web Crypto is required for safe request recovery.','CONFIGURATION');return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),function(n){return n.toString(16).padStart(2,'0');}).join('');}
     async function digest(v){return hashBytes(new TextEncoder().encode(v));}
@@ -4806,7 +4827,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     async function page(id,signal,expectedParent){return assertPage(await storage.page(numeric(id),EXPAND,options(signal)),expectedParent);}
     async function restrictions(id,operation,signal){return request('/rest/api/content/'+id+'/restriction/byOperation/'+operation+'?expand=restrictions.user,restrictions.group&limit=200',null,undefined,signal);}
     function restrictionRows(r,operation){if(!r||r.operation!==operation||!object(r.restrictions))fail('Confluence did not return verifiable native restrictions.','INVALID_PERMISSIONS');var users=r.restrictions.user,groups=r.restrictions.group;if(!users||!groups||!Array.isArray(users.results)||!Array.isArray(groups.results))fail('Confluence did not expand native restriction subjects.','INVALID_PERMISSIONS');if((users._links&&users._links.next)||(groups._links&&groups._links.next))fail('The restriction list is too large to verify safely.','PERMISSIONS_LIMIT');return {users:users.results,groups:groups.results};}
-    async function boundaries(signal,reading){
+    async function boundaries(signal,reading,currentUserRead){
       var results=await Promise.all([storage.page(rootId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),storage.page(workingId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),request('/rest/api/space/'+encodeURIComponent(space)+'?expand=operations',null,undefined,signal)]);
       if(results[2].key!==space||results[2].operations!=null&&!Array.isArray(results[2].operations))fail('Confluence space permissions could not be verified.','INVALID_PERMISSIONS');
       var privacyError=null,protectedBy=null;
@@ -4827,7 +4848,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var canCreate=false,permissionError=null;
       if(Array.isArray(results[2].operations))canCreate=op(results[2],'create','page');
       else try {
-        var currentUser=await storage.user(options(signal));
+        var currentUser=await (currentUserRead||storage.user(options(signal)));
         if(!currentUser.userKey)fail('Confluence did not return a user key for the native Add page check.','INVALID_PERMISSIONS');
         var grants=await request('/rest/api/space/'+encodeURIComponent(space)+'/permissions/user/'+encodeURIComponent(currentUser.userKey),null,undefined,signal);
         if(!Array.isArray(grants))fail('Confluence did not return native space permissions.','INVALID_PERMISSIONS');
@@ -4851,7 +4872,8 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       return {people:people,actor:actor,who:who};
     }
     async function contextFor(input,signal,reading){
-      input=input||{};var responses=await Promise.all([input.user?Promise.resolve(input.user):storage.user(options(signal)),input.policy?Promise.resolve(input.policy):deps.loadPolicy(options(signal)),input.skipDocuments?Promise.resolve(null):boundaries(signal,reading)]);
+      input=input||{};var currentUserRead=input.user?Promise.resolve(input.user):storage.user(options(signal));
+      var responses=await Promise.all([currentUserRead,input.policy?Promise.resolve(input.policy):deps.loadPolicy(options(signal)),input.skipDocuments?Promise.resolve(null):boundaries(signal,reading,currentUserRead)]);
       var policy=E.validatePolicy(responses[1].data||responses[1]),catalog=clone(input.catalog||(lastContext&&lastContext.catalog)||config.catalog||{schemaVersion:1,isDemo:false,people:[],areas:[],documents:[]});
       var dir=directory(catalog,policy,responses[0]);var ctx={user:responses[0],policy:policy,bounds:responses[2],catalog:catalog,dir:dir,access:input.access||{}};lastContext=ctx;return ctx;
     }
@@ -4862,21 +4884,31 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       d.confluencePageId=String(p.id);d.confluencePageVersion=p.version.number;
       return {state:result,document:d,people:value.people,media:value.media||{}};
     }
+    function validSummary(summary,p){return object(summary)&&(!summary.key||summary.key===SUMMARY)&&(!summary.content||String(summary.content.id)===String(p.id))&&object(summary.value)&&summary.value.schemaVersion===1&&typeof summary.value.documentKey==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(summary.value.documentKey);}
+    async function summaryForPage(p,signal){
+      var summary=p.metadata&&p.metadata.properties&&p.metadata.properties[SUMMARY];
+      // Omitted/unexpanded metadata is inconclusive, not evidence that the
+      // document is absent. The exact property endpoint remains the fallback.
+      if(!validSummary(summary,p))summary=await storage.property(p.id,SUMMARY,options(signal));
+      if(summary&&!validSummary(summary,p))fail('A document has invalid identity metadata. Reconcile that page before continuing.','INVALID_DATA');
+      return summary;
+    }
     async function children(signal,parentId){
       parentId=parentId||workingId;
       var out=[],start=0,search=false,seen=new Set();
-      // Avoid body and nested content-property expansion on the child collection.
-      // Some DC installations reject these expansions with HTTP 500. Fetch the
-      // exact working document only after its summary matches the current user.
-      var expand='space,ancestors,version,operations';
+      // Identity recovery needs every summary, never every article/history.
+      // DC can expand this one property in its native child response. Older
+      // installations that reject it retry the same scoped listing without it.
+      var expand='space,ancestors,version,operations',withSummary=summaryExpansionSupported;
       var cql='type = page AND space = "'+space+'" AND parent = '+parentId+' ORDER BY id ASC';
       while(out.length<maxPages){
         var response,limit=Math.min(50,maxPages-out.length);
         try{
           var path=search?'/rest/api/content/search?cql='+encodeURIComponent(cql):'/rest/api/content/'+parentId+'/child/page?';
-          response=await request(path+(search?'&':'')+'limit='+limit+'&start='+start+'&expand='+encodeURIComponent(expand),null,undefined,signal);
+          response=await request(path+(search?'&':'')+'limit='+limit+'&start='+start+'&expand='+encodeURIComponent(expand+(withSummary?',metadata.properties.'+SUMMARY:'')),null,undefined,signal);
         }catch(error){
           aborted(signal);
+          if(withSummary&&([400,405,501].includes(error.status)||(error.status>=500&&error.status<=599))){withSummary=false;summaryExpansionSupported=false;continue;}
           // Never turn denied access, missing parents or an aborted request into
           // a search. Restart once on unsupported/failed collection endpoints.
           if(!search&&([400,405,501].includes(error.status)||(error.status>=500&&error.status<=599))){search=true;out=[];seen.clear();start=0;continue;}
@@ -4909,7 +4941,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(scope.startsWith('document:')){var documentKey=key(scope.slice(9)),target=await findSeed('WCSpedia working '+documentKey,'wcs-document-'+documentKey,signal)||await findSingle(documentKey,signal);if(target)rows=[target];}
       else if(scope!=='create'){var lists=await Promise.all(scope==='review'?[children(signal)]:[children(signal),children(signal,insightsId)]);rows=lists.flat();}
       var entries=await parallel(rows,async function(p){
-        var props=p.metadata&&p.metadata.properties,summary=props&&props[SUMMARY];if(!summary)summary=await storage.property(p.id,SUMMARY,options(signal));
+        var summary=await summaryForPage(p,signal);
         if(!summary||!summary.value||summary.value.schemaVersion!==1)return null;
         if(parent(p)===insightsId&&summary.value.singlePageInsight!==true)return null;
         if(ctx.dir.actor.role!=='Manager'&&!(summary.value.people||[]).includes(ctx.dir.actor.id))return null;
@@ -4928,7 +4960,10 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if(journal&&journal.value&&!journal.value.done)pending.push({documentKey:summary.value.documentKey,requestId:journal.value.requestId,action:journal.value.action});
         return item.document?Object.assign(item,{page:p,pending:!!(journal&&journal.value&&!journal.value.done)}):null;
       });
-      entries=entries.filter(Boolean);ctx.dir=directory(ctx.catalog,ctx.policy,ctx.user,entries.flatMap(function(e){return e.people;}));
+      return sessionWithEntries(ctx,entries.filter(Boolean),pending,scope);
+    }
+    function sessionWithEntries(ctx,entries,pending,scope){
+      ctx.dir=directory(ctx.catalog,ctx.policy,ctx.user,entries.flatMap(function(e){return e.people;}));
       var documents=clone((ctx.catalog.documents||[]).filter(function(d){return !d.nativeSessionWorkflow;})),pages={},versions={},permissions={};
       entries.forEach(function(e){var d=e.document,index=documents.findIndex(function(v){return v.id===d.id;});if(index>=0)documents[index]=d;else documents.push(d);pages[d.id]=e.page.operations||[];versions[d.id]=e.page.version.number;permissions[d.id]={edit:(d.singlePageInsight||ctx.bounds.draftsProtected)&&!e.pending&&op(e.page,'update')&&E.hasGrant(ctx.policy,ctx.dir.who,'content.edit',d.id),delete:(d.singlePageInsight||ctx.bounds.draftsProtected)&&!e.pending&&op(e.page,'delete')&&E.hasGrant(ctx.policy,ctx.dir.who,'content.delete',d.id)};});
       var effective=Object.assign({},ctx.access.effectivePermissions||{});effective['content.create']=ctx.bounds.draftsProtected&&ctx.bounds.canCreate&&E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*');
@@ -4937,6 +4972,20 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var data=Object.assign({},ctx.catalog,{people:ctx.dir.people,documents:documents,isDemo:false});
       var actorId=ctx.dir.actor.id,assigned=entries.some(function(e){return [e.document.authorId,e.document.reviewerId,e.document.approverId].includes(actorId)&&(e.document.singlePageInsight||ctx.bounds.draftsProtected)&&op(e.page,'update');});
       return Object.assign({},ctx.access,{data:data,actorId:actorId,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:true,workspaceScope:scope,discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,creationMessage:ctx.bounds.creationMessage,creationCode:ctx.bounds.creationCode,canSubmit:effective['content.create']||assigned,nativePermissions:nativePermissions,effectivePermissions:effective,documentPermissions:permissions,nativePageVersions:versions,pendingOperations:pending,workflowMode:'cooperative-native'});
+    }
+    async function completedSession(ctx,p,doc,people,signal){
+      // Writes and the final operation receipt have already been verified. Build
+      // this action's response from those results instead of discovering and
+      // downloading the same document again. The next action always rereads its
+      // identity, grants, native page, state and journal before writing.
+      // Some native PUT responses omit operations. Only in that case fetch the
+      // actual page; do not turn omitted permission metadata into disabled UI.
+      if(!Array.isArray(p.operations)){
+        p=await page(p.id,signal,doc.singlePageInsight?insightsId:workingId);
+        if(p.version.number!==doc.confluencePageVersion||!marked(p,'wcs-document-'+doc.id))fail('The document changed after its save was confirmed. Reload its native history.','CONFLICT');
+      }
+      var visible=ctx.dir.actor.role==='Manager'||[doc.ownerId,doc.authorId,doc.reviewerId,doc.approverId].includes(ctx.dir.actor.id);
+      return sessionWithEntries(ctx,visible?[{document:clone(doc),people:people,page:p,pending:false}]:[],[],'document:'+doc.id);
     }
     async function assignments(doc,people,signal){
       var ids=Array.from(new Set([doc.authorId,doc.reviewerId,doc.approverId].filter(Boolean)));
@@ -5039,7 +5088,10 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(cached){try{var known=await page(cached,signal,insightsId);if(!marked(known,'wcs-single-insight')||!marked(known,'wcs-document-'+documentKey))fail('The Insights page identity changed.','PAGE_SCOPE');return known;}catch(error){if(error.status!==404)throw error;fail('The previously identified Insights page is no longer readable. Restore access or reconcile its native history before retrying; no replacement page was created.','UNKNOWN_COMMIT');}}
       var seed=await findSeed('WCSpedia insight '+documentKey,'wcs-document-'+documentKey,signal,insightsId);
       if(seed){if(!marked(seed,'wcs-single-insight'))fail('The Insights seed identity changed.','PAGE_SCOPE');singlePages.set(documentKey,seed.id);return seed;}
-      var candidates=await children(signal,insightsId),found=await parallel(candidates,async function(p){var summary=await storage.property(p.id,SUMMARY,options(signal));return summary&&summary.value&&summary.value.singlePageInsight===true&&summary.value.documentKey===documentKey?p:null;});
+      var candidates=await children(signal,insightsId),found=await parallel(candidates,async function(p){
+        var summary=await summaryForPage(p,signal);
+        return summary&&summary.value.singlePageInsight===true&&summary.value.documentKey===documentKey?p:null;
+      });
       found=found.filter(Boolean);if(found.length>1)fail('Duplicate Insights metadata needs administrator review.','CONFLICT');if(!found.length)return null;
       var result=await page(found[0].id,signal,insightsId);if(!marked(result,'wcs-single-insight')||!marked(result,'wcs-document-'+documentKey))fail('The Insights page identity changed.','PAGE_SCOPE');singlePages.set(documentKey,result.id);return result;
     }
@@ -5139,7 +5191,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       [['tag','tags'],['process','processes'],['region','regions']].forEach(function(pair){(v[pair[1]]||[]).forEach(function(value){labels.push(label(pair[0],value));});});labels=Array.from(new Set(labels.filter(Boolean)));
       var previous=await request('/rest/api/content/'+p.id+'/label?limit=200',null,undefined,signal);if(!previous||!Array.isArray(previous.results)||previous._links&&previous._links.next)fail('The page label list could not be safely reconciled.','LABEL_LIMIT');
       var obsolete=previous.results.map(function(l){return l.name;}).filter(function(name){return /^wcs-(?:area|type|tag|topic|process|region)-/.test(name)&&!labels.includes(name);});
-      for(var name of obsolete)await request('/rest/api/content/'+p.id+'/label?name='+encodeURIComponent(name),'DELETE',undefined,signal);
+      await mediaBatch(obsolete,async function(name){await request('/rest/api/content/'+p.id+'/label?name='+encodeURIComponent(name),'DELETE',undefined,signal);});
       var existing=new Set(previous.results.filter(function(l){return l.prefix!=='my';}).map(function(l){return l.name;}));
       var missing=labels.filter(function(name){return !existing.has(name);});
       if(missing.length)await request('/rest/api/content/'+p.id+'/label','POST',missing.map(function(name){return {prefix:'global',name:name};}),signal);
@@ -5171,7 +5223,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var ctx=await contextFor({catalog:session&&session.data},signal,true),actor=ctx.dir.actor,who=ctx.dir.who;
       if(!session||session.actorId!==actor.id||!session.identity||session.identity.soeid!==who.soeid||['userKey','accountId'].some(function(k){return (session.identity[k]||null)!==(who[k]||null);}))fail('Your signed-in account changed. Reload before saving.','IDENTITY_MAPPING');
       if(command.expectedEntitlementRevision!=null&&command.expectedEntitlementRevision!==ctx.policy.revision)fail('Entitlements changed. Reload before saving.','CONFLICT');
-      var creating=command.action==='create',documentKey=key(creating?command.fields&&command.fields.id:command.documentKey||command.docId),doc,p,state;
+      var creating=command.action==='create',documentKey=key(creating?command.fields&&command.fields.id:command.documentKey||command.docId),doc,p,state,journal,verifiedAssignments=null,summarySynced=false;
       var fingerprint=await digest(JSON.stringify(canonical(command)));
       if(creating){
         if(!ctx.bounds.canCreate||!E.hasGrant(ctx.policy,who,'content.create','*'))fail('Your account needs Add page permission and the WCSpedia creation grant.','FORBIDDEN');
@@ -5179,7 +5231,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if((!areas[command.fields.area]&&!(Content.isDirectPublication(command.fields)))||!TYPES.includes(command.fields.type))fail('Choose a configured business area and content type.','INVALID_MAPPING');
         doc=W.createDocument(command.fields,{people:ctx.dir.people,actorId:actor.id,actorSOEID:who.soeid,now:new Date().toISOString(),requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:{actorId:actor.id,documentId:documentKey,create:true}});
         statePreflight(doc,ctx.dir.people);await Renderer.collectMedia(doc,W.currentVersion(doc),{media:{}});
-        if(!Content.isDirectPublication(doc))await assignments(doc,ctx.dir.people,signal);
+        if(!Content.isDirectPublication(doc))verifiedAssignments=await assignments(doc,ctx.dir.people,signal);
         // Resume old two-page saves in place. Never move their private history.
         p=Content.isDirectPublication(doc)?await findSeed('WCSpedia working '+documentKey,'wcs-document-'+documentKey,signal):null;
         if(Content.isDirectPublication(doc)&&!p){
@@ -5188,7 +5240,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           if(!p)p=await createPage('WCSpedia insight '+documentKey,documentKey,'published',requestId,signal,insightsId);
           singlePages.set(documentKey,p.id);doc.singlePageInsight=true;
         }else{if(!ctx.bounds.draftsProtected)fail(ctx.bounds.creationMessage,ctx.bounds.creationCode);if(!p)p=await createPage('WCSpedia working '+documentKey,documentKey,'working',requestId,signal);}
-        state=await readState(p,signal);
+        var initialReads=await Promise.all([readState(p,signal),storage.property(p.id,JOURNAL,options(signal))]);state=initialReads[0];journal=initialReads[1];
       }else{
         var entry=(session.data.documents||[]).find(function(d){return d.id===documentKey;});if(!entry||!entry.confluencePageId)fail('Reload the document workspace before saving.','NOT_FOUND');try{p=await page(entry.confluencePageId,signal,entry.singlePageInsight?insightsId:workingId);}catch(error){
           if(error.status!==404||!entry.singlePageInsight||command.action!=='delete')throw error;
@@ -5196,7 +5248,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           if(!E.hasGrant(ctx.policy,who,'content.delete',documentKey)||!deleted||deleted.status!=='trashed'||String(deleted.id)!==String(entry.confluencePageId)||deleted.space&&deleted.space.key!==space||!marked(deleted,'wcs-single-insight')||!marked(deleted,'wcs-document-'+documentKey)||!marked(deleted,'wcs-deleted-'+requestId+'-'+fingerprint))fail('Article deletion could not be confirmed.','UNKNOWN_COMMIT');
           singlePages.delete(documentKey);return loadWithContext({catalog:ctx.catalog,signal:signal,workspaceScope:'document:'+documentKey},ctx);
         }
-        state=await readState(p,signal);doc=state.document;if(!doc)fail('The working document metadata is unavailable.','INVALID_DATA');ctx.dir=directory(ctx.catalog,ctx.policy,ctx.user,state.people);actor=ctx.dir.actor;
+        var currentReads=await Promise.all([readState(p,signal),storage.property(p.id,JOURNAL,options(signal))]);state=currentReads[0];journal=currentReads[1];doc=state.document;if(!doc)fail('The working document metadata is unavailable.','INVALID_DATA');ctx.dir=directory(ctx.catalog,ctx.policy,ctx.user,state.people);actor=ctx.dir.actor;
       }
       if(!doc.singlePageInsight&&!ctx.bounds.draftsProtected)fail(ctx.bounds.creationMessage,ctx.bounds.creationCode);
       if(Content.isInsightType(doc.type)&&!['create','edit','revise','delete','reassign-owner'].includes(command.action))fail('This content publishes directly to Insights; open it in the editor to publish.','INVALID_ACTION');
@@ -5206,7 +5258,6 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         var nextUser=await request('/rest/api/user?username='+encodeURIComponent((nextOwner.confluence||{}).username||nextOwner.soeid),null,undefined,signal);
         if(!E.identity(nextUser)||E.identity(nextUser).soeid!==E.normalizeSOEID(nextOwner.soeid))fail('The new owner cannot be verified in Confluence.','IDENTITY_MAPPING');
       }
-      var journal=await storage.property(p.id,JOURNAL,options(signal));
       if(journal&&journal.value&&journal.value.requestId===requestId){if(journal.value.fingerprint!==fingerprint||journal.value.actorSOEID!==who.soeid)fail('This request ID was already used for another action.','CONFLICT');if(journal.value.done)return loadWithContext({catalog:ctx.catalog,signal:signal,workspaceScope:'document:'+documentKey},ctx);}
       else if(journal&&journal.value&&!journal.value.done)fail('Another operation is unfinished. Retry that original action before making a new change.','WRITE_PENDING');
       else{
@@ -5235,7 +5286,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // publisher. Only the approval workflow provisions assigned editors.
       // Keep existing restrictions untouched; never retry a denial by removing them.
       if(marked(p,'wcs-single-insight'))doc=publicState(doc);
-      var single=doc.singlePageInsight===true,direct=Content.isDirectPublication(doc),users=direct?[]:await assignments(doc,ctx.dir.people,signal);
+      var single=doc.singlePageInsight===true,direct=Content.isDirectPublication(doc),users=direct?[]:verifiedAssignments||await assignments(doc,ctx.dir.people,signal);
       // Existing drafts may predate automatic assignment or have had native
       // access changed. Reconcile before handing work to the reviewer and when
       // opening a new revision, as well as on initial creation. Restriction
@@ -5244,7 +5295,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var media=await stageMedia(doc,p,state.media||{},p.id,signal);doc._people=j.people||ctx.dir.people;
       if(marked(p,'wcs-operation-'+requestId)?p.version.number!==j.expectedNativeVersion+1:p.version.number!==j.expectedNativeVersion)fail('The native working page changed during this operation.','CONFLICT');
       if(single){
-        await destination(doc,signal);await ensureSummary(p,doc,signal);
+        await destination(doc,signal);await ensureSummary(p,doc,signal);summarySynced=true;
         if(command.action!=='delete'){
           p=await bodyWrite(p,doc,media,'published',requestId,insightsId,signal);
           doc.publishedConfluencePageId=String(p.id);doc.publishedConfluencePageVersion=p.version.number;doc.publishedReader=p.readerReady===true;
@@ -5273,10 +5324,10 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       Object.keys(media).forEach(function(k){if(media[k].url){media[k].sourceUrl=media[k].url;if(k.startsWith('data:')){media[media[k].url]=media[k];delete media[k];}}});
       await checkpoint({stage:'native-written'});
       await storage.writeJSON(p.id,FILE,STATE,{schemaVersion:1,document:doc,people:j.people||ctx.dir.people,media:media},{expectedRevision:j.priorStateRevision,expectedAttachmentVersion:j.priorAttachmentVersion,expectedFingerprint:j.priorFingerprint,requestId:requestId,signal:signal});
-      await ensureSummary(p,doc,signal);
+      if(!summarySynced)await ensureSummary(p,doc,signal);
       if(single&&command.action==='delete')return finishSingleDelete(p,doc,journal,requestId,fingerprint,ctx,signal);
       await checkpoint({done:true,stage:'complete'});
-      return loadWithContext({catalog:ctx.catalog,signal:signal,workspaceScope:'document:'+documentKey},ctx);
+      return completedSession(ctx,p,doc,j.people||ctx.dir.people,signal);
     }
     return Object.freeze({load:load,submit:submit,capabilities:capabilities});
   }
@@ -6723,12 +6774,28 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         try {
           var refreshedUser = await nativeStorage().user(), refreshedIdentity = entitlementHelper().identity(refreshedUser);
           if (!refreshedIdentity || refreshedIdentity.soeid !== nextSession.identity.soeid || ['userKey', 'accountId'].some(function (key) { return (refreshedIdentity[key] || null) !== (nextSession.identity[key] || null); })) fail('Your account changed after saving. Reload the workspace.', 'IDENTITY_MAPPING');
-          var freshAccess = await resolveAccess(refreshedUser, {}, null);
-          // Preserve document-specific rights from the workflow's native reads,
-          // and restore freshly read policy-host access for navigation/actions.
+          // The committed workflow already checked native creation boundaries.
+          // Refresh identity, policy and policy-host rights without repeating that
+          // UI-only capability probe. Every subsequent mutation rechecks natively.
+          var freshAccess = await resolveAccess(refreshedUser, {}, null, undefined, true), E = entitlementHelper();
+          if (freshAccess.entitlementPolicy.revision !== nextSession.entitlementPolicy.revision) fail('Entitlements changed during saving. Reload the workspace.', 'REFRESH_REQUIRED');
+          var verifiedCreate = nextSession.effectivePermissions['content.create'] === true && E.nativeHas(freshAccess.nativePermissions.root, 'read') && E.hasGrant(freshAccess.entitlementPolicy, refreshedIdentity, 'content.create', '*');
+          freshAccess.nativePermissions.root = freshAccess.nativePermissions.root.filter(function (operation) { return operation.operation !== 'create'; });
+          if (verifiedCreate) freshAccess.nativePermissions.root.push({operation:'create',targetType:'page'});
+          freshAccess.effectivePermissions['content.create'] = verifiedCreate && E.effective(freshAccess.entitlementPolicy, refreshedIdentity, 'content.create', {native:freshAccess.nativePermissions});
+          freshAccess.creationMessage = nextSession.creationMessage || '';
+          freshAccess.creationCode = nextSession.creationCode || '';
+          // Retain the verified document operations, gated again by the policy
+          // just read, so grants revoked during a save cannot leave enabled UI.
           freshAccess.nativePermissions.documents = nextSession.nativePermissions.documents;
           freshAccess.nativePageVersions = nextSession.nativePageVersions;
-          freshAccess.documentPermissions = nextSession.documentPermissions;
+          Object.keys(nextSession.documentPermissions || {}).forEach(function (id) {
+            var verified = nextSession.documentPermissions[id];
+            freshAccess.documentPermissions[id] = {
+              edit: verified.edit === true && E.effective(freshAccess.entitlementPolicy, refreshedIdentity, 'content.edit', {native:freshAccess.nativePermissions,documentKey:id}),
+              delete: verified.delete === true && E.effective(freshAccess.entitlementPolicy, refreshedIdentity, 'content.delete', {native:freshAccess.nativePermissions,documentKey:id})
+            };
+          });
           nextSession = Object.assign(nextSession, freshAccess);
         } catch (_) { fail('The action was saved, but current access could not be refreshed. Reload before continuing.', 'REFRESH_REQUIRED'); }
         last = nextSession; accessLast = clone(nextSession); clearSearchReads();
@@ -10642,5 +10709,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['insights'] = { version: '49d16709df30' };
+  modules['insights'] = { version: 'b3c0c5f49085' };
 })();

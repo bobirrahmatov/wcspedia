@@ -20,7 +20,7 @@
   }
 
   if (mount.dataset.wcsPageStarted) return;
-  if (!window.WCSPageModules || window.WCSPageModules['saved']?.version !== '49d16709df30') {
+  if (!window.WCSPageModules || window.WCSPageModules['saved']?.version !== 'b3c0c5f49085') {
     failPage('Load wcspedia-saved-items.js before wcspedia-saved-itemsHTMLPage.js. Use both files from the same upload package and check their attachment URLs.');
     return;
   }

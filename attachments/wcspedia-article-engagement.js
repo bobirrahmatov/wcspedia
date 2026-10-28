@@ -42,7 +42,7 @@
     if (!origin || base.origin !== origin || base.protocol !== 'https:' || base.username || base.password || base.search || base.hash || !/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context || '/') || typeof fetcher !== 'function' || !crypto || !crypto.subtle || typeof crypto.getRandomValues !== 'function') fail('Use the signed-in HTTPS Confluence origin with Web Crypto and fetch.', 'CONFIGURATION');
     var spaceKey = config.spaceKey, roots = [config.rootPageId].concat(config.extraRootPageIds || []), allowed = config.allowedPageIds || [], protectedIds = config.protectedPageIds || [], storageIds = config.storagePageIds || [];
     if (typeof spaceKey !== 'string' || !spaceKey.trim() || !Array.isArray(roots) || !roots.length || roots.some(function (v) { return !id(v); }) || !Array.isArray(allowed) || !Array.isArray(protectedIds) || !Array.isArray(storageIds) || allowed.concat(protectedIds, storageIds).some(function (v) { return !id(v); }) || config.authorize != null && typeof config.authorize !== 'function') fail('Configure the exact space key, roots and permitted page IDs.', 'CONFIGURATION');
-    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds);
+    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds), pendingPageReads = new Map();
     async function digest(bytes) { var hash = await crypto.subtle.digest('SHA-256', bytes); return Array.from(new Uint8Array(hash), function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function token() { var bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function route(path) {
@@ -72,6 +72,9 @@
     async function transport(path, init) {
       init = init || {}; var url = route(path), method = (init.method || 'GET').toUpperCase(), mutation = !['GET', 'HEAD'].includes(method);
       checkAbort(init.signal);
+      // Never reuse a pre-write scope/permission read for a later operation.
+      // Entries otherwise exist only while that exact read is in flight.
+      if (mutation) pendingPageReads.clear();
       var headers = new Headers(init.headers || {});
       if (['authorization', 'cookie', 'proxy-authorization'].some(function (key) { return headers.has(key); })) fail('Use the current Confluence session; do not supply credentials.', 'CONFIGURATION');
       headers.set('Accept', 'application/json'); if (mutation) headers.set('X-Requested-With', 'XMLHttpRequest');
@@ -124,11 +127,25 @@
       if (object(expand)) { options = expand; expand = ''; } options = options || {};
       if (!id(pageId) || expand != null && (typeof expand !== 'string' || !/^[A-Za-z0-9.,]*$/.test(expand))) fail('Use a numeric page ID and native expansion names.', 'CONFIGURATION');
       var expansions = Array.from(new Set(['space', 'ancestors', 'operations', 'version'].concat((expand || '').split(',')).filter(Boolean))).join(',');
-      var result = await transport('/rest/api/content/' + pageId + '?expand=' + encodeURIComponent(expansions), { signal: options.signal });
+      checkAbort(options.signal);
+      var readKey = pageId + ':' + expansions, group = pendingPageReads.get(readKey), signal = options.signal || null;
+      if (!group) { group = []; pendingPageReads.set(readKey, group); }
+      var entry = group.find(function (pending) { return pending.signal === signal; });
+      if (!entry) {
+        entry = { signal: signal, promise: transport('/rest/api/content/' + pageId + '?expand=' + encodeURIComponent(expansions), { signal: options.signal }) };
+        group.push(entry);
+      }
+      var result;
+      try { result = await entry.promise; }
+      finally {
+        var index = group.indexOf(entry); if (index >= 0) group.splice(index, 1);
+        if (!group.length && pendingPageReads.get(readKey) === group) pendingPageReads.delete(readKey);
+      }
       checkAbort(options.signal);
       if (!object(result) || String(result.id) !== pageId || result.type !== 'page' || result.status != null && result.status !== 'current' || !result.space || result.space.key !== spaceKey || !Array.isArray(result.ancestors) || result.ancestors.some(function (ancestor) { return !object(ancestor) || !id(String(ancestor.id)); })) fail('The page is not a current page in the configured WCSpedia space.', 'SCOPE');
       if (!rootSet.has(pageId) && !allowedSet.has(pageId) && !result.ancestors.some(function (ancestor) { return rootSet.has(String(ancestor.id)); })) fail('The page is outside the configured WCSpedia roots.', 'SCOPE');
-      return result;
+      // Callers can annotate their own page without changing another reader.
+      return clone(result);
     }
     async function writable(pageId, action, options, requireUpdate) {
       // A dedicated JSON host can remain protected from page body/deletion
@@ -363,9 +380,13 @@
         var found = await getProperty(pageId, pointerKey, {});
         if (!found || !same(found.value, committed)) throw error;
       }
-      var finalState = await snapshot(pageId, filename, pointerKey, {});
-      if (!finalState.pointer || !matches(finalState.pointer.lastWrite) || !same(finalState.baseline, committed.attachment)) fail('Another JSON change committed before this confirmation was read. Reload the current state.', 'CONFLICT');
-      return exposed(finalState);
+      // The exact uploaded version was downloaded and SHA-256 checked above.
+      // Reuse those bytes only within this write; confirm its live pointer and
+      // native revision instead of downloading the same attachment again.
+      var finalReads = await Promise.all([getProperty(pageId, pointerKey, {}), metadata(pageId, filename, {})]);
+      var finalProperty = finalReads[0];
+      if (!finalProperty || finalProperty.version.number !== reservation.version.number + 1 || !same(finalProperty.value, committed) || !same(finalReads[1], uploaded)) fail('Another JSON change committed before this confirmation was read. Reload the current state.', 'CONFLICT');
+      return exposed({ data: JSON.parse(encoded.text), revision: finalProperty.version.number, attachmentId: uploaded.id, attachmentVersion: uploaded.version, pointer: committed, baseline: committed.attachment });
     }
     return Object.freeze({ request: request, page: page, user: user, property: property, putProperty: putProperty, readJSON: readJSON, writeJSON: writeJSON, inspectJSON:inspectJSON, reconcileJSON:reconcileJSON, maxBytes: MAX_BYTES });
   }
