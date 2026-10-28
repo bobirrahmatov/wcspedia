@@ -24,11 +24,12 @@
  }
  function refresh(){
   if(destroyed||!d.body)return;if(!active()){reset();return;}
-  var bodyFamily=w.getComputedStyle(d.body).fontFamily||'sans-serif',text=registered('text'),display=registered('display');
-  var family=text?JSON.stringify(text)+', '+bodyFamily:bodyFamily;
-  var title=Array.from(d.querySelectorAll('h1,.font-display')).find(function(el){return !el.closest('#wcspedia,.wcs-native-article,.wcs-reader-navigation');});
-  set('--wcs-resolved-space-font',family);
-  set('--wcs-resolved-space-display-font',display?JSON.stringify(display)+', '+family:title?w.getComputedStyle(title).fontFamily||family:family);
+  var text=registered('text'),display=registered('display');
+  // These exact families are registered in the space Look and Feel stylesheet.
+  // Keep them first even before a late stylesheet registers its FontFace entries.
+  // Do not copy a temporary body/theme fallback (for example Inter) into the app.
+  set('--wcs-resolved-space-font',JSON.stringify(text||'Citi-Sans-Text'));
+  set('--wcs-resolved-space-display-font',JSON.stringify(display||'Citi-Sans-Display')+', '+JSON.stringify(text||'Citi-Sans-Text'));
   requestFont(text);requestFont(display);
  }
  function schedule(){if(!queued&&!destroyed){queued=true;Promise.resolve().then(function(){queued=false;refresh();});}}

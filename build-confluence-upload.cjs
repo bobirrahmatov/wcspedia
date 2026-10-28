@@ -27,7 +27,7 @@ let css=read('wcspedia-style.css')
   .replace(/Citi Sans, generous spacing/g,'inherited host typography, generous spacing')
   .replace(/\.wcs-preview-tools[^{}]*\{[^}]*\}/g,'')
   .replace(/(?<!#wcspedia )\.control-details-body \.wcs-governance-metadata/g,'#wcspedia .control-details-body .wcs-governance-metadata');
-if(/@font-face|data:font|WCSCiti|Citi-Sans-Text|Citi Sans/.test(css))throw Error('A hosted font override remains. Review the upload stylesheet.');
+if(/@font-face|data:font|WCSCiti|Citi Sans/.test(css))throw Error('A hosted font override remains. Review the upload stylesheet.');
 css='/* WCSpedia component styles. Inherits the existing Confluence font; no site header or global reset. */\n'+css;
 const bundle=read('wcspedia.js');
 // Native discovery needs only this small navigation catalogue. Published

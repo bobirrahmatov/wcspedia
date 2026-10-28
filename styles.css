@@ -442,7 +442,7 @@
 
 /* Keep the reviewer queue close to its compact page heading. */
 #wcspedia .reviewer-workspace .press-heading { padding:24px 0!important; }
-#wcspedia .reviewer-workspace .press-heading .breadcrumbs { margin-bottom:16px!important; }
+
 #wcspedia .reviewer-workspace .press-heading h1 { font-size:clamp(28px,3vw,40px)!important; }
 #wcspedia .reviewer-workspace .review-container { padding-top:24px!important; }
 
@@ -470,3 +470,7 @@
 /* Keep the administrative actions together without changing page heading layout. */
 #wcspedia .entitlement-header-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px}
 #wcspedia .entitlement-header-actions .button{white-space:nowrap}
+
+/* Local previews register the same Text family as the host. The Confluence build removes all font-face blocks. */
+@font-face{font-family:"Citi-Sans-Text";src:url("assets/citi-text-regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Citi-Sans-Text";src:url("assets/citi-text-bold.ttf") format("truetype");font-weight:600 900;font-style:normal;font-display:swap}

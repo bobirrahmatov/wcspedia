@@ -205,7 +205,7 @@ test('inline settings respect each page role and separate same-origin attachment
 test('hosted CSS inherits host fonts, retains code fonts, and has no site-wide rules',()=>{
   const css=read('attachments/wcspedia-style.css');
   assert.doesNotMatch(css,/@font-face|data:font|\.ttf\b|\.woff2?\b/i,'No duplicate downloadable or embedded fonts');
-  assert.doesNotMatch(css,/WCSCiti|Citi-Sans-Text|Citi Sans|Inter\b/,'No forced application font');
+  assert.doesNotMatch(css,/WCSCiti|Inter\b/,'No separate application font family');
   assert.doesNotMatch(css,/font(?:-family)?\s*:[^;}]*\b(?:Arial|sans-serif)\b/i,'UI controls inherit the host font as well');
   assert.match(css,/monospace/,'Code and source fields retain their deliberate monospace font');
   const dom=new JSDOM('<!doctype html><head><style>'+css+'</style></head><body></body>');
@@ -233,7 +233,7 @@ test('hosted CSS inherits host fonts, retains code fonts, and has no site-wide r
     for(const selector of ['#wcspedia','.wcs-loading-overlay','.wcs-add-document','.wcs-add-document-popover']){
       const fonts=rules.filter(rule=>rule.selectorText.split(',').some(s=>s.trim()===selector)).map(rule=>rule.style.getPropertyValue('font-family')).filter(Boolean);
       assert.ok(fonts.length,'Font declaration exists for '+selector);
-      assert.ok(['inherit','var(--wcs-space-font,var(--wcs-resolved-space-font,inherit))'].includes(fonts.at(-1).trim()),selector+' uses inherited or resolved existing Confluence fonts');
+      assert.ok(['inherit','var(--wcs-space-font,var(--wcs-resolved-space-font,"Citi-Sans-Text"))'].includes(fonts.at(-1).trim()),selector+' uses inherited or resolved existing Confluence fonts');
     }
     for(const rule of rules.filter(rule=>/highcharts-(?:container|root)/.test(rule.selectorText))){
       const family=rule.style.getPropertyValue('font-family');if(family)assert.equal(family.trim(),'inherit');
