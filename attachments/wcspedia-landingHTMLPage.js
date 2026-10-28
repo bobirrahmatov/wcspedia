@@ -20,7 +20,7 @@
   }
 
   if (mount.dataset.wcsPageStarted) return;
-  if (!window.WCSPageModules || window.WCSPageModules['home']?.version !== '7ec24e3d0040') {
+  if (!window.WCSPageModules || window.WCSPageModules['home']?.version !== 'b0b96b020eb7') {
     failPage('Load wcspedia-landing.js before wcspedia-landingHTMLPage.js. Use both files from the same upload package and check their attachment URLs.');
     return;
   }
@@ -318,7 +318,8 @@
     const error=nativeLanding.error||nativeLanding.recentError;
     if(error)return (nativeLanding.recent.length?'<div class="featured-grid">'+nativeLanding.recent.slice(0,3).map(nativeFeaturedCard).join('')+'</div>':'')+'<div class="library-unavailable" role="alert"><strong>'+ (nativeLanding.recent.length?'Showing previously loaded documents. Refresh unavailable.':'Latest documents are unavailable')+'</strong><p>'+esc(error.message||'Unable to load child pages from Confluence.')+'</p><button class="button secondary" data-action="retry-native-landing">Try again</button></div>';
     if(!nativeLanding.recentReady)return '<p class="quiet-note">Search or browse a business area to find documents.</p><button class="button secondary" data-action="retry-native-landing">Load latest documents</button>';
-    return nativeLanding.recent.length?'<div class="featured-grid">'+nativeLanding.recent.slice(0,3).map(nativeFeaturedCard).join('')+'</div>':'<p class="quiet-note" role="status">No documents are available yet. Pages beneath WCSpedia will appear here when you have access to them and Confluence has indexed them.</p>';
+    const partial=nativeLanding.insightsUnavailable?'<p class="quiet-note" role="status">Latest Insights could not be checked. Showing documents from Confluence search.</p>':nativeLanding.orderingComplete===false?'<p class="quiet-note" role="status">More recent Insights may be available. Use View all to continue browsing.</p>':'';
+    return (nativeLanding.recent.length?'<div class="featured-grid">'+nativeLanding.recent.slice(0,3).map(nativeFeaturedCard).join('')+'</div>':nativeLanding.orderingComplete===false?'':'<p class="quiet-note" role="status">No documents are available yet. Pages beneath WCSpedia will appear here when you have access to them.</p>')+partial;
   }
   function nativeAreaStatus() {
     if(nativeLanding.status!=='ready'||nativeLanding.error||!nativeLanding.countsError&&!data.areas.some(a=>nativeLanding.areas[a.id]?.error))return '';
@@ -350,6 +351,7 @@
   async function loadNativeLanding(force=false) {
     if(!live||!root.querySelector('#native-landing-documents'))return;
     if(!force&&(nativeLanding.status==='loading'||nativeLanding.status==='ready'&&Date.now()-nativeLanding.at<nativeBrowseTTL))return;
+    if(force)adapter.invalidateSearch?.();
     landingController?.abort();const controller=new AbortController(),sequence=++landingSequence;landingController=controller;
     releaseLandingPaint?.();landingPaintPromise=new Promise(resolve=>{releaseLandingPaint=resolve;});const painted=releaseLandingPaint;
     const retained=nativeLanding;
@@ -360,7 +362,7 @@
       if(!current())return;
       const recentReady=complete||result.recentReady===true;
       const keepRecent=result.recentError&&transientReadFailure(result.recentError);
-      nativeLanding={status:complete?'ready':'loading',areas:{...nativeLanding.areas,...result.areas},recent:recentReady&&!keepRecent?result.recent||[]:nativeLanding.recent,recentError:result.recentError,recentReady:recentReady||nativeLanding.recentReady,at:complete?Date.now():nativeLanding.at};
+      nativeLanding={status:complete?'ready':'loading',areas:{...nativeLanding.areas,...result.areas},recent:recentReady&&!keepRecent?result.recent||[]:nativeLanding.recent,orderingComplete:recentReady&&!keepRecent?result.orderingComplete!==false:nativeLanding.orderingComplete,insightsUnavailable:recentReady&&!keepRecent?result.insightsUnavailable===true:nativeLanding.insightsUnavailable,recentError:result.recentError,recentReady:recentReady||nativeLanding.recentReady,at:complete?Date.now():nativeLanding.at};
       Object.entries(result.areas||{}).forEach(([areaId,item])=>{
         // Progress snapshots include previously completed areas again. Their
         // cloned rows must not extend the original response's freshness window.
@@ -631,7 +633,8 @@
       const previousLabel=page>2&&!nativePageLinks.has(queryKey+'|'+(page-1))?'First page':'Previous page';
       const control=(href,label,kind,content)=>href?'<a class="wcs-page-control '+kind+'" href="'+esc(href)+'" aria-label="'+label+'">'+content+'</a>':'<span class="wcs-page-control '+kind+'" aria-disabled="true">'+content+'</span>';
       const paging='<div class="discovery-pagination"><span>'+(items.length?(first==null?items.length+' '+(items.length===1?'result':'results')+' on this page':'Showing '+(first+1)+'–'+(first+items.length)+(result.total!=null?' of '+result.total:'')):'No results on this page')+'</span><nav class="wcs-pagination" aria-label="Document pages">'+control(previous,previousLabel,'wcs-page-previous','<span aria-hidden="true">←</span><span class="wcs-page-direction">'+(previousLabel==='First page'?'First':'Previous')+'</span>')+'<ol class="wcs-page-numbers"><li><span class="wcs-page-control is-current" aria-current="page">'+page+'</span></li></ol>'+control(next,'Next page','wcs-page-next','<span class="wcs-page-direction">Next</span><span aria-hidden="true">→</span>')+'</nav></div>';
-      mount.innerHTML=(items.length?'<div class="press-card-list">'+items.map(item=>nativeResultCard(item,options.query)).join('')+'</div>':empty(next?'Continue searching':'No matching pages',next?'More pages are available. Use Next to continue searching.':'Try another keyword or remove a filter. Only pages you can access are included.','Search all WCSpedia',url('/results')))+(items.length||previous||next?paging:'');
+      const insightsNotice=result.insightsUnavailable?'<p class="quiet-note" role="status">Latest Insights could not be checked. Showing documents from Confluence search.</p>':result.orderingComplete===false?'<p class="quiet-note" role="status">More Insights are available on the following pages.</p>':'';
+      mount.innerHTML=(items.length?'<div class="press-card-list">'+items.map(item=>nativeResultCard(item,options.query)).join('')+'</div>':result.insightsUnavailable?'':empty(next?'Continue searching':'No matching pages',next?'More pages are available. Use Next to continue searching.':'Try another keyword or remove a filter. Only pages you can access are included.','Search all WCSpedia',url('/results')))+insightsNotice+(items.length||previous||next?paging:'');
       loadViewCounts(false);
       wirePageLinks(mount);
     }catch(error){

@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var revision = '7ec24e3d0040';
+  var revision = 'b0b96b020eb7';
   function placeFloating(host) {
     // Portal out of themed headers: transforms/overflow there can clip fixed controls.
     host.setAttribute('data-wcs-floating-add', '');

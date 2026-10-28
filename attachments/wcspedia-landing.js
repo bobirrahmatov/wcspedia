@@ -6181,10 +6181,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     var preferContentSearch = searchConfig.transport !== 'search';
     // This tab and adapter own the cache. Identity/access refreshes and writes
     // invalidate it; native Confluence permissions still apply to every read.
+    var discoveryContinuations = new Map(), discoverySequence = 0, nativeDiscoveryCache = null;
     var searchCache = new Map(), searchInflight = new Map(), searchGeneration = 0, searchIdentity = null, discoverySessionChanged = false, searchIdentityAt = 0, identityCheck = null;
     function searchAbort() { var error = new Error('The search was cancelled.'); error.name = 'AbortError'; return error; }
     function clearSearchReads() {
-      searchGeneration++; searchCache.clear();
+      searchGeneration++; searchCache.clear(); discoveryContinuations.clear(); nativeDiscoveryCache = null;
       searchInflight.forEach(function (entry) { entry.controller.abort(); settleSearchRead(entry, searchAbort()); });
       searchInflight.clear(); searchScopePromise = null; verifiedSearchSpace = null;
       preferContentSearch = searchConfig.transport !== 'search';
@@ -6225,7 +6226,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if (entry.settled) return;
       entry.settled = true; clearTimeout(entry.cancelTimer);
       if (searchInflight.get(entry.key) === entry) searchInflight.delete(entry.key);
-      if (!error && result.results?.length && entry.subscribers.size && !entry.controller.signal.aborted && entry.generation === searchGeneration) {
+      if (!error && !result.insightsUnavailable && result.results?.length && entry.subscribers.size && !entry.controller.signal.aborted && entry.generation === searchGeneration) {
         searchCache.delete(entry.key); searchCache.set(entry.key, { at: Date.now(), result: clone(result) });
         while (searchCache.size > 24) searchCache.delete(searchCache.keys().next().value);
       }
@@ -7327,7 +7328,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if (names.some(function (name) { return typeof name === 'string' && name.indexOf('wcs-type-') === 0; })) return null;
       return ancestors.some(function (a) { return String(object(a) ? a.id : a) === String(nativePublication.insightsPageId || ''); }) ? 'Blog' : null;
     }
-    async function insightChildren(options, search) {
+    async function insightChildren(options, search, keepMetadata) {
       var parent = String(nativePublication.insightsPageId || ''), limit = options.limit || 9, start = options.start || 0;
       if (!/^[1-9]\d{0,19}$/.test(parent) || parent === pageId) fail('Configure the Insights parent page.', 'CONFIGURATION');
       if (!integer(limit) || limit > 100 || !integer(start, 0)) fail('Invalid Insights page size.');
@@ -7345,8 +7346,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var excluded = searchExclusions(options), seen = new Set();
       var results = payload.results.map(function (item) {
         var id = String(item && item.id || ''), ancestors = item && item.ancestors;
-        if (!/^[1-9]\d{0,19}$/.test(id) || seen.has(id) || item.type !== 'page' || item.status !== 'current' || item.space?.key !== space || !Array.isArray(ancestors) || !ancestors.some(function (a) {return String(a.id) === pageId;}) || String(ancestors[ancestors.length - 1]?.id) !== parent || excluded.pages.includes(id) || ancestors.some(function (a) { return excluded.trees.includes(String(a.id)); })) fail('Confluence returned a page outside the Insights parent.', 'INVALID_SCOPE');
+        if (!/^[1-9]\d{0,19}$/.test(id) || seen.has(id) || item.type !== 'page' || item.status !== 'current' || item.space?.key !== space || !Array.isArray(ancestors) || !ancestors.some(function (a) {return String(a.id) === pageId;}) || String(ancestors[ancestors.length - 1]?.id) !== parent ) fail('Confluence returned a page outside the Insights parent.', 'INVALID_SCOPE');
         seen.add(id);
+        if (excluded.pages.includes(id) || ancestors.some(function(a) { return excluded.trees.includes(String(a.id)); })) return null;
         var labels = item.metadata?.labels?.results;
         if (!Array.isArray(labels)) fail('Confluence did not return Insights article labels.', 'INVALID_SCOPE');
         var names = labels.map(function (label) { return label.name; }), card = discoveryBody(item), type = discoveryType(names, ancestors, search, card);
@@ -7359,7 +7361,8 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (options.year && String(row.updated || '').slice(0,4) !== String(options.year)) return null;
         var days = {week:7,month:30,quarter:90}[options.updated];
         if (days && !(Date.parse(row.updated) >= Date.now() - days * 86400000)) return null;
-        delete row.searchText;
+        if (keepMetadata) row.discoveryLabels = names;
+        else delete row.searchText;
         return row;
       }).filter(Boolean);
       // Advance by native rows, including untyped pages. Never infer completion
@@ -7369,7 +7372,123 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var continuation = hasMore ? {transport:'children',parent:parent,limit:limit,start:start + payload.results.length} : null;
       return {results:results,total:null,start:start,limit:limit,nextContinuation:continuation,nextStart:continuation?.start || null};
     }
+    function discoveryQueryKey(options) {
+      return searchReadKey(Object.assign({}, options, {start:0,continuation:undefined}));
+    }
+    function discoveryCompare(options, left, right) {
+      if (options.sort === 'title') return left.title.localeCompare(right.title) || left.id.localeCompare(right.id);
+      if (['updated','newest'].includes(options.sort) || !options.query) {
+        var difference = (Date.parse(right.updated) || 0) - (Date.parse(left.updated) || 0);
+        return difference || left.id.localeCompare(right.id);
+      }
+      // CQL relevance has no portable score to compare with an unindexed page.
+      // Fresh native matches precede indexed-only matches; both remain visible.
+      return 0;
+    }
+    function discoveryMatches(row, options, types) {
+      if (types.length && !types.includes(row.type)) return false;
+      var names = row.discoveryLabels || [], terms = String(options.query || '').normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
+      var haystack = [row.title,row.summary,row.searchText,(row.tags || []).join(' ')].join(' ').normalize('NFKC').toLowerCase();
+      if (!terms.every(function(term) { return haystack.includes(term); })) return false;
+      if (['tag','process','region'].some(function(key) { return options[key] && !names.includes(facetLabel(key,options[key])); })) return false;
+      if (options.year && String(row.updated || '').slice(0,4) !== String(options.year)) return false;
+      var days = {week:7,month:30,quarter:90}[options.updated];
+      return !days || Date.parse(row.updated) >= Date.now() - days * 86400000;
+    }
     async function searchPagesWithin(options) {
+      options = options || {};
+      var union = options.continuation && options.continuation.transport === 'insights-union';
+      var content = root.WCSEditorContent || (typeof require === 'function' ? require('./editor-content.js') : null);
+      var types = options.types || (options.type ? content?.typeMembers(options.type) || [options.type] : []);
+      var eligible = options.scope === 'tree' && nativePublication.insightsPageId && !options.nativeChildren &&
+        (!options.area || options.area === 'insights') && Array.isArray(types) && (!types.length || types.some(function(type) { return type !== 'Job aid'; }));
+      if (eligible && searchExclusions(options).trees.includes(String(nativePublication.insightsPageId))) eligible = false;
+      if (union && !eligible) fail('Restart the search in its original collection.', 'INVALID_CONTINUATION');
+      if (!eligible || !union && (options.continuation || options.start)) return searchIndexedPagesWithin(options);
+      var key = discoveryQueryKey(options), limit = options.limit == null ? 20 : options.limit, generation = searchGeneration, state;
+      if (union) {
+        var token = options.continuation;
+        if (Object.keys(token).some(function(k) { return !['transport','token'].includes(k); }) || typeof token.token !== 'string') fail('Restart this search.', 'INVALID_CONTINUATION');
+        var saved = discoveryContinuations.get(token.token);
+        if (!saved || saved.key !== key || Date.now() - saved.at > 120000) fail('This search page has expired. Start the search again.', 'INVALID_CONTINUATION');
+        state = clone(saved.state); // Back/retry never consumes another cursor's buffers.
+      } else {
+        // Validate every filter and scope through the indexed path first. Native
+        // discovery supplements the exact query, never a failed/wider query.
+        var indexed = await searchIndexedPagesWithin(Object.assign({},options,{skipInsightsRecovery:true}));
+        state = {index:indexed.results,indexNext:indexed.nextContinuation,native:[],nativeNext:null,nativeStarted:false,nativeKnown:[],seen:[],offset:0,cql:indexed.cql,total:indexed.total,changed:false,unavailableCount:indexed.unavailableCount || 0};
+      }
+      var search = dependencies.search || root.WCSSearch;
+      async function readNative() {
+        if (state.nativeStarted && !state.nativeNext) return;
+        var cacheKey = JSON.stringify(searchExclusions(options));
+        var batch, rows = [], next = state.nativeNext, batches = 0;
+        if (!state.nativeStarted && nativeDiscoveryCache && nativeDiscoveryCache.key === cacheKey && Date.now() - nativeDiscoveryCache.at < 30000) {
+          rows = clone(nativeDiscoveryCache.rows); next = clone(nativeDiscoveryCache.next);
+        } else {
+          do {
+            batch = await insightChildren({scope:'tree',types:[],limit:25,continuation:next,signal:options.signal,excludeIds:options.excludeIds,excludeAncestorIds:options.excludeAncestorIds},search,true);
+            rows.push.apply(rows,batch.results); next = batch.nextContinuation;
+          } while (next && ++batches < 4);
+          throwIfAborted(options.signal);
+          if (!state.nativeStarted && generation === searchGeneration) nativeDiscoveryCache = {key:cacheKey,at:Date.now(),rows:clone(rows),next:clone(next)};
+        }
+        state.nativeStarted = true; state.nativeNext = next;
+        state.orderingIncomplete = state.orderingIncomplete || !!next;
+        state.nativeKnown = Array.from(new Set(state.nativeKnown.concat(rows.map(function(row) { return row.id; }))));
+        var seen = new Set(state.seen), native = new Map(state.native.map(function(row) { return [row.id,row]; }));
+        rows.forEach(function(row) { native.delete(row.id); if (!seen.has(row.id) && discoveryMatches(row,options,types)) native.set(row.id,row); });
+        state.native = Array.from(native.values()).sort(function(a,b) { return discoveryCompare(options,a,b); });
+      }
+      try { await readNative(); }
+      catch (error) {
+        if (!union && [404,405,500,502,503,504].includes(error.status)) {
+          // Unsupported child expansion keeps the original scoped indexed path.
+          return {results:state.index,total:null,start:0,limit:limit,nextStart:state.indexNext?.start || null,nextContinuation:state.indexNext,cql:state.cql,orderingComplete:false,insightsUnavailable:true};
+        }
+        throw error;
+      }
+      if (!union && !state.nativeKnown.length && !state.nativeNext) return Object.assign({},indexed,{orderingComplete:true});
+      var seen = new Set(state.seen), directIds = new Set(state.nativeKnown), results = [], indexReads = 0;
+      // Any direct source can contain rows beyond the index page. A CQL count
+      // cannot establish the union cardinality, even if this page is a duplicate.
+      if (state.nativeKnown.length || state.nativeNext) state.changed = true;
+      function cleanIndex() { state.index = state.index.filter(function(row) { return !seen.has(row.id) && !directIds.has(row.id); }); }
+      cleanIndex();
+      while (results.length < limit) {
+        if (!state.index.length && state.indexNext && indexReads < 4) {
+          var following = await searchIndexedPagesWithin(Object.assign({},options,{continuation:state.indexNext,start:0,skipInsightsRecovery:true}));
+          state.index = following.results; state.indexNext = following.nextContinuation; state.unavailableCount += following.unavailableCount || 0; indexReads++; cleanIndex();
+          if (!state.index.length && state.indexNext) continue;
+        }
+        // Stop at a bounded index scan rather than emitting a later native row
+        // ahead of unknown indexed candidates in an explicitly ordered search.
+        if (!state.index.length && state.indexNext && ['updated','newest','title'].includes(options.sort)) break;
+        var direct = state.native[0], indexed = state.index[0], row;
+        if (direct && (!indexed || discoveryCompare(options,direct,indexed) <= 0)) row = state.native.shift();
+        else if (indexed) row = state.index.shift();
+        else break;
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        row = Object.assign({},row); delete row.searchText; delete row.discoveryLabels;
+        results.push(row);
+      }
+      state.seen = Array.from(seen);
+      throwIfAborted(options.signal);
+      if (generation !== searchGeneration) throw searchAbort();
+      var start = state.offset; state.offset += results.length;
+      var nextContinuation = null;
+      if (state.native.length || state.nativeNext || state.index.length || state.indexNext) {
+        var id = String(searchGeneration) + '-' + String(++discoverySequence);
+        discoveryContinuations.set(id,{key:key,at:Date.now(),state:clone(state)});
+        while (discoveryContinuations.size > 96) discoveryContinuations.delete(discoveryContinuations.keys().next().value);
+        nextContinuation = {transport:'insights-union',token:id};
+      }
+      var output = {results:results,total:state.changed ? null : state.total,start:start,limit:limit,nextStart:null,nextContinuation:nextContinuation,cql:state.cql,orderingComplete:!state.orderingIncomplete};
+      if (state.unavailableCount) output.unavailableCount = state.unavailableCount;
+      return output;
+    }
+    async function searchIndexedPagesWithin(options) {
       options = options || {};
       if (mode !== 'confluence') fail('Page search requires Confluence mode.', 'CONFIGURATION');
       var search = dependencies.search || root.WCSSearch;
@@ -7616,7 +7735,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // A new article is readable before the CQL index catches up. Recover an
       // empty first page from the exact Insights parent, in bounded batches.
       // Never consult private workspace JSON or broaden a business-area query.
-      if (tree && (!queryOptions.types.length || queryOptions.types.some(function (type) { return type !== 'Job aid'; })) && !response.results.length && !nextContinuation && !options.continuation && !start && !options.nativeChildren && nativePublication.insightsPageId && (!options.area || options.area === 'insights')) {
+      if (!options.skipInsightsRecovery && tree && (!queryOptions.types.length || queryOptions.types.some(function (type) { return type !== 'Job aid'; })) && !response.results.length && !nextContinuation && !options.continuation && !start && !options.nativeChildren && nativePublication.insightsPageId && (!options.area || options.area === 'insights')) {
         var recoveryOptions = Object.assign({},options,{types:queryOptions.types,continuation:null});
         var recovered = await insightChildren(recoveryOptions,search);
         var batches = 1;
@@ -7671,6 +7790,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           var continuation, batches = 0, seen = new Set();
           do {
             var result = await searchPages({ scope: 'tree', sort: 'updated', limit: 3, signal: options.signal, continuation: continuation });
+            output.orderingComplete = output.orderingComplete !== false && result.orderingComplete !== false;
+            output.nextContinuation = result.nextContinuation;
+            output.insightsUnavailable = output.insightsUnavailable || result.insightsUnavailable === true;
             result.results.forEach(function (item) {
               if (output.recent.length < 3 && !seen.has(item.id)) { seen.add(item.id); output.recent.push(item); }
             });
@@ -10732,5 +10854,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['home'] = { version: '7ec24e3d0040' };
+  modules['home'] = { version: 'b0b96b020eb7' };
 })();
