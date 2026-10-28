@@ -158,7 +158,7 @@
     if (!origin || base.origin !== origin || base.protocol !== 'https:' || base.username || base.password || base.search || base.hash || !/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context || '/') || typeof fetcher !== 'function' || !crypto || !crypto.subtle || typeof crypto.getRandomValues !== 'function') fail('Use the signed-in HTTPS Confluence origin with Web Crypto and fetch.', 'CONFIGURATION');
     var spaceKey = config.spaceKey, roots = [config.rootPageId].concat(config.extraRootPageIds || []), allowed = config.allowedPageIds || [], protectedIds = config.protectedPageIds || [], storageIds = config.storagePageIds || [];
     if (typeof spaceKey !== 'string' || !spaceKey.trim() || !Array.isArray(roots) || !roots.length || roots.some(function (v) { return !id(v); }) || !Array.isArray(allowed) || !Array.isArray(protectedIds) || !Array.isArray(storageIds) || allowed.concat(protectedIds, storageIds).some(function (v) { return !id(v); }) || config.authorize != null && typeof config.authorize !== 'function') fail('Configure the exact space key, roots and permitted page IDs.', 'CONFIGURATION');
-    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds), pendingPageReads = new Map();
+    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds), pendingPageReads = new Map(), propertyObservations = new WeakMap();
     async function digest(bytes) { var hash = await crypto.subtle.digest('SHA-256', bytes); return Array.from(new Uint8Array(hash), function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function token() { var bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function route(path) {
@@ -168,16 +168,21 @@
       if (url.origin !== origin || url.pathname !== rawPath || /%(?:2e|2f|5c)/i.test(rawPath) || !(url.pathname.startsWith(context + '/rest/api/') || url.pathname.startsWith(context + '/download/attachments/'))) fail('The request escaped the configured Confluence context.', 'SCOPE');
       return url;
     }
+    function cancelBody(body) {
+      // Once a response is rejected, waiting for stream cancellation must not
+      // hide its known status until the full read/write timeout expires.
+      try { Promise.resolve(body.cancel()).catch(function () {}); } catch (_) {}
+    }
     async function bounded(response, signal, maxBytes) {
       maxBytes = maxBytes || MAX_BYTES;
       var length = response.headers && response.headers.get('content-length');
-      if (length != null && /^\d+$/.test(length) && Number(length) > maxBytes) { try { await response.body.cancel(); } catch (_) {} fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); }
+      if (length != null && /^\d+$/.test(length) && Number(length) > maxBytes) { cancelBody(response.body); fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); }
       if (response.body && typeof response.body.getReader === 'function') {
         var reader = response.body.getReader(), parts = [], size = 0;
         var cancel = function () { reader.cancel().catch(function () {}); };
         signal.addEventListener('abort', cancel, { once: true });
         try {
-          while (true) { checkAbort(signal); var part = await reader.read(); checkAbort(signal); if (part.done) break; size += part.value.byteLength; if (size > maxBytes) { try { await reader.cancel(); } catch (_) {} fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); } parts.push(part.value); }
+          while (true) { checkAbort(signal); var part = await reader.read(); checkAbort(signal); if (part.done) break; size += part.value.byteLength; if (size > maxBytes) { cancelBody(reader); fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); } parts.push(part.value); }
         } finally { signal.removeEventListener('abort', cancel); reader.releaseLock(); }
         var bytes = new Uint8Array(size), offset = 0; parts.forEach(function (part) { bytes.set(part, offset); offset += part.byteLength; }); return bytes;
       }
@@ -194,14 +199,14 @@
       var headers = new Headers(init.headers || {});
       if (['authorization', 'cookie', 'proxy-authorization'].some(function (key) { return headers.has(key); })) fail('Use the current Confluence session; do not supply credentials.', 'CONFIGURATION');
       headers.set('Accept', 'application/json'); if (mutation) headers.set('X-Requested-With', 'XMLHttpRequest');
-      var response, rejection, controller = new AbortController(), timer, onAbort;
+      var response, rejection, controller = new AbortController(), timer, onAbort, stop, deadline = Date.now() + (mutation ? writeTimeoutMs : timeoutMs);
       var stopped = new Promise(function (_, reject) {
-        function stop(external) {
+        stop = function (external) {
           if (rejection) { reject(rejection); controller.abort(); return; }
           var error = new Error(mutation ? 'Confluence has not confirmed '+method+' '+url.pathname+'. Use Check save to recover this same request; do not start another document.' : external ? 'The request was cancelled.' : 'Confluence took too long to respond. Try again.');
           if (mutation) error.code = 'UNKNOWN_COMMIT'; else if (external) error.name = 'AbortError'; else error.code = 'TIMEOUT';
           reject(error); controller.abort();
-        }
+        };
         timer = setTimeout(function () { stop(false); }, mutation ? writeTimeoutMs : timeoutMs);
         onAbort = function () { stop(true); };
         if (init.signal) init.signal.addEventListener('abort', onAbort, { once: true });
@@ -217,13 +222,17 @@
         // A short structured validation reason is useful; HTML proxy/login
         // pages, stack traces and full responses must not become UI content.
         if (response.status === 400 && /\bapplication\/(?:[a-z0-9.-]+\+)?json\b/i.test(response.headers.get('content-type') || '')) {
+          // The server has already rejected the request. Optional diagnostics
+          // get at most one second, inside the original operation deadline.
+          clearTimeout(timer);
+          timer = setTimeout(function () { stop(false); }, Math.max(0, Math.min(1000, timeoutMs, deadline - Date.now())));
           try {
             var problem = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await bounded(response, controller.signal, 8192)));
             var messages = [problem && problem.message].concat(problem && Array.isArray(problem.errorMessages) ? problem.errorMessages.slice(0,3) : []);
             var detail = messages.filter(function(v){return typeof v === 'string' && !/[<>]/.test(v);}).join(' ').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,500);
             if (detail) rejection.message += ' Server: ' + detail;
           } catch (_) { /* Keep the original HTTP status if diagnostics are unavailable. */ }
-        } else { try { await response.body.cancel(); } catch (_) {} }
+        } else cancelBody(response.body);
         throw rejection;
       }
       if (response.status === 204 || method === 'HEAD') return null;
@@ -341,26 +350,53 @@
       fail('The metadata lookup exceeded its safe page limit.', 'PROPERTY_LIMIT');
     }
     async function property(pageId, key, options) { keyCheck(key); await page(pageId, '', options); return options && options.optional === true ? findProperty(pageId, key, { signal: options.signal }) : getProperty(pageId, key, options); }
+    function rememberProperty(receipt, pageId, key, previous) {
+      propertyObservations.set(receipt, { pageId: pageId, key: key, previous: previous ? clone(previous) : null });
+      return receipt;
+    }
+    // The opaque receipt includes confirmed absence. It is issued only after a
+    // real scoped read, belongs to this storage instance and is consumed once.
+    // Caller edits/clones cannot manufacture a native ID or CAS baseline.
+    async function observeProperty(pageId, key, options) {
+      var previous = await property(pageId, key, options);
+      return rememberProperty(Object.freeze({ property: previous }), pageId, key, previous);
+    }
     async function putProperty(pageId, key, value, expectedVersion, options) {
       options = options || {}; keyCheck(key); var encoded = jsonBytes(value, MAX_PROPERTY_BYTES);
       if (expectedVersion !== null && !integer(expectedVersion, 1)) fail('Use null to create a property or its current CAS version to update it.', 'CONFIGURATION');
       writableTarget(pageId, 'property.write');
-      // Both checks are fresh reads. Overlap their network latency; the CAS
-      // mutation still waits for native permission and the expected revision.
-      var checks = await Promise.all([writable(pageId, 'property.write', options, true), getProperty(pageId, key, options)]);
-      var previous = checks[1], nextVersion = expectedVersion === null ? 1 : expectedVersion + 1;
+      var receipt = object(options.observedProperty) && propertyObservations.get(options.observedProperty);
+      if (receipt) propertyObservations.delete(options.observedProperty);
+      var observed = receipt && receipt.pageId === pageId && receipt.key === key && (receipt.previous ? receipt.previous.version.number : null) === expectedVersion;
+      // Overlap ordinary scope/revision reads; the CAS mutation still waits
+      // for fresh native permission. A storage-issued receipt
+      // already has the exact native CAS baseline; native PUT/POST enforces it.
+      // Missing, forged, reused or mismatched receipts take the ordinary read.
+      var checks = await Promise.all([writable(pageId, 'property.write', options, true), observed ? Promise.resolve(receipt.previous) : getProperty(pageId, key, options)]);
+      return writeProperty(pageId, key, encoded, expectedVersion, checks[1], options);
+    }
+    // Only the JSON transaction uses this private path. Its snapshot/reservation
+    // already supplies the exact native property ID and CAS version. Native CAS
+    // still rejects a competing update; permissions are freshly checked here.
+    async function putObservedProperty(pageId, key, value, previous, options) {
+      var encoded = jsonBytes(value, MAX_PROPERTY_BYTES);
+      await writable(pageId, 'property.write', options, true);
+      return writeProperty(pageId, key, encoded, previous ? previous.version.number : null, previous, options);
+    }
+    async function writeProperty(pageId, key, encoded, expectedVersion, previous, options) {
+      var nextVersion = expectedVersion === null ? 1 : expectedVersion + 1;
       if ((previous ? previous.version.number : null) !== expectedVersion) fail('The content property changed. Reload before writing.', 'CONFLICT');
       var payload = { key: key, value: JSON.parse(encoded.text), version: { number: nextVersion } };
       if (previous) payload.id = previous.id;
       try {
         var result = validateProperty(await transport('/rest/api/content/' + pageId + '/property' + (previous ? '/' + encodeURIComponent(key) : ''), { method: previous ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: options.signal }), pageId, key);
         if (result.version.number !== nextVersion || !same(result.value, payload.value) || previous && result.id !== previous.id) fail('The property write was not confirmed.', 'UNKNOWN_COMMIT');
-        return result;
+        return rememberProperty(result, pageId, key, result);
       } catch (error) {
         if (error.code !== 'UNKNOWN_COMMIT' && error.code !== 'CONFLICT') throw error;
         // A lost CAS reply may be confirmed, but no PUT/POST is repeated.
         var found; try { found = await getProperty(pageId, key, {}); } catch (_) { throw error; }
-        if (found && found.version.number === nextVersion && same(found.value, payload.value) && (!previous || found.id === previous.id)) return found;
+        if (found && found.version.number === nextVersion && same(found.value, payload.value) && (!previous || found.id === previous.id)) return rememberProperty(found, pageId, key, found);
         throw error;
       }
     }
@@ -401,7 +437,7 @@
       if ((fresh ? fresh.version.number : 0) !== (prop ? prop.version.number : 0) || fresh && (fresh.id !== prop.id || !same(fresh.value, prop.value))) fail('The JSON pointer changed while loading. Reload it.', 'CONFLICT');
       if (!same(verified[1], native)) fail('The live JSON attachment changed while loading.', 'CONFLICT');
       if (committed && selected && committed.id === selected.id && committed.version === selected.version && (hash !== committed.sha256 || bytes.byteLength !== committed.bytes)) fail('The JSON failed its SHA-256 check for the same native attachment revision.', 'INTEGRITY');
-      return { data: data, revision: prop ? prop.version.number : 0, attachmentId: selected ? selected.id : null, attachmentVersion: selected ? selected.version : 0, pointer: pointer, propertyId: prop ? prop.id : null, native: native, baseline: selected ? { id: selected.id, version: selected.version, sha256: hash, bytes: bytes.byteLength } : null };
+      return { data: data, revision: prop ? prop.version.number : 0, attachmentId: selected ? selected.id : null, attachmentVersion: selected ? selected.version : 0, pointer: pointer, propertyId: prop ? prop.id : null, property: prop, native: native, baseline: selected ? { id: selected.id, version: selected.version, sha256: hash, bytes: bytes.byteLength } : null };
     }
     function fingerprint(result) { return result.baseline ? result.baseline.id + ':' + result.baseline.version + ':' + result.baseline.sha256 : null; }
     function exposed(result) { return { data: result.data, revision: result.revision, attachmentId: result.attachmentId, attachmentVersion: result.attachmentVersion, fingerprint:fingerprint(result), pointer: result.pointer }; }
@@ -472,7 +508,7 @@
         }
         pending = { requestId: requestId, sha256: hash, bytes: encoded.bytes.byteLength, actor: actor, expectedRevision: options.expectedRevision, expectedAttachmentVersion: options.expectedAttachmentVersion, nativeVersion: before.native ? before.native.version : 0, attachmentId: before.native ? before.native.id : null, token: token() };
         pointer = { schemaVersion: 1, pageId: pageId, filename: filename, attachment: before.baseline, lastWrite: pointer ? pointer.lastWrite : null, pending: pending };
-        reservation = await putProperty(pageId, pointerKey, pointer, before.revision || null, options); ownsUpload = true;
+        reservation = await putObservedProperty(pageId, pointerKey, pointer, before.property, options); ownsUpload = true;
       }
       if (ownsUpload) {
         // Recheck the existing native file after winning the property CAS. A
@@ -500,7 +536,7 @@
       var confirmedBytes = await bytesAt(pageId, filename, uploaded.version, {});
       if (confirmedBytes.byteLength !== pending.bytes || await digest(confirmedBytes) !== hash) fail('The uploaded attachment does not match this request. No JSON pointer was committed.', 'INTEGRITY');
       var committed = { schemaVersion: 1, pageId: pageId, filename: filename, attachment: { id: uploaded.id, version: uploaded.version, sha256: hash, bytes: confirmedBytes.byteLength }, lastWrite: { requestId: requestId, sha256: hash, actor: actor, expectedRevision: options.expectedRevision, expectedAttachmentVersion: options.expectedAttachmentVersion }, pending: null };
-      try { await putProperty(pageId, pointerKey, committed, reservation.version.number, {}); }
+      try { await putObservedProperty(pageId, pointerKey, committed, reservation, {}); }
       catch (error) {
         if (error.code !== 'CONFLICT' && error.code !== 'UNKNOWN_COMMIT') throw error;
         var found = await getProperty(pageId, pointerKey, {});
@@ -514,7 +550,7 @@
       if (!finalProperty || finalProperty.version.number !== reservation.version.number + 1 || !same(finalProperty.value, committed) || !same(finalReads[1], uploaded)) fail('Another JSON change committed before this confirmation was read. Reload the current state.', 'CONFLICT');
       return exposed({ data: JSON.parse(encoded.text), revision: finalProperty.version.number, attachmentId: uploaded.id, attachmentVersion: uploaded.version, pointer: committed, baseline: committed.attachment });
     }
-    return Object.freeze({ request: request, page: page, user: user, property: property, putProperty: putProperty, readJSON: readJSON, writeJSON: writeJSON, inspectJSON:inspectJSON, reconcileJSON:reconcileJSON, maxBytes: MAX_BYTES });
+    return Object.freeze({ request: request, page: page, user: user, property: property, observeProperty: observeProperty, putProperty: putProperty, readJSON: readJSON, writeJSON: writeJSON, inspectJSON:inspectJSON, reconcileJSON:reconcileJSON, maxBytes: MAX_BYTES });
   }
   return Object.freeze({ create: create, MAX_BYTES: MAX_BYTES, MAX_PROPERTY_BYTES: MAX_PROPERTY_BYTES });
 });

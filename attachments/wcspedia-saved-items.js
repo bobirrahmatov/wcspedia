@@ -3971,7 +3971,7 @@
     if (!origin || base.origin !== origin || base.protocol !== 'https:' || base.username || base.password || base.search || base.hash || !/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context || '/') || typeof fetcher !== 'function' || !crypto || !crypto.subtle || typeof crypto.getRandomValues !== 'function') fail('Use the signed-in HTTPS Confluence origin with Web Crypto and fetch.', 'CONFIGURATION');
     var spaceKey = config.spaceKey, roots = [config.rootPageId].concat(config.extraRootPageIds || []), allowed = config.allowedPageIds || [], protectedIds = config.protectedPageIds || [], storageIds = config.storagePageIds || [];
     if (typeof spaceKey !== 'string' || !spaceKey.trim() || !Array.isArray(roots) || !roots.length || roots.some(function (v) { return !id(v); }) || !Array.isArray(allowed) || !Array.isArray(protectedIds) || !Array.isArray(storageIds) || allowed.concat(protectedIds, storageIds).some(function (v) { return !id(v); }) || config.authorize != null && typeof config.authorize !== 'function') fail('Configure the exact space key, roots and permitted page IDs.', 'CONFIGURATION');
-    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds), pendingPageReads = new Map();
+    var rootSet = new Set(roots), allowedSet = new Set(allowed), protectedSet = new Set(protectedIds), storageSet = new Set(storageIds), pendingPageReads = new Map(), propertyObservations = new WeakMap();
     async function digest(bytes) { var hash = await crypto.subtle.digest('SHA-256', bytes); return Array.from(new Uint8Array(hash), function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function token() { var bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, function (v) { return v.toString(16).padStart(2, '0'); }).join(''); }
     function route(path) {
@@ -3981,16 +3981,21 @@
       if (url.origin !== origin || url.pathname !== rawPath || /%(?:2e|2f|5c)/i.test(rawPath) || !(url.pathname.startsWith(context + '/rest/api/') || url.pathname.startsWith(context + '/download/attachments/'))) fail('The request escaped the configured Confluence context.', 'SCOPE');
       return url;
     }
+    function cancelBody(body) {
+      // Once a response is rejected, waiting for stream cancellation must not
+      // hide its known status until the full read/write timeout expires.
+      try { Promise.resolve(body.cancel()).catch(function () {}); } catch (_) {}
+    }
     async function bounded(response, signal, maxBytes) {
       maxBytes = maxBytes || MAX_BYTES;
       var length = response.headers && response.headers.get('content-length');
-      if (length != null && /^\d+$/.test(length) && Number(length) > maxBytes) { try { await response.body.cancel(); } catch (_) {} fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); }
+      if (length != null && /^\d+$/.test(length) && Number(length) > maxBytes) { cancelBody(response.body); fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); }
       if (response.body && typeof response.body.getReader === 'function') {
         var reader = response.body.getReader(), parts = [], size = 0;
         var cancel = function () { reader.cancel().catch(function () {}); };
         signal.addEventListener('abort', cancel, { once: true });
         try {
-          while (true) { checkAbort(signal); var part = await reader.read(); checkAbort(signal); if (part.done) break; size += part.value.byteLength; if (size > maxBytes) { try { await reader.cancel(); } catch (_) {} fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); } parts.push(part.value); }
+          while (true) { checkAbort(signal); var part = await reader.read(); checkAbort(signal); if (part.done) break; size += part.value.byteLength; if (size > maxBytes) { cancelBody(reader); fail('The Confluence response exceeds its size limit.', 'ATTACHMENT_TOO_LARGE'); } parts.push(part.value); }
         } finally { signal.removeEventListener('abort', cancel); reader.releaseLock(); }
         var bytes = new Uint8Array(size), offset = 0; parts.forEach(function (part) { bytes.set(part, offset); offset += part.byteLength; }); return bytes;
       }
@@ -4007,14 +4012,14 @@
       var headers = new Headers(init.headers || {});
       if (['authorization', 'cookie', 'proxy-authorization'].some(function (key) { return headers.has(key); })) fail('Use the current Confluence session; do not supply credentials.', 'CONFIGURATION');
       headers.set('Accept', 'application/json'); if (mutation) headers.set('X-Requested-With', 'XMLHttpRequest');
-      var response, rejection, controller = new AbortController(), timer, onAbort;
+      var response, rejection, controller = new AbortController(), timer, onAbort, stop, deadline = Date.now() + (mutation ? writeTimeoutMs : timeoutMs);
       var stopped = new Promise(function (_, reject) {
-        function stop(external) {
+        stop = function (external) {
           if (rejection) { reject(rejection); controller.abort(); return; }
           var error = new Error(mutation ? 'Confluence has not confirmed '+method+' '+url.pathname+'. Use Check save to recover this same request; do not start another document.' : external ? 'The request was cancelled.' : 'Confluence took too long to respond. Try again.');
           if (mutation) error.code = 'UNKNOWN_COMMIT'; else if (external) error.name = 'AbortError'; else error.code = 'TIMEOUT';
           reject(error); controller.abort();
-        }
+        };
         timer = setTimeout(function () { stop(false); }, mutation ? writeTimeoutMs : timeoutMs);
         onAbort = function () { stop(true); };
         if (init.signal) init.signal.addEventListener('abort', onAbort, { once: true });
@@ -4030,13 +4035,17 @@
         // A short structured validation reason is useful; HTML proxy/login
         // pages, stack traces and full responses must not become UI content.
         if (response.status === 400 && /\bapplication\/(?:[a-z0-9.-]+\+)?json\b/i.test(response.headers.get('content-type') || '')) {
+          // The server has already rejected the request. Optional diagnostics
+          // get at most one second, inside the original operation deadline.
+          clearTimeout(timer);
+          timer = setTimeout(function () { stop(false); }, Math.max(0, Math.min(1000, timeoutMs, deadline - Date.now())));
           try {
             var problem = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await bounded(response, controller.signal, 8192)));
             var messages = [problem && problem.message].concat(problem && Array.isArray(problem.errorMessages) ? problem.errorMessages.slice(0,3) : []);
             var detail = messages.filter(function(v){return typeof v === 'string' && !/[<>]/.test(v);}).join(' ').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,500);
             if (detail) rejection.message += ' Server: ' + detail;
           } catch (_) { /* Keep the original HTTP status if diagnostics are unavailable. */ }
-        } else { try { await response.body.cancel(); } catch (_) {} }
+        } else cancelBody(response.body);
         throw rejection;
       }
       if (response.status === 204 || method === 'HEAD') return null;
@@ -4154,26 +4163,53 @@
       fail('The metadata lookup exceeded its safe page limit.', 'PROPERTY_LIMIT');
     }
     async function property(pageId, key, options) { keyCheck(key); await page(pageId, '', options); return options && options.optional === true ? findProperty(pageId, key, { signal: options.signal }) : getProperty(pageId, key, options); }
+    function rememberProperty(receipt, pageId, key, previous) {
+      propertyObservations.set(receipt, { pageId: pageId, key: key, previous: previous ? clone(previous) : null });
+      return receipt;
+    }
+    // The opaque receipt includes confirmed absence. It is issued only after a
+    // real scoped read, belongs to this storage instance and is consumed once.
+    // Caller edits/clones cannot manufacture a native ID or CAS baseline.
+    async function observeProperty(pageId, key, options) {
+      var previous = await property(pageId, key, options);
+      return rememberProperty(Object.freeze({ property: previous }), pageId, key, previous);
+    }
     async function putProperty(pageId, key, value, expectedVersion, options) {
       options = options || {}; keyCheck(key); var encoded = jsonBytes(value, MAX_PROPERTY_BYTES);
       if (expectedVersion !== null && !integer(expectedVersion, 1)) fail('Use null to create a property or its current CAS version to update it.', 'CONFIGURATION');
       writableTarget(pageId, 'property.write');
-      // Both checks are fresh reads. Overlap their network latency; the CAS
-      // mutation still waits for native permission and the expected revision.
-      var checks = await Promise.all([writable(pageId, 'property.write', options, true), getProperty(pageId, key, options)]);
-      var previous = checks[1], nextVersion = expectedVersion === null ? 1 : expectedVersion + 1;
+      var receipt = object(options.observedProperty) && propertyObservations.get(options.observedProperty);
+      if (receipt) propertyObservations.delete(options.observedProperty);
+      var observed = receipt && receipt.pageId === pageId && receipt.key === key && (receipt.previous ? receipt.previous.version.number : null) === expectedVersion;
+      // Overlap ordinary scope/revision reads; the CAS mutation still waits
+      // for fresh native permission. A storage-issued receipt
+      // already has the exact native CAS baseline; native PUT/POST enforces it.
+      // Missing, forged, reused or mismatched receipts take the ordinary read.
+      var checks = await Promise.all([writable(pageId, 'property.write', options, true), observed ? Promise.resolve(receipt.previous) : getProperty(pageId, key, options)]);
+      return writeProperty(pageId, key, encoded, expectedVersion, checks[1], options);
+    }
+    // Only the JSON transaction uses this private path. Its snapshot/reservation
+    // already supplies the exact native property ID and CAS version. Native CAS
+    // still rejects a competing update; permissions are freshly checked here.
+    async function putObservedProperty(pageId, key, value, previous, options) {
+      var encoded = jsonBytes(value, MAX_PROPERTY_BYTES);
+      await writable(pageId, 'property.write', options, true);
+      return writeProperty(pageId, key, encoded, previous ? previous.version.number : null, previous, options);
+    }
+    async function writeProperty(pageId, key, encoded, expectedVersion, previous, options) {
+      var nextVersion = expectedVersion === null ? 1 : expectedVersion + 1;
       if ((previous ? previous.version.number : null) !== expectedVersion) fail('The content property changed. Reload before writing.', 'CONFLICT');
       var payload = { key: key, value: JSON.parse(encoded.text), version: { number: nextVersion } };
       if (previous) payload.id = previous.id;
       try {
         var result = validateProperty(await transport('/rest/api/content/' + pageId + '/property' + (previous ? '/' + encodeURIComponent(key) : ''), { method: previous ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: options.signal }), pageId, key);
         if (result.version.number !== nextVersion || !same(result.value, payload.value) || previous && result.id !== previous.id) fail('The property write was not confirmed.', 'UNKNOWN_COMMIT');
-        return result;
+        return rememberProperty(result, pageId, key, result);
       } catch (error) {
         if (error.code !== 'UNKNOWN_COMMIT' && error.code !== 'CONFLICT') throw error;
         // A lost CAS reply may be confirmed, but no PUT/POST is repeated.
         var found; try { found = await getProperty(pageId, key, {}); } catch (_) { throw error; }
-        if (found && found.version.number === nextVersion && same(found.value, payload.value) && (!previous || found.id === previous.id)) return found;
+        if (found && found.version.number === nextVersion && same(found.value, payload.value) && (!previous || found.id === previous.id)) return rememberProperty(found, pageId, key, found);
         throw error;
       }
     }
@@ -4214,7 +4250,7 @@
       if ((fresh ? fresh.version.number : 0) !== (prop ? prop.version.number : 0) || fresh && (fresh.id !== prop.id || !same(fresh.value, prop.value))) fail('The JSON pointer changed while loading. Reload it.', 'CONFLICT');
       if (!same(verified[1], native)) fail('The live JSON attachment changed while loading.', 'CONFLICT');
       if (committed && selected && committed.id === selected.id && committed.version === selected.version && (hash !== committed.sha256 || bytes.byteLength !== committed.bytes)) fail('The JSON failed its SHA-256 check for the same native attachment revision.', 'INTEGRITY');
-      return { data: data, revision: prop ? prop.version.number : 0, attachmentId: selected ? selected.id : null, attachmentVersion: selected ? selected.version : 0, pointer: pointer, propertyId: prop ? prop.id : null, native: native, baseline: selected ? { id: selected.id, version: selected.version, sha256: hash, bytes: bytes.byteLength } : null };
+      return { data: data, revision: prop ? prop.version.number : 0, attachmentId: selected ? selected.id : null, attachmentVersion: selected ? selected.version : 0, pointer: pointer, propertyId: prop ? prop.id : null, property: prop, native: native, baseline: selected ? { id: selected.id, version: selected.version, sha256: hash, bytes: bytes.byteLength } : null };
     }
     function fingerprint(result) { return result.baseline ? result.baseline.id + ':' + result.baseline.version + ':' + result.baseline.sha256 : null; }
     function exposed(result) { return { data: result.data, revision: result.revision, attachmentId: result.attachmentId, attachmentVersion: result.attachmentVersion, fingerprint:fingerprint(result), pointer: result.pointer }; }
@@ -4285,7 +4321,7 @@
         }
         pending = { requestId: requestId, sha256: hash, bytes: encoded.bytes.byteLength, actor: actor, expectedRevision: options.expectedRevision, expectedAttachmentVersion: options.expectedAttachmentVersion, nativeVersion: before.native ? before.native.version : 0, attachmentId: before.native ? before.native.id : null, token: token() };
         pointer = { schemaVersion: 1, pageId: pageId, filename: filename, attachment: before.baseline, lastWrite: pointer ? pointer.lastWrite : null, pending: pending };
-        reservation = await putProperty(pageId, pointerKey, pointer, before.revision || null, options); ownsUpload = true;
+        reservation = await putObservedProperty(pageId, pointerKey, pointer, before.property, options); ownsUpload = true;
       }
       if (ownsUpload) {
         // Recheck the existing native file after winning the property CAS. A
@@ -4313,7 +4349,7 @@
       var confirmedBytes = await bytesAt(pageId, filename, uploaded.version, {});
       if (confirmedBytes.byteLength !== pending.bytes || await digest(confirmedBytes) !== hash) fail('The uploaded attachment does not match this request. No JSON pointer was committed.', 'INTEGRITY');
       var committed = { schemaVersion: 1, pageId: pageId, filename: filename, attachment: { id: uploaded.id, version: uploaded.version, sha256: hash, bytes: confirmedBytes.byteLength }, lastWrite: { requestId: requestId, sha256: hash, actor: actor, expectedRevision: options.expectedRevision, expectedAttachmentVersion: options.expectedAttachmentVersion }, pending: null };
-      try { await putProperty(pageId, pointerKey, committed, reservation.version.number, {}); }
+      try { await putObservedProperty(pageId, pointerKey, committed, reservation, {}); }
       catch (error) {
         if (error.code !== 'CONFLICT' && error.code !== 'UNKNOWN_COMMIT') throw error;
         var found = await getProperty(pageId, pointerKey, {});
@@ -4327,7 +4363,7 @@
       if (!finalProperty || finalProperty.version.number !== reservation.version.number + 1 || !same(finalProperty.value, committed) || !same(finalReads[1], uploaded)) fail('Another JSON change committed before this confirmation was read. Reload the current state.', 'CONFLICT');
       return exposed({ data: JSON.parse(encoded.text), revision: finalProperty.version.number, attachmentId: uploaded.id, attachmentVersion: uploaded.version, pointer: committed, baseline: committed.attachment });
     }
-    return Object.freeze({ request: request, page: page, user: user, property: property, putProperty: putProperty, readJSON: readJSON, writeJSON: writeJSON, inspectJSON:inspectJSON, reconcileJSON:reconcileJSON, maxBytes: MAX_BYTES });
+    return Object.freeze({ request: request, page: page, user: user, property: property, observeProperty: observeProperty, putProperty: putProperty, readJSON: readJSON, writeJSON: writeJSON, inspectJSON:inspectJSON, reconcileJSON:reconcileJSON, maxBytes: MAX_BYTES });
   }
   return Object.freeze({ create: create, MAX_BYTES: MAX_BYTES, MAX_PROPERTY_BYTES: MAX_PROPERTY_BYTES });
 });
@@ -5034,14 +5070,15 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     async function hashBytes(bytes){if(!crypto||!crypto.subtle)fail('Web Crypto is required for safe request recovery.','CONFIGURATION');return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),function(n){return n.toString(16).padStart(2,'0');}).join('');}
     async function digest(v){return hashBytes(new TextEncoder().encode(v));}
     function options(signal,extra){return Object.assign({signal:signal},extra||{});}
+    async function observeProperty(id,key,signal){return typeof storage.observeProperty==='function'?storage.observeProperty(id,key,options(signal)):{property:await storage.property(id,key,options(signal))};}
     async function request(path,method,body,signal){aborted(signal);return storage.request(path,options(signal,{method:method||'GET',headers:body===undefined?undefined:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:body===undefined?undefined:JSON.stringify(body)}));}
     function assertPage(p,expectedParent){if(!p||p.type!=='page'||p.status&&p.status!=='current'||String(p.space&&p.space.key)!==space||!Number.isSafeInteger(p.version&&p.version.number))fail('A configured page is unavailable or outside WCSpedia.','PAGE_SCOPE');if(expectedParent&&parent(p)!==expectedParent)fail('A document or destination was moved outside its configured parent.','PAGE_SCOPE');return p;}
     async function page(id,signal,expectedParent){return assertPage(await storage.page(numeric(id),EXPAND,options(signal)),expectedParent);}
     async function restrictions(id,operation,signal){return request('/rest/api/content/'+id+'/restriction/byOperation/'+operation+'?expand=restrictions.user,restrictions.group&limit=200',null,undefined,signal);}
     function restrictionRows(r,operation){if(!r||r.operation!==operation||!object(r.restrictions))fail('Confluence did not return verifiable native restrictions.','INVALID_PERMISSIONS');var users=r.restrictions.user,groups=r.restrictions.group;if(!users||!groups||!Array.isArray(users.results)||!Array.isArray(groups.results))fail('Confluence did not expand native restriction subjects.','INVALID_PERMISSIONS');if((users._links&&users._links.next)||(groups._links&&groups._links.next))fail('The restriction list is too large to verify safely.','PERMISSIONS_LIMIT');return {users:users.results,groups:groups.results};}
-    async function boundaries(signal,reading,currentUserRead){
+    async function boundaries(signal,reading,currentUserRead,skipWorking){
       var workingError=null;
-      var results=await Promise.all([storage.page(rootId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),storage.page(workingId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}).catch(function(error){aborted(signal);if(error.name==='AbortError')throw error;workingError=error;return null;}),request('/rest/api/space/'+encodeURIComponent(space)+'?expand=operations',null,undefined,signal)]);
+      var results=await Promise.all([storage.page(rootId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),skipWorking?Promise.resolve(null):storage.page(workingId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}).catch(function(error){aborted(signal);if(error.name==='AbortError')throw error;workingError=error;return null;}),request('/rest/api/space/'+encodeURIComponent(space)+'?expand=operations',null,undefined,signal)]);
       if(results[2].key!==space||results[2].operations!=null&&!Array.isArray(results[2].operations))fail('Confluence space permissions could not be verified.','INVALID_PERMISSIONS');
       // Each private workflow record protects its own body, history and
       // attachments. Working is a location, not a global authoring entitlement.
@@ -5075,7 +5112,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     }
     async function contextFor(input,signal,reading){
       input=input||{};var currentUserRead=input.user?Promise.resolve(input.user):storage.user(options(signal));
-      var responses=await Promise.all([currentUserRead,input.policy?Promise.resolve(input.policy):deps.loadPolicy(options(signal)),input.skipDocuments?Promise.resolve(null):boundaries(signal,reading,currentUserRead)]);
+      var responses=await Promise.all([currentUserRead,input.policy?Promise.resolve(input.policy):deps.loadPolicy(options(signal)),input.skipDocuments?Promise.resolve(null):boundaries(signal,reading,currentUserRead,input.skipWorking===true)]);
       var policy=E.validatePolicy(responses[1].data||responses[1]),catalog=clone(input.catalog||(lastContext&&lastContext.catalog)||config.catalog||{schemaVersion:1,isDemo:false,people:[],areas:[],documents:[]});
       var dir=directory(catalog,policy,responses[0]);var ctx={user:responses[0],policy:policy,bounds:responses[2],catalog:catalog,dir:dir,access:input.access||{}};lastContext=ctx;return ctx;
     }
@@ -5279,9 +5316,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(!p.body||!p.body.storage||typeof p.body.storage.value!=='string'||!Array.isArray(p.operations))p=await page(p.id,signal,expectedParent);
       if(p.title!==title||!marked(p,marker))fail('The working-page title is already used by other content.','CONFLICT');return p;
     }
-    async function createPage(title,documentKey,kind,requestId,signal,expectedParent){
+    async function createPage(title,documentKey,kind,requestId,signal,expectedParent,seedCheckedAbsent){
       expectedParent=expectedParent||workingId;
-      var marker='wcs-document-'+documentKey,existing=await findSeed(title,marker,signal,expectedParent);
+      // findSingle already checked this exact seed before enumerating renamed
+      // identities. Reuse that absence only in this call; retries run the fresh
+      // search again, and Confluence still enforces the title on the POST.
+      var marker='wcs-document-'+documentKey,existing=seedCheckedAbsent?null:await findSeed(title,marker,signal,expectedParent);
       if(existing){if(!marked(existing,'wcs-created-'+requestId)&&!marked(existing,'wcs-operation-'+requestId))fail('This document key already exists. Reload the workspace.','CONFLICT');return existing;}
       var created=await request('/rest/api/content','POST',{type:'page',title:title,space:{key:space},ancestors:[{id:expectedParent}],body:{storage:{representation:'storage',value:anchor(marker)+anchor('wcs-created-'+requestId)+anchor('wcs-kind-'+kind)+(expectedParent===insightsId?anchor('wcs-single-insight'):'')+'<p>WCSpedia content is being prepared.</p>'}}},signal);
       if(!created||!/^[1-9]\d{0,19}$/.test(String(created.id||'')))fail('Confluence did not confirm the created page ID. Check this same save before retrying.','UNKNOWN_COMMIT');
@@ -5406,9 +5446,10 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var response=await request('/rest/api/content/'+p.id,'PUT',{id:p.id,type:'page',title:title.slice(0,250),space:{key:space},ancestors:[{id:expectedParent}],version:{number:p.version.number+1,message:'WCSpedia '+kind+' '+v.status+' v'+v.version+' r'+v.revision+' · '+requestId},body:{storage:{representation:'storage',value:body}}},signal);
       var result=assertPage(response,expectedParent);if(result.version.number!==p.version.number+1)fail('The native page update was not confirmed.','UNKNOWN_COMMIT');result.readerReady=kind==='published';return result;
     }
-    async function ensureSummary(p,doc,signal){
-      var value={schemaVersion:1,documentKey:doc.id,singlePageInsight:doc.singlePageInsight===true,people:[doc.ownerId,doc.authorId,doc.reviewerId,doc.approverId],status:doc.deletedAt?'Deleted':W.currentVersion(doc).status},old=await storage.property(p.id,SUMMARY,options(signal));
-      if(!old||JSON.stringify(old.value)!==JSON.stringify(value))await storage.putProperty(p.id,SUMMARY,value,old?old.version.number:null,options(signal));
+    async function ensureSummary(p,doc,signal,observed){
+      var value={schemaVersion:1,documentKey:doc.id,singlePageInsight:doc.singlePageInsight===true,people:[doc.ownerId,doc.authorId,doc.reviewerId,doc.approverId],status:doc.deletedAt?'Deleted':W.currentVersion(doc).status};
+      observed=observed||await observeProperty(p.id,SUMMARY,signal);var old=observed.property;
+      if(!old||JSON.stringify(old.value)!==JSON.stringify(value))await storage.putProperty(p.id,SUMMARY,value,old?old.version.number:null,options(signal,{observedProperty:observed}));
     }
     async function syncLabels(p,doc,signal){
       function label(kind,value){var slug=String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);return slug?'wcs-'+kind+'-'+slug:null;}
@@ -5446,9 +5487,16 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(!object(command)||!ACTIONS.includes(command.action)||typeof command.comment!=='string'||!command.comment.trim())fail('A supported workflow action and reason are required.');
       var requestId=command.requestId;if(typeof requestId!=='string'||!/^[a-zA-Z0-9-]{16,100}$/.test(requestId))fail('Preserve a secure request ID while retrying this action.','CONFIGURATION');
       var creating=command.action==='create';
+      var documentKey=key(creating?command.fields&&command.fields.id:command.documentKey||command.docId);
+      var entry=!creating&&session&&session.data&&(session.data.documents||[]).find(function(d){return d.id===documentKey;});
+      if(!creating&&(!entry||!entry.confluencePageId))fail('Reload the document workspace before saving.','NOT_FOUND');
       // Existing pages carry their own fresh native scope/edit permissions.
       // Space Add-page and parent availability matter only when creating a page.
-      var ctx=await contextFor({catalog:session&&session.data,skipDocuments:!creating},signal,true),actor=ctx.dir.actor,who=ctx.dir.who;
+      var directCreation=creating&&Content.isDirectPublication(command.fields||{});
+      // The existing native page and fresh policy/identity are independent
+      // reads. No journal or content mutation starts until both are validated.
+      var preflight=await Promise.all([contextFor({catalog:session&&session.data,skipDocuments:!creating,skipWorking:directCreation},signal,true),creating?Promise.resolve(null):page(entry.confluencePageId,signal,entry.singlePageInsight?insightsId:workingId).then(function(value){return {page:value};},function(error){return {error:error};})]);
+      var ctx=preflight[0],actor=ctx.dir.actor,who=ctx.dir.who;
       var creationBoundsReady=creating;
       if(!creating)ctx.bounds={root:{operations:[]},working:null,space:null,canCreate:false,nativeCreationVerified:false,creationCode:'',creationMessage:''};
       async function ensureCreationBounds(){
@@ -5457,7 +5505,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       }
       if(!session||session.actorId!==actor.id||!session.identity||session.identity.soeid!==who.soeid||['userKey','accountId'].some(function(k){return (session.identity[k]||null)!==(who[k]||null);}))fail('Your signed-in account changed. Reload before saving.','IDENTITY_MAPPING');
       if(command.expectedEntitlementRevision!=null&&command.expectedEntitlementRevision!==ctx.policy.revision)fail('Entitlements changed. Reload before saving.','CONFLICT');
-      var documentKey=key(creating?command.fields&&command.fields.id:command.documentKey||command.docId),doc,p,state,journal,verifiedAssignments=null,summarySynced=false;
+      var doc,p,state,journal,observedJournal,observedSummary,verifiedAssignments=null,summarySynced=false;
       var verifiedUsers=new Map([[who.soeid,ctx.user]]),verifiedDestinations=new Map(),readMedia=actionMediaReader(signal);
       async function actionDestination(value){
         var id=publicationParent(value);
@@ -5473,22 +5521,22 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         statePreflight(doc,ctx.dir.people);await Renderer.collectMedia(doc,W.currentVersion(doc),{media:{}});
         if(!Content.isDirectPublication(doc))verifiedAssignments=await assignments(doc,ctx.dir.people,signal,verifiedUsers);
         // Resume old two-page saves in place. Never move their private history.
-        p=Content.isDirectPublication(doc)?await findSeed('WCSpedia working '+documentKey,'wcs-document-'+documentKey,signal):null;
+        p=Content.isDirectPublication(doc)?(await Promise.all([findSeed('WCSpedia working '+documentKey,'wcs-document-'+documentKey,signal),actionDestination(doc)]))[0]:null;
         if(Content.isDirectPublication(doc)&&!p){
-          await actionDestination(doc);p=await findSingle(documentKey,signal);
+          p=await findSingle(documentKey,signal);
           if(p&&!marked(p,'wcs-created-'+requestId))fail('This document key already exists. Reload the workspace.','CONFLICT');
-          if(!p)p=await createPage('WCSpedia insight '+documentKey,documentKey,'published',requestId,signal,insightsId);
+          if(!p)p=await createPage('WCSpedia insight '+documentKey,documentKey,'published',requestId,signal,insightsId,true);
           singlePages.set(documentKey,p.id);doc.singlePageInsight=true;
-        }else{if(!ctx.bounds.working)throw ctx.bounds.workingError||Object.assign(new Error('The configured Working page is unavailable.'),{code:'WORKING_ROOT_UNAVAILABLE'});if(!p)p=await createPage('WCSpedia working '+documentKey,documentKey,'working',requestId,signal);}
-        var initialReads=await Promise.all([readState(p,signal),storage.property(p.id,JOURNAL,options(signal))]);state=initialReads[0];journal=initialReads[1];
+        }else{if(directCreation&&!ctx.bounds.working)ctx.bounds.working=await page(workingId,signal);if(!ctx.bounds.working)throw ctx.bounds.workingError||Object.assign(new Error('The configured Working page is unavailable.'),{code:'WORKING_ROOT_UNAVAILABLE'});if(!p)p=await createPage('WCSpedia working '+documentKey,documentKey,'working',requestId,signal);}
+        var initialReads=await Promise.all([readState(p,signal),observeProperty(p.id,JOURNAL,signal),observeProperty(p.id,SUMMARY,signal)]);state=initialReads[0];observedJournal=initialReads[1];journal=observedJournal.property;observedSummary=initialReads[2];
       }else{
-        var entry=(session.data.documents||[]).find(function(d){return d.id===documentKey;});if(!entry||!entry.confluencePageId)fail('Reload the document workspace before saving.','NOT_FOUND');try{p=await page(entry.confluencePageId,signal,entry.singlePageInsight?insightsId:workingId);}catch(error){
+        try{if(preflight[1].error)throw preflight[1].error;p=preflight[1].page;}catch(error){
           if(error.status!==404||!entry.singlePageInsight||command.action!=='delete')throw error;
           var deleted=await request('/rest/api/content/'+numeric(entry.confluencePageId)+'?status=trashed&expand='+encodeURIComponent(EXPAND),null,undefined,signal);
           if(!E.hasGrant(ctx.policy,who,'content.delete',documentKey)||!deleted||deleted.status!=='trashed'||String(deleted.id)!==String(entry.confluencePageId)||deleted.space&&deleted.space.key!==space||!marked(deleted,'wcs-single-insight')||!marked(deleted,'wcs-document-'+documentKey)||!marked(deleted,'wcs-deleted-'+requestId+'-'+fingerprint))fail('Article deletion could not be confirmed.','UNKNOWN_COMMIT');
           singlePages.delete(documentKey);return loadWithContext({catalog:ctx.catalog,signal:signal,workspaceScope:'document:'+documentKey},ctx);
         }
-        var currentReads=await Promise.all([readState(p,signal),storage.property(p.id,JOURNAL,options(signal))]);state=currentReads[0];journal=currentReads[1];doc=state.document;if(!doc)fail('The working document metadata is unavailable.','INVALID_DATA');ctx.dir=directory(ctx.catalog,ctx.policy,ctx.user,state.people);actor=ctx.dir.actor;
+        var currentReads=await Promise.all([readState(p,signal),observeProperty(p.id,JOURNAL,signal),observeProperty(p.id,SUMMARY,signal),marked(p,'wcs-single-insight')?page(insightsId,signal,rootId).then(function(value){verifiedDestinations.set(insightsId,value);}):Promise.resolve()]);state=currentReads[0];observedJournal=currentReads[1];journal=observedJournal.property;observedSummary=currentReads[2];doc=state.document;if(!doc)fail('The working document metadata is unavailable.','INVALID_DATA');ctx.dir=directory(ctx.catalog,ctx.policy,ctx.user,state.people);actor=ctx.dir.actor;
       }
       if(Content.isInsightType(doc.type)&&!['create','edit','revise','delete','reassign-owner'].includes(command.action))fail('This content publishes directly to Insights; open it in the editor to publish.','INVALID_ACTION');
       if(command.action==='reassign-owner'){
@@ -5539,12 +5587,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         var snapshotPeople=ctx.dir.people.filter(function(person){return relevantIds.has(person.id);});
         if(!creating)statePreflight(W.transition(doc,command.action,{people:ctx.dir.people,actorId:actor.id,actorSOEID:who.soeid,now:at,effectiveAt:at,nextReviewAt:command.nextReviewAt,governanceReview:command.governanceReview,expectedVersion:command.expectedVersion,expectedRevision:command.expectedRevision,expectedAuditLength:command.expectedAuditLength,changes:command.changes,ownerId:command.ownerId,comment:command.comment,requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:{actorId:actor.id,documentId:documentKey,edit:E.hasGrant(ctx.policy,who,'content.edit',documentKey)&&op(p,'update'),delete:E.hasGrant(ctx.policy,who,'content.delete',documentKey)&&op(p,'delete')}}),snapshotPeople);
         await protectPrivateRecord();
-        journal=await storage.putProperty(p.id,JOURNAL,{schemaVersion:1,requestId:requestId,fingerprint:fingerprint,actorSOEID:who.soeid,documentKey:documentKey,action:command.action,at:at,people:snapshotPeople,expectedNativeVersion:p.version.number,priorPublishedParentId:publicationParent(doc),priorStateRevision:state.state.revision,priorAttachmentVersion:state.state.attachmentVersion||0,priorFingerprint:state.state.fingerprint,stage:'reserved',done:false},journal?journal.version.number:null,options(signal));
+        journal=await storage.putProperty(p.id,JOURNAL,{schemaVersion:1,requestId:requestId,fingerprint:fingerprint,actorSOEID:who.soeid,documentKey:documentKey,action:command.action,at:at,people:snapshotPeople,expectedNativeVersion:p.version.number,priorPublishedParentId:publicationParent(doc),priorStateRevision:state.state.revision,priorAttachmentVersion:state.state.attachmentVersion||0,priorFingerprint:state.state.fingerprint,stage:'reserved',done:false},journal?journal.version.number:null,options(signal,{observedProperty:observedJournal}));
       }
-      async function checkpoint(changes){journal=await storage.putProperty(p.id,JOURNAL,Object.assign({},journal.value,changes),journal.version.number,options(signal));}
+      async function checkpoint(changes){journal=await storage.putProperty(p.id,JOURNAL,Object.assign({},journal.value,changes),journal.version.number,options(signal,{observedProperty:journal}));}
       var j=journal.value;
       await protectPrivateRecord();
-      if(state.document&&state.document.lastRequestId===requestId){if(state.document.singlePageInsight&&command.action==='delete')return finishSingleDelete(p,state.document,journal,requestId,fingerprint,ctx,signal);await ensureSummary(p,state.document,signal);await checkpoint({done:true,stage:'complete'});return loadWithContext({catalog:ctx.catalog,signal:signal,workspaceScope:'document:'+documentKey},ctx);}
+      if(state.document&&state.document.lastRequestId===requestId){if(state.document.singlePageInsight&&command.action==='delete')return finishSingleDelete(p,state.document,journal,requestId,fingerprint,ctx,signal);await ensureSummary(p,state.document,signal,observedSummary);await checkpoint({done:true,stage:'complete'});return loadWithContext({catalog:ctx.catalog,signal:signal,workspaceScope:'document:'+documentKey},ctx);}
       if(state.state.revision!==j.priorStateRevision&&!(state.state.pointer&&state.state.pointer.pending&&state.state.pointer.pending.requestId===requestId&&state.state.pointer.pending.expectedRevision===j.priorStateRevision))fail('The document state changed while this action was pending.','CONFLICT');
       if(['request-changes','complete-review','approve'].includes(command.action)&&actor.role==='Reader')fail('Your active review role is no longer available.','FORBIDDEN');
       var permissionContext={actorId:actor.id,documentId:documentKey,create:creating,edit:E.hasGrant(ctx.policy,who,'content.edit',documentKey)&&op(p,'update'),delete:E.hasGrant(ctx.policy,who,'content.delete',documentKey)&&op(p,'delete')};
@@ -5558,7 +5606,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var media=await stageMedia(doc,p,state.media||{},p.id,signal,readMedia);doc._people=j.people||ctx.dir.people;
       if(marked(p,'wcs-operation-'+requestId)?p.version.number!==j.expectedNativeVersion+1:p.version.number!==j.expectedNativeVersion)fail('The native working page changed during this operation.','CONFLICT');
       if(single){
-        await actionDestination(doc);await ensureSummary(p,doc,signal);summarySynced=true;
+        await actionDestination(doc);await ensureSummary(p,doc,signal,observedSummary);summarySynced=true;
         if(command.action!=='delete'){
           p=await bodyWrite(p,doc,media,'published',requestId,insightsId,signal);
           doc.publishedConfluencePageId=String(p.id);doc.publishedConfluencePageVersion=p.version.number;doc.publishedReader=p.readerReady===true;
@@ -5587,7 +5635,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       doc=externalize(doc,media);delete doc._people;doc.nativeSessionWorkflow=true;doc.confluencePageId=String(p.id);doc.confluencePageVersion=p.version.number;doc.lastRequestId=requestId;
       Object.keys(media).forEach(function(k){if(media[k].url){media[k].sourceUrl=media[k].url;if(k.startsWith('data:')){media[media[k].url]=media[k];delete media[k];}}});
       await storage.writeJSON(p.id,FILE,STATE,{schemaVersion:1,document:doc,people:j.people||ctx.dir.people,media:media},{expectedRevision:j.priorStateRevision,expectedAttachmentVersion:j.priorAttachmentVersion,expectedFingerprint:j.priorFingerprint,requestId:requestId,signal:signal});
-      if(!summarySynced)await ensureSummary(p,doc,signal);
+      if(!summarySynced)await ensureSummary(p,doc,signal,observedSummary);
       if(single&&command.action==='delete')return finishSingleDelete(p,doc,journal,requestId,fingerprint,ctx,signal);
       await checkpoint({done:true,stage:'complete'});
       return completedSession(ctx,p,doc,j.people||ctx.dir.people,signal);
@@ -7114,35 +7162,24 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         // A reload may advance native versions after a lost response. Recovery
         // must use the exact original payload recorded by the durable journal.
         var nextSession = await nativeWorkflow().submit(clone(pendingCommand.payload), last);
-        validateData(nextSession.data);
+        // submit() returns only after the native body/state and durable receipt
+        // are verified. Do not reread the whole entitlement host after commit:
+        // every subsequent mutation verifies fresh identity, policy and access.
+        pendingCommand = null;
+        clearSearchReads();
         try {
+          validateData(nextSession.data);
           var refreshedUser = await nativeStorage().user(), refreshedIdentity = entitlementHelper().identity(refreshedUser);
           if (!refreshedIdentity || refreshedIdentity.soeid !== nextSession.identity.soeid || ['userKey', 'accountId'].some(function (key) { return (refreshedIdentity[key] || null) !== (nextSession.identity[key] || null); })) fail('Your account changed after saving. Reload the workspace.', 'IDENTITY_MAPPING');
-          // Refresh identity and policy after the committed workflow's native
-          // checks. Every subsequent mutation checks its own destination rights.
-          var freshAccess = await resolveAccess(refreshedUser, {}, null), E = entitlementHelper();
-          if (freshAccess.entitlementPolicy.revision !== nextSession.entitlementPolicy.revision) fail('Entitlements changed during saving. Reload the workspace.', 'REFRESH_REQUIRED');
-          var verifiedCreate = nextSession.effectivePermissions['content.create'] === true && E.nativeHas(freshAccess.nativePermissions.root, 'read') && E.hasGrant(freshAccess.entitlementPolicy, refreshedIdentity, 'content.create', '*');
-          freshAccess.nativePermissions.root = freshAccess.nativePermissions.root.filter(function (operation) { return operation.operation !== 'create'; });
-          if (verifiedCreate) freshAccess.nativePermissions.root.push({operation:'create',targetType:'page'});
-          freshAccess.effectivePermissions['content.create'] = verifiedCreate && E.effective(freshAccess.entitlementPolicy, refreshedIdentity, 'content.create', {native:freshAccess.nativePermissions});
-          freshAccess.creationMessage = nextSession.creationMessage || '';
-          freshAccess.creationCode = nextSession.creationCode || '';
-          // Retain the verified document operations, gated again by the policy
-          // just read, so grants revoked during a save cannot leave enabled UI.
-          freshAccess.nativePermissions.documents = nextSession.nativePermissions.documents;
-          freshAccess.nativePageVersions = nextSession.nativePageVersions;
-          Object.keys(nextSession.documentPermissions || {}).forEach(function (id) {
-            var verified = nextSession.documentPermissions[id];
-            freshAccess.documentPermissions[id] = {
-              edit: verified.edit === true && E.effective(freshAccess.entitlementPolicy, refreshedIdentity, 'content.edit', {native:freshAccess.nativePermissions,documentKey:id}),
-              delete: verified.delete === true && E.effective(freshAccess.entitlementPolicy, refreshedIdentity, 'content.delete', {native:freshAccess.nativePermissions,documentKey:id})
-            };
-          });
-          nextSession = Object.assign(nextSession, freshAccess);
-        } catch (_) { fail('The action was saved, but current access could not be refreshed. Reload before continuing.', 'REFRESH_REQUIRED'); }
-        last = nextSession; accessLast = clone(nextSession); clearSearchReads();
-        pendingCommand = null;
+        } catch (_) {
+          // A confirmed save must never be offered as an unknown-write retry.
+          // Require a fresh session before any further action in this tab.
+          last = null; accessLast = null;
+          var refreshError = new Error('The action was saved. Reload the workspace to verify your current account before continuing.');
+          refreshError.code = 'REFRESH_REQUIRED'; refreshError.committed = true;
+          throw refreshError;
+        }
+        last = nextSession; accessLast = clone(nextSession);
         return clone(nextSession);
       }
       if (mode !== 'confluence' || !workflowURL || !workspaceURL) fail('Trusted workspace and workflow endpoints are required for live review and approval.', 'READ_ONLY');
@@ -11211,5 +11248,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['saved'] = { version: '39b3586756cd' };
+  modules['saved'] = { version: '66913248758f' };
 })();
