@@ -1,3 +1,5 @@
+**Installation files:** open [ready/](ready/README.md) for upload attachments, page HTML macros, the shared navBar helper and exact destination page IDs. Regenerate with `python3 prepare-ready.py` after rebuilding the configured package.
+
 **Current space-only deployment:** use [NATIVE-SPACE-SETUP.md](NATIVE-SPACE-SETUP.md). The configured package uses native-session persistence for authoring, approval, entitlements, favourites and suggestions. Custom service instructions below are legacy reference and are not required for this installation.
 
 # WCSpedia · Wealth Credit Services knowledge base
