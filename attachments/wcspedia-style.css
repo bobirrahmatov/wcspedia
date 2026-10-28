@@ -83,7 +83,7 @@
 #wcspedia .discovery-area{border:1px solid var(--ds-border,var(--wcs-theme-border,#e1e8ef));background:var(--ds-surface,var(--wcs-theme-surface,#fff));border-radius:17px;padding:24px 23px 21px;position:relative;overflow:hidden;min-height:216px;transition:border-color .15s,box-shadow .15s}
 #wcspedia .discovery-area:hover{border-color:var(--ds-border,var(--wcs-theme-border,#92add9));box-shadow:0 6px 18px #17355f08}
 #wcspedia .discovery-area-icon{display:block;color:var(--ds-link,var(--wcs-theme-link,#255be3));margin-bottom:14px}
-#wcspedia .discovery-area-icon svg{width:25px;height:25px;stroke-width:1.4}
+#wcspedia .discovery-area-icon svg{width:25px;height:25px;stroke-width:1.5}
 #wcspedia .discovery-area h3{font-size:19px;color:var(--navy);font-weight:400;line-height:1.3;letter-spacing:-.25px;margin:0 0 8px;min-height:49px;max-width:220px}
 #wcspedia .discovery-area p{color:var(--ds-text-subtle,var(--wcs-theme-muted,#64758a));font-size:12px;line-height:1.65;max-width:200px;margin-bottom:20px}
 #wcspedia .area-count{font-size:10px;color:var(--ds-text-subtle,var(--wcs-theme-muted,#647b96))}
@@ -671,6 +671,13 @@
 #wcspedia .wcs-ui-drawer-scroll{min-height:0;overflow:auto;overscroll-behavior:contain;flex:1;padding:24px}
 #wcspedia .wcs-ui-drawer-footer{flex:none;padding:18px 24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
 @media(max-width:600px){#wcspedia dialog.wcs-ui-drawer-backdrop{padding:8px}#wcspedia .wcs-ui-drawer .wcs-ui-dialog-heading{padding:20px}#wcspedia .wcs-ui-drawer-scroll{padding:20px}#wcspedia .wcs-ui-drawer-footer{padding:16px 20px}}
+
+/* One optical treatment for interface glyphs, including avatar placeholders.
+   No rule targets content illustrations, brand artwork or progress rings. */
+#wcspedia .wcs-icon,.wcs-add-document .wcs-icon,.wcs-article-discussion .wcs-icon,.wcs-article-engagement .wcs-icon{display:inline-block;flex-shrink:0;vertical-align:middle;pointer-events:none}
+#wcspedia .wcs-avatar{display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+#wcspedia .wcs-avatar>.wcs-icon,.wcs-article-discussion .wcs-discussion-avatar>.wcs-icon{width:20px;height:20px;min-width:0;max-width:75%;max-height:75%;margin:0;flex:none;color:inherit}
+#wcspedia .process-copy .wcs-avatar>.wcs-icon{width:16px;height:16px}
 
 /* Authoring extensions, bundled into wcspedia-style.css. */
 #wcspedia .editor-mode-actions{display:flex;gap:13px;align-items:center;flex-wrap:wrap}
@@ -1555,7 +1562,7 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 .wcs-reader-navigation .wcs-native-sidebar-toggle{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;font-size:0!important;text-indent:0!important;min-width:32px!important;min-height:32px!important;color:var(--ds-text,var(--wcs-theme-text,#253b54))!important}
 .wcs-reader-navigation .wcs-native-sidebar-toggle::before,.wcs-reader-navigation .wcs-native-sidebar-toggle::after,.wcs-reader-navigation .wcs-native-sidebar-toggle>:not(.wcs-native-toggle-icon){display:none!important;content:none!important}
 .wcs-reader-navigation .wcs-native-sidebar-toggle .wcs-native-toggle-icon{display:block!important;width:20px!important;height:20px!important;flex:none!important;overflow:visible!important;opacity:1!important;visibility:visible!important}
-.wcs-reader-navigation .wcs-native-sidebar-toggle .wcs-native-toggle-icon,.wcs-reader-navigation .wcs-native-sidebar-toggle .wcs-native-toggle-icon path{fill:none!important;stroke:currentColor!important;stroke-width:1.8!important}
+.wcs-reader-navigation .wcs-native-sidebar-toggle .wcs-native-toggle-icon,.wcs-reader-navigation .wcs-native-sidebar-toggle .wcs-native-toggle-icon path{fill:none!important;stroke:currentColor!important;stroke-width:1.5!important}
 .wcs-reader-navigation[data-wcs-native-compact=true] .wcs-native-toggle-icon{transform:rotate(180deg)!important}
 .wcs-reader-navigation[data-wcs-native-compact=true] .wcs-native-footer .wcs-native-toggle-path:not(button):not(a):not([role=button]){display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important}
 
@@ -1568,7 +1575,7 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 :is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation) .wcs-native-top-toggle:hover{background:var(--ds-background-neutral,var(--wcs-theme-subtle,#f0f5ff))!important;color:var(--ds-link,var(--wcs-theme-link,#255be3))!important}
 .wcs-reader-navigation .wcs-native-top-toggle::before,.wcs-reader-navigation .wcs-native-top-toggle::after{content:none!important;display:none!important}
 .wcs-reader-navigation .wcs-native-top-toggle>.wcs-native-toggle-icon{display:block!important;position:static!important;box-sizing:border-box!important;width:20px!important;height:20px!important;min-width:20px!important;max-width:20px!important;max-height:20px!important;flex:0 0 20px!important;overflow:visible!important;padding:0!important;margin:0!important;border:0!important;background:none!important;opacity:1!important;visibility:visible!important}
-.wcs-reader-navigation .wcs-native-top-toggle>.wcs-native-toggle-icon,.wcs-reader-navigation .wcs-native-top-toggle>.wcs-native-toggle-icon path{fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.wcs-reader-navigation .wcs-native-top-toggle>.wcs-native-toggle-icon,.wcs-reader-navigation .wcs-native-top-toggle>.wcs-native-toggle-icon path{fill:none!important;stroke:currentColor!important;stroke-width:1.5!important;stroke-linecap:round!important;stroke-linejoin:round!important}
 .wcs-reader-navigation .wcs-native-top-toggle-label{font:inherit!important;color:inherit!important}
 :is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation)[data-wcs-native-compact=true] .wcs-native-top-toggle{justify-content:center!important;width:36px!important;margin-inline:auto!important;gap:0!important}
 :is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation)[data-wcs-native-compact=true] .wcs-native-top-toggle-label,
@@ -1674,7 +1681,7 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 #wcspedia .wcs-help-item summary{display:flex;align-items:center;justify-content:space-between;gap:20px;list-style:none;padding:22px 24px;font-size:18px;line-height:1.4;font-weight:700;color:var(--navy);border-radius:12px}
 #wcspedia .wcs-help-item summary::-webkit-details-marker{display:none}
 #wcspedia .wcs-help-item summary::marker{content:''}
-#wcspedia .wcs-help-item summary svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;transition:transform .18s ease}
+#wcspedia .wcs-help-item summary svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;transition:transform .18s ease}
 #wcspedia .wcs-help-item[open] summary svg{transform:rotate(180deg)}
 #wcspedia .wcs-help-item>div{padding:0 24px 24px}
 #wcspedia .wcs-help-item p{max-width:90ch;margin:0;color:var(--muted);font-size:15px;line-height:1.75}

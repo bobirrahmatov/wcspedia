@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var revision = '0c980d9ae9be';
+  var revision = 'b9a0abd2a1ba';
   function placeFloating(host) {
     // Portal out of themed headers: transforms/overflow there can clip fixed controls.
     host.setAttribute('data-wcs-floating-add', '');
@@ -40,7 +40,7 @@
     function error(host, message, code) {
       var button = document.createElement('button');
       button.type = 'button'; button.disabled = true; button.className = 'wcs-add-document-trigger';
-      button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="wcs-add-document-label">Add document</span>'; button.setAttribute('aria-label', 'Add document'); button.title = message;
+      button.innerHTML = (modules?.Icons?modules.Icons.svg('plus'):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>')+'<span class="wcs-add-document-label">Add document</span>'; button.setAttribute('aria-label', 'Add document'); button.title = message;
       var shell = document.createElement('div'); shell.className = 'wcs-add-document'; shell.append(button);
       host.replaceChildren(shell); host.hidden = false; host.style.removeProperty('display');
       if (host.wcsStopFloating) host.wcsStopFloating();
