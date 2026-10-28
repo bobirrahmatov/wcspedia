@@ -231,6 +231,11 @@
     if (topToggle) mark(host, 'wcs-native-has-top-toggle');
     links.forEach(function (record, a) {
       if (!eligibleLink(a)) return;
+      // Native themes also paint wrappers around the tree, independently of the
+      // outer sidebar. Mark only structural ancestors, preserving row/link states.
+      for (var surface = a.parentElement; surface && surface !== host; surface = surface.parentElement) {
+        if (surface.matches('div,section,nav,aside,ul,ol') && !surface.closest(nativeMenu)) mark(surface, 'wcs-native-surface');
+      }
       if(compactLinks.has(a)) for (var parent = a.parentElement; parent && parent !== host; parent = parent.parentElement) mark(parent, 'wcs-native-compact-path');
       mark(a.closest('li'), 'wcs-native-link-row');
       // Hide only redundant native decoration, never a native interactive control.
@@ -10854,5 +10859,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['home'] = { version: 'b0b96b020eb7' };
+  modules['home'] = { version: 'aa5283158fb0' };
 })();
