@@ -1,9 +1,0 @@
-TailAdmin SVG paths and PAL sidebar adaptation
-
-Exact SVG paths copied from the user-supplied PAL / Lending Analytics sidebar.
-Original source: TailAdmin Pro 2.2.0 sidebar.html, header.html, metric-group
-partials and alert/alert-success.html. Copyright TailAdmin.
-Used for the requested internal Citi deployment, subject to the supplied asset
-license. No broader redistribution rights are asserted.
-
-WCSpedia retains its own native page IDs, reader routing and workflow.

@@ -1,8 +1,0 @@
-#wcspedia .wcs-export-menu{width:245px;padding:7px}
-#wcspedia .wcs-export-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:7px;padding:13px 14px;color:var(--navy);cursor:pointer;font:inherit}
-#wcspedia .wcs-export-menu button:hover,#wcspedia .wcs-export-menu button:focus-visible{background:var(--pale);outline:2px solid var(--blue);outline-offset:-2px}
-#wcspedia .wcs-export-menu strong{display:block;font-size:14px;font-weight:500}
-#wcspedia .wcs-export-menu small{display:block;font-size:12px;color:var(--muted);margin-top:5px}
-#wcspedia .wcs-export-progress{display:flex;align-items:center;gap:16px;min-height:90px;color:var(--muted);font-size:14px}
-#wcspedia .wcs-export-spinner{width:24px;height:24px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:wcs-export-spin .8s linear infinite!important}
-@keyframes wcs-export-spin{to{transform:rotate(360deg)}}
