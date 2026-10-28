@@ -1499,9 +1499,10 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 .wcs-reader-navigation :is(.acs-side-bar,.acs-side-bar-content,.wcs-native-footer,.wcs-native-surface){color:var(--ds-text,var(--wcs-theme-text,#253b54))!important;border-color:var(--ds-border,var(--wcs-theme-border,#dce4ec))!important;box-shadow:none!important}
 /* Confluence can paint each nested panel and use two-ID important selectors.
  * Match that specificity with the reader activation marker, including themes
- * whose outer host has no ID. Never paint links or floating menu layers. */
+ * whose outer host has no ID. The resolved color comes from the visible reader,
+ * never a sidebar-local theme token. Links and menu states keep their own colors. */
 :is(.wcs-reader-navigation,#com-atlassian-confluence[data-wcs-reader-nav="native"] :is(#sidebar,.ia-fixed-sidebar,.acs-side-bar).wcs-reader-navigation),
-:is(.wcs-reader-navigation,#com-atlassian-confluence[data-wcs-reader-nav="native"] :is(#sidebar,.ia-fixed-sidebar,.acs-side-bar).wcs-reader-navigation) :is(.acs-side-bar,.acs-side-bar-content,.acs-side-bar-space-info,.acs-nav-wrapper,.ia-secondary-content,.wcs-native-footer,.wcs-native-surface):not(:is(aui-dropdown-menu,.aui-dropdown2,.aui-layer,[role=menu],[role=listbox],[role=dialog])):not(:is(aui-dropdown-menu,.aui-dropdown2,.aui-layer,[role=menu],[role=listbox],[role=dialog]) *){background:var(--wcs-reader-background,var(--wcs-theme-surface,#fff))!important}
+:is(.wcs-reader-navigation,#com-atlassian-confluence[data-wcs-reader-nav="native"] :is(#sidebar,.ia-fixed-sidebar,.acs-side-bar).wcs-reader-navigation) :is(.acs-side-bar,.acs-side-bar-content,.acs-side-bar-space-info,.acs-nav-wrapper,.ia-secondary-content,.wcs-native-footer,.wcs-native-surface):not(:is(aui-dropdown-menu,.aui-dropdown2,.aui-layer,[role=menu],[role=listbox],[role=dialog])):not(:is(aui-dropdown-menu,.aui-dropdown2,.aui-layer,[role=menu],[role=listbox],[role=dialog]) *){background:var(--wcs-resolved-reader-background,var(--wcs-reader-background,var(--wcs-theme-surface,#fff)))!important}
 :is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation) .wcs-native-toolbar-control:not(:hover):not(:focus-visible){background:transparent!important;color:inherit!important}
 .wcs-reader-navigation .wcs-native-toolbar-control:not(.aui-icon):not([class*="aui-iconfont-"]){font-family:var(--wcs-space-font,var(--wcs-resolved-space-font,"Citi-Sans-Text"))!important}
 .wcs-reader-navigation :is(ul,ol,li){list-style:none!important}

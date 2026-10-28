@@ -105,6 +105,8 @@
   if(w.WCSReaderSidebar)return;
   var defaultedHosts=new WeakSet();
   var host=null,observer=null,resizeObserver=null,queued=false,destroyed=false,revealOwned=false;
+  var originalSurface=null;
+  var surfaceSelector='#wcspedia .detail-page,#main-content .wcs-native-article,.wiki-content .wcs-native-article';
   var compactPaths=new Set(),compactLinks=new Set(),tooltip=null,tooltipLink=null,previousDescription=null;
   var links=new Map(),checks=new Map(),pending=[],running=0,generation=0,controllers=new Set(),leafMarkers=new Set(),treeRows=new Set(),collections=new Set();
   function config(){
@@ -426,6 +428,29 @@
     if(d.getElementById('wcspedia'))return !!d.querySelector('#wcspedia .detail-page');
     return !!d.querySelector('#main-content .wcs-native-article,.wiki-content .wcs-native-article')&&!!d.body.getAttribute('data-wcs-active-style-flags');
   }
+  function readerSurface(){
+    return Array.from(d.querySelectorAll(surfaceSelector)).find(function(reader){
+      for(var el=reader;el;el=el.parentElement){
+        var style=w.getComputedStyle(el);
+        if(el.hidden||style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse')return false;
+      }
+      return true;
+    });
+  }
+  function affectsSurface(el){return el.matches(surfaceSelector)||!!el.querySelector(surfaceSelector);}
+  function syncSurface(){
+    if(!host)return;
+    var name='--wcs-resolved-reader-background',color='';
+    // Resolve at the visible reader, once. Sidebar descendants can have their
+    // own Confluence tokens, so repeating var(--ds-surface) there is not enough.
+    for(var el=readerSurface();el;el=el.parentElement){
+      var value=w.getComputedStyle(el).backgroundColor;
+      if(value&&value!=='transparent'&&!/^rgba\([^)]*,\s*0(?:\.0+)?\)$/.test(value)){color=value;break;}
+    }
+    if(!color)return;
+    if(!originalSurface)originalSurface=[host.style.getPropertyValue(name),host.style.getPropertyPriority(name),host.hasAttribute('style')];
+    if(host.style.getPropertyValue(name)!==color)host.style.setProperty(name,color);
+  }
   function reset(){
     hideTooltip();resizeObserver?.disconnect();resizeObserver=null;removeTopToggle();toggles.forEach(function(record,control){restoreToggle(control,record);});
     decorations.forEach(function(names,el){names.forEach(function(name){el.classList.remove(name);});restoreClassAttribute(el);});decorations.clear();nativeFooters.clear();
@@ -435,7 +460,15 @@
     links.forEach(function(record,a){if(record.rewritten&&a.getAttribute('href')===record.rewritten)a.setAttribute('href',record.original);if(record.title&&record.title.node.nodeValue===record.title.clean)record.title.node.nodeValue=record.title.original;record.icon.remove();if(record.label.parentNode===a)record.label.replaceWith(...Array.from(record.label.childNodes));if(record.ariaLabel===null)a.removeAttribute('aria-label');else a.setAttribute('aria-label',record.ariaLabel);a.removeAttribute('data-wcs-native-page-link');});links.clear();
     leafMarkers.forEach(function(marker){marker.classList.remove('wcs-native-leaf-marker');});leafMarkers.clear();
     treeRows.forEach(function(row){row.classList.remove('wcs-native-tree-row');});treeRows.clear();collections.forEach(function(row){row.classList.remove('wcs-native-collection');});collections.clear();
-    if(host)host.classList.remove('wcs-reader-navigation');
+    if(host){
+      host.classList.remove('wcs-reader-navigation');
+      if(originalSurface){
+        if(originalSurface[0])host.style.setProperty('--wcs-resolved-reader-background',originalSurface[0],originalSurface[1]);
+        else host.style.removeProperty('--wcs-resolved-reader-background');
+        if(!originalSurface[2]&&!host.getAttribute('style'))host.removeAttribute('style');
+      }
+    }
+    originalSurface=null;
     host=null;d.body?.removeAttribute('data-wcs-reader-nav');
     if(revealOwned){revealOwned=false;d.body.classList.add('citi-hide-sidebar');}
   }
@@ -450,15 +483,20 @@
     // Let the theme restore its own sidebar/content layout. Native collapsed
     // classes and preferences remain entirely under Confluence's control.
     if(d.body.classList.contains('citi-hide-sidebar')){revealOwned=true;d.body.classList.remove('citi-hide-sidebar');}
-    enhance();compactState();defaultCollapsed();
+    syncSurface();enhance();compactState();defaultCollapsed();
   }
   function schedule(){if(!queued){queued=true;Promise.resolve().then(function(){queued=false;refresh();});}}
   function start(){
     refresh();if(observer||!d.body)return;
     observer=new MutationObserver(function(changes){
       if(changes.some(function(c){
+        if(c.type==='characterData')return !!c.target.parentElement?.closest('style');
         if(c.type==='attributes'){
           if(c.attributeName==='class'&&(c.oldValue||'')===(c.target.getAttribute('class')||''))return false;
+          if(['style','hidden','data-color-mode','data-theme','media','disabled','href'].includes(c.attributeName)){
+            return c.target===host||affectsSurface(c.target)||c.target.matches('link[rel="stylesheet"],style');
+          }
+          if(c.attributeName==='class'&&affectsSurface(c.target))return true;
           if(c.attributeName==='data-wcs-active-style-flags')return c.target===d.body;
           if(host&&host.contains(c.target)&&c.attributeName==='aria-current')return true;
           if(host&&host.contains(c.target)&&c.attributeName==='class'&&((c.oldValue||'').includes('plugin_pagetree_current')||c.target.classList.contains('plugin_pagetree_current')))return true;
@@ -466,14 +504,15 @@
             var old=(c.oldValue||'').replace(/wcs-reader-navigation/g,'').trim(),next=(c.target.getAttribute('class')||'').replace(/wcs-reader-navigation/g,'').trim();return old!==next;
           }return false;
         }
-        return Array.from(c.addedNodes).concat(Array.from(c.removedNodes)).some(function(n){return n.nodeType===1;});
+        return c.target.nodeType===1&&c.target.matches('style')||Array.from(c.addedNodes).concat(Array.from(c.removedNodes)).some(function(n){return n.nodeType===1;});
       }))schedule();
     });
-    observer.observe(d.body,{childList:true,subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['data-wcs-active-style-flags','class','aria-current']});
+    observer.observe(d.documentElement,{childList:true,characterData:true,subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['data-wcs-active-style-flags','class','style','hidden','data-color-mode','data-theme','aria-current','media','disabled','href']});
   }
-  function destroy(){destroyed=true;observer?.disconnect();observer=null;reset();d.removeEventListener('DOMContentLoaded',start);w.removeEventListener('hashchange',schedule);w.removeEventListener('resize',compactState);w.removeEventListener('scroll',hideTooltip,true);d.removeEventListener('keydown',escapeTooltip);}
+  function stylesheetLoaded(e){if(e.target.matches?.('link[rel="stylesheet"]'))schedule();}
+  function destroy(){destroyed=true;observer?.disconnect();observer=null;reset();d.removeEventListener('load',stylesheetLoaded,true);d.removeEventListener('DOMContentLoaded',start);w.removeEventListener('hashchange',schedule);w.removeEventListener('resize',compactState);w.removeEventListener('scroll',hideTooltip,true);d.removeEventListener('keydown',escapeTooltip);}
   w.WCSReaderSidebar={refresh:refresh,destroy:destroy};
-  d.addEventListener('DOMContentLoaded',start);w.addEventListener('hashchange',schedule);w.addEventListener('resize',compactState);w.addEventListener('scroll',hideTooltip,true);d.addEventListener('keydown',escapeTooltip);
+  d.addEventListener('load',stylesheetLoaded,true);d.addEventListener('DOMContentLoaded',start);w.addEventListener('hashchange',schedule);w.addEventListener('resize',compactState);w.addEventListener('scroll',hideTooltip,true);d.addEventListener('keydown',escapeTooltip);
   if(d.body)start();
 })(window,document);
 
@@ -10859,5 +10898,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['mine'] = { version: 'aa5283158fb0' };
+  modules['mine'] = { version: '1ccd945fc0fd' };
 })();
