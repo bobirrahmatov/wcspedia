@@ -5036,9 +5036,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var visible=ctx.dir.actor.role==='Manager'||[doc.ownerId,doc.authorId,doc.reviewerId,doc.approverId].includes(ctx.dir.actor.id);
       return sessionWithEntries(ctx,visible?[{document:clone(doc),people:people,page:p,pending:false}]:[],[],'document:'+doc.id);
     }
-    async function assignments(doc,people,signal){
+    async function assignments(doc,people,signal,verifiedUsers){
       var ids=Array.from(new Set([doc.ownerId,doc.authorId,doc.reviewerId,doc.approverId].filter(Boolean)));
-      var actors=await Promise.all(ids.map(async function(id){var p=people.find(function(x){return x.id===id;});if(!p)fail('Choose an available author, reviewer and manager.');var soeid=E.normalizeSOEID(p.soeid||(p.confluence||{}).username);if(!soeid)fail('Workflow assignments need valid SOEIDs.');var u=await request('/rest/api/user?username='+encodeURIComponent((p.confluence||{}).username||soeid),null,undefined,signal);if(!E.identity(u)||E.identity(u).soeid!==soeid)fail('An assigned person cannot be verified in Confluence.','IDENTITY_MAPPING');return {type:'known',username:u.username,userKey:u.userKey};}));
+      var actors=await Promise.all(ids.map(async function(id){var p=people.find(function(x){return x.id===id;});if(!p)fail('Choose an available author, reviewer and manager.');var soeid=E.normalizeSOEID(p.soeid||(p.confluence||{}).username);if(!soeid)fail('Workflow assignments need valid SOEIDs.');var u=verifiedUsers&&verifiedUsers.get(soeid)||await request('/rest/api/user?username='+encodeURIComponent((p.confluence||{}).username||soeid),null,undefined,signal);if(!E.identity(u)||E.identity(u).soeid!==soeid)fail('An assigned person cannot be verified in Confluence.','IDENTITY_MAPPING');return {type:'known',username:u.username,userKey:u.userKey};}));
       return actors;
     }
     async function restrictUpdate(p,users,signal,publication,knownRead){
@@ -5198,19 +5198,36 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       }));
       if(failure)throw failure;
     }
-    async function stageMedia(document,p,previousMedia,sourcePageId,signal){
+    // Keep only version-pinned bytes read in this action. Approval validates a
+    // source and then copies it: both steps may use the same verified bytes.
+    // Nothing survives the action or replaces native writes/target verification.
+    function actionMediaReader(signal){
+      var reads=new Map(),retainedBytes=0,maxRetainedBytes=30000000;
+      return function(resource,sourcePageId){
+        aborted(signal);var id=String(sourcePageId)+'|'+resource.sourceUrl;
+        if(reads.has(id))return reads.get(id);
+        var pending=download(resource,sourcePageId,signal).then(function(item){
+          if(retainedBytes+item.bytes.byteLength<=maxRetainedBytes)retainedBytes+=item.bytes.byteLength;
+          else reads.delete(id);
+          return item;
+        },function(error){reads.delete(id);throw error;});
+        reads.set(id,pending);return pending;
+      };
+    }
+    async function stageMedia(document,p,previousMedia,sourcePageId,signal,readMedia){
       var v=W.currentVersion(document),resources=Renderer.mediaResources(document,v).items,mapping={},old=previousMedia||{};
+      readMedia=readMedia||function(resource,id){return download(resource,id,signal);};
       await mediaBatch(resources,async function(resource){
         var entry=old[resource.key];
         if(entry&&entry.sourceUrl===resource.sourceUrl&&String(p.id)===String(sourcePageId)){
           if(!Number.isSafeInteger(entry.attachmentVersion)||entry.attachmentVersion<1||!/^[a-f0-9]{64}$/.test(entry.sha256||''))fail('The staged resource has unverifiable version metadata. Upload it again.','INTEGRITY');
-          var pinned=await download(resource,sourcePageId,signal);
+          var pinned=await readMedia(resource,sourcePageId);
           if(pinned.bytes.byteLength!==entry.size||await hashBytes(pinned.bytes)!==entry.sha256)fail('The staged resource changed after it was saved. Upload it again.','INTEGRITY');
           mapping[resource.key]=entry;
         }
       });
       var remote=resources.filter(function(r){return !mapping[r.key]&&!r.sourceUrl.startsWith('data:');});
-      await mediaBatch(remote,async function(r){var item=await download(r,sourcePageId,signal);mapping[r.key]=await upload(p.id,item,signal);});
+      await mediaBatch(remote,async function(r){var item=await readMedia(r,sourcePageId);mapping[r.key]=await upload(p.id,item,signal);});
       var uploads=await Renderer.collectMedia(document,v,{media:mapping});
       await mediaBatch(uploads,async function(item){mapping[item.key]=await upload(p.id,item,signal);});
       return mapping;
@@ -5283,6 +5300,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(!session||session.actorId!==actor.id||!session.identity||session.identity.soeid!==who.soeid||['userKey','accountId'].some(function(k){return (session.identity[k]||null)!==(who[k]||null);}))fail('Your signed-in account changed. Reload before saving.','IDENTITY_MAPPING');
       if(command.expectedEntitlementRevision!=null&&command.expectedEntitlementRevision!==ctx.policy.revision)fail('Entitlements changed. Reload before saving.','CONFLICT');
       var documentKey=key(creating?command.fields&&command.fields.id:command.documentKey||command.docId),doc,p,state,journal,verifiedAssignments=null,summarySynced=false;
+      var verifiedUsers=new Map([[who.soeid,ctx.user]]),verifiedDestinations=new Map(),readMedia=actionMediaReader(signal);
+      async function actionDestination(value){
+        var id=publicationParent(value);
+        if(!verifiedDestinations.has(id))verifiedDestinations.set(id,await destination(value,signal));
+        return verifiedDestinations.get(id);
+      }
       var fingerprint=await digest(JSON.stringify(canonical(command)));
       if(creating){
         if(!ctx.bounds.canCreate||!E.hasGrant(ctx.policy,who,'content.create','*'))fail('Your account needs Add page permission and the WCSpedia creation grant.','FORBIDDEN');
@@ -5290,11 +5313,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if((!areas[command.fields.area]&&!(Content.isDirectPublication(command.fields)))||!TYPES.includes(command.fields.type))fail('Choose a configured business area and content type.','INVALID_MAPPING');
         doc=W.createDocument(command.fields,{people:ctx.dir.people,actorId:actor.id,actorSOEID:who.soeid,now:new Date().toISOString(),requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:{actorId:actor.id,documentId:documentKey,create:true}});
         statePreflight(doc,ctx.dir.people);await Renderer.collectMedia(doc,W.currentVersion(doc),{media:{}});
-        if(!Content.isDirectPublication(doc))verifiedAssignments=await assignments(doc,ctx.dir.people,signal);
+        if(!Content.isDirectPublication(doc))verifiedAssignments=await assignments(doc,ctx.dir.people,signal,verifiedUsers);
         // Resume old two-page saves in place. Never move their private history.
         p=Content.isDirectPublication(doc)?await findSeed('WCSpedia working '+documentKey,'wcs-document-'+documentKey,signal):null;
         if(Content.isDirectPublication(doc)&&!p){
-          await destination(doc,signal);p=await findSingle(documentKey,signal);
+          await actionDestination(doc);p=await findSingle(documentKey,signal);
           if(p&&!marked(p,'wcs-created-'+requestId))fail('This document key already exists. Reload the workspace.','CONFLICT');
           if(!p)p=await createPage('WCSpedia insight '+documentKey,documentKey,'published',requestId,signal,insightsId);
           singlePages.set(documentKey,p.id);doc.singlePageInsight=true;
@@ -5315,12 +5338,13 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if(!nextOwner)fail('Choose an active author or manager.','INVALID_MAPPING');
         var nextUser=await request('/rest/api/user?username='+encodeURIComponent((nextOwner.confluence||{}).username||nextOwner.soeid),null,undefined,signal);
         if(!E.identity(nextUser)||E.identity(nextUser).soeid!==E.normalizeSOEID(nextOwner.soeid))fail('The new owner cannot be verified in Confluence.','IDENTITY_MAPPING');
+        verifiedUsers.set(E.identity(nextUser).soeid,nextUser);
       }
       var privateAccessConfirmed=false;
       async function protectPrivateRecord(){
         if(doc.singlePageInsight||privateAccessConfirmed)return;
         if(!op(p,'update'))fail('Confluence does not permit editing this private document.','FORBIDDEN');
-        var reconcile=['create','submit','revise'].includes(command.action),read=null;
+        var reconcile=['create','submit','revise','reassign-owner'].includes(command.action),read=null;
         if(!reconcile){
           read=restrictionRows(await restrictions(p.id,'read',signal),'read');
           if(read.users.some(function(u){return !u||typeof u.username!=='string'||!u.username.trim();})||read.groups.some(function(g){return !g||typeof g.name!=='string'||!g.name.trim();}))fail('Confluence did not return identifiable private viewing subjects.','INVALID_PERMISSIONS');
@@ -5329,7 +5353,16 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         // The generic seed is safe to create in an unrestricted Working folder.
         // Establish private View/Edit before journal, media, body or state writes.
         // Legacy two-page Insights also retain private history on this page.
-        verifiedAssignments=verifiedAssignments||await assignments(doc,ctx.dir.people,signal);
+        verifiedAssignments=verifiedAssignments||await assignments(doc,ctx.dir.people,signal,verifiedUsers);
+        if(command.action==='reassign-owner'){
+          // Add the new owner while retaining the existing owner and acting
+          // editor. Revoking their native Edit mid-transfer would prevent the
+          // remaining journal/state writes from completing. Application
+          // ownership changes independently; existing native access is retained.
+          [nextUser,ctx.user].forEach(function(user){
+            if(!verifiedAssignments.some(function(assigned){return E.normalizeSOEID(assigned.username)===E.normalizeSOEID(user.username);}))verifiedAssignments.push({type:'known',username:user.username,userKey:user.userKey});
+          });
+        }
         await restrictUpdate(p,verifiedAssignments,signal,null,read);
         privateAccessConfirmed=true;
       }
@@ -5364,10 +5397,10 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // Keep existing restrictions untouched; never retry a denial by removing them.
       if(marked(p,'wcs-single-insight'))doc=publicState(doc);
       var single=doc.singlePageInsight===true,direct=Content.isDirectPublication(doc);
-      var media=await stageMedia(doc,p,state.media||{},p.id,signal);doc._people=j.people||ctx.dir.people;
+      var media=await stageMedia(doc,p,state.media||{},p.id,signal,readMedia);doc._people=j.people||ctx.dir.people;
       if(marked(p,'wcs-operation-'+requestId)?p.version.number!==j.expectedNativeVersion+1:p.version.number!==j.expectedNativeVersion)fail('The native working page changed during this operation.','CONFLICT');
       if(single){
-        await destination(doc,signal);await ensureSummary(p,doc,signal);summarySynced=true;
+        await actionDestination(doc);await ensureSummary(p,doc,signal);summarySynced=true;
         if(command.action!=='delete'){
           p=await bodyWrite(p,doc,media,'published',requestId,insightsId,signal);
           doc.publishedConfluencePageId=String(p.id);doc.publishedConfluencePageVersion=p.version.number;doc.publishedReader=p.readerReady===true;
@@ -5375,7 +5408,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         }
       }else if(command.action!=='delete')p=await bodyWrite(p,doc,media,'working',requestId,workingId,signal);
       if(!single&&(command.action==='approve'||(command.action==='reassign-owner'&&doc.publishedConfluencePageId)||(Content.isDirectPublication(doc)&&['create','edit','revise'].includes(command.action)))){
-        var dest=await destination(doc,signal),publishedId=doc.publishedConfluencePageId||j.publishedPageId,published;
+        var dest=await actionDestination(doc),publishedId=doc.publishedConfluencePageId||j.publishedPageId,published;
         if(publishedId){published=await page(publishedId,signal);if(parent(published)!==dest.id&&parent(published)!==workingId&&!(Content.isDirectPublication(doc)&&parent(published)===journal.value.priorPublishedParentId))fail('The published page was moved.','PAGE_SCOPE');if(!marked(published,'wcs-document-'+documentKey))fail('The published document identity changed.','PAGE_SCOPE');if(!op(published,'update'))fail('Confluence does not permit updating the published page.','FORBIDDEN');if(doc.publishedConfluencePageId&&!j.expectedPublishedVersion&&!journal.value.expectedPublishedVersion&&published.version.number!==doc.publishedConfluencePageVersion)fail('The published page changed outside this workflow. Reconcile its native history before approving.','CONFLICT');}
         else{await ensureCreationBounds();if(!ctx.bounds.canCreate)fail('Publishing needs your Confluence space Add page permission.','FORBIDDEN');published=await createPage('WCSpedia publication '+documentKey,documentKey,'published',requestId,signal);await checkpoint({publishedPageId:published.id,expectedPublishedVersion:published.version.number,stage:'publication-created'});}
         if(!j.expectedPublishedVersion&&!journal.value.expectedPublishedVersion)await checkpoint({publishedPageId:published.id,expectedPublishedVersion:published.version.number,stage:'publication-prepared'});
@@ -5385,7 +5418,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           var approver={type:'known',username:ctx.user.username,userKey:ctx.user.userKey};
           await restrictUpdate(published,[approver],signal,{first:!doc.publishedConfluencePageId});
         }
-        var publishedMedia=await stageMedia(doc,published,{},p.id,signal);
+        var publishedMedia=await stageMedia(doc,published,{},p.id,signal,readMedia);
         if(marked(published,'wcs-operation-'+requestId)?published.version.number!==journal.value.expectedPublishedVersion+1:published.version.number!==journal.value.expectedPublishedVersion)fail('The published page changed during approval.','CONFLICT');
         published=await bodyWrite(published,doc,publishedMedia,'published',requestId,String(dest.id),signal);
         doc.publishedConfluencePageId=String(published.id);doc.publishedConfluencePageVersion=published.version.number;
@@ -6363,7 +6396,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     var responseReads = new WeakMap();
     var requestTimeoutMs = config.requestTimeoutMs == null ? 12000 : config.requestTimeoutMs;
     if (!Number.isInteger(requestTimeoutMs) || requestTimeoutMs < 1 || requestTimeoutMs > 60000) fail('Use a requestTimeoutMs between 1 and 60000.', 'CONFIGURATION');
-    async function boundedRequest(task, signal, mutation, cancel) {
+    async function boundedRequest(task, signal, mutation, cancel, deadline) {
       if (signal && signal.aborted && cancel) cancel();
       throwIfAborted(signal);
       var controller = new AbortController(), timer, onAbort;
@@ -6373,7 +6406,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           if (mutation) error.code = 'UNKNOWN_COMMIT'; else if (external) error.name = 'AbortError'; else error.code = 'TIMEOUT';
           reject(error); controller.abort(); if (cancel) cancel();
         }
-        timer = setTimeout(function () { stop(false); }, mutation ? 60000 : requestTimeoutMs);
+        var remaining = deadline == null ? mutation ? 60000 : requestTimeoutMs : deadline - Date.now();
+        if (remaining <= 0) stop(false);
+        else timer = setTimeout(function () { stop(false); }, remaining);
         onAbort = function () { stop(true); };
         if (signal) signal.addEventListener('abort', onAbort, {once:true});
       });
@@ -6383,20 +6418,27 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     async function request(url, options) {
       var settings = Object.assign({ method: 'GET', credentials: 'same-origin', mode: 'same-origin', redirect: 'error', cache: 'no-store', headers: { Accept: 'application/json' } }, options || {});
       var response, controller, parentSignal = settings.signal, mutation = !['GET','HEAD'].includes(settings.method.toUpperCase());
-      try { response = await boundedRequest(function (pending) { controller = pending; settings.signal = pending.signal; return fetcher(url.href || String(url), settings); }, parentSignal, mutation); }
+      var deadline = Date.now() + (mutation ? 60000 : requestTimeoutMs);
+      try { response = await boundedRequest(function (pending) { controller = pending; settings.signal = pending.signal; return fetcher(url.href || String(url), settings); }, parentSignal, mutation, null, deadline); }
       catch (error) { if (error && (error.code || error.name === 'AbortError')) throw error; fail(mutation ? 'The write outcome is unknown. Check the original save before retrying.' : 'Confluence could not be reached. Check your connection and session.', mutation ? 'UNKNOWN_COMMIT' : 'NETWORK'); }
       if (!response.ok) {
         var error = new Error(response.status === 401 || response.status === 403 ? 'Your Confluence session does not have access to this resource.' : response.status === 409 ? 'This content changed. Reload before continuing.' : response.status === 413 ? 'Confluence rejected the upload as too large. Each attachment must be at most 10 MB; this operation may have a smaller limit.' : 'Confluence request failed (' + response.status + ').');
         error.code = response.status === 409 ? 'CONFLICT' : response.status === 413 ? 'ATTACHMENT_TOO_LARGE' : 'HTTP_ERROR'; error.status = response.status; throw error;
       }
-      responseReads.set(response, {signal:parentSignal, mutation:mutation, controller:controller});
+      responseReads.set(response, {signal:parentSignal, mutation:mutation, controller:controller, deadline:deadline});
       return response;
     }
     async function json(response, options) {
       var pending = responseReads.get(response);
       responseReads.delete(response);
       if (!pending) return parseJSON(response, options);
-      return boundedRequest(function () { return parseJSON(response, options); }, pending.signal, pending.mutation, function () { pending.controller.abort(); });
+      if (pending.mutation && pending.signal && pending.signal.aborted) {
+        pending.controller.abort();
+        fail('The write outcome is unknown. Check the original save before retrying.', 'UNKNOWN_COMMIT');
+      }
+      // Receiving headers does not restart the clock. A slow fetch and its
+      // response body share the original read/write budget and cancellation.
+      return boundedRequest(function () { return parseJSON(response, options); }, pending.signal, pending.mutation, function () { pending.controller.abort(); }, pending.deadline);
     }
     async function parseJSON(response, options) {
       options = options || {};
@@ -6579,8 +6621,14 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       searchCache.clear();
       accessLast = null;
       if (mode !== 'confluence') return resolveAccess(null, {}, null, options.signal);
-      if (nativeSession) config.spaceKey = await waitForSearchSpace(options.signal);
-      var user = await json(await request(endpoint('/rest/api/user/current'), { signal: options.signal }));
+      // Scope and signed-in identity are independent reads. Both must finish
+      // before policy/page access is loaded, but neither needs to wait for the other.
+      var startup = await Promise.all([
+        nativeSession ? waitForSearchSpace(options.signal) : Promise.resolve(null),
+        request(endpoint('/rest/api/user/current'), { signal: options.signal }).then(json)
+      ]);
+      if (nativeSession) config.spaceKey = startup[0];
+      var user = startup[1];
       throwIfAborted(options.signal);
       if (!object(user)) fail('Unexpected Confluence current-user response.');
       observeSearchIdentity(user);
@@ -7450,6 +7498,10 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if (union && !eligible) fail('Restart the search in its original collection.', 'INVALID_CONTINUATION');
       if (!eligible || !union && (options.continuation || options.start)) return searchIndexedPagesWithin(options);
       var key = discoveryQueryKey(options), limit = options.limit == null ? 20 : options.limit, generation = searchGeneration, state;
+      var search = dependencies.search || root.WCSSearch, indexed, nativePending, nativeFailure, nativeCacheCandidate;
+      var parallelController, readSignal = options.signal;
+      function stopParallel() { if (parallelController) parallelController.abort(); }
+      function unavailableSupplement(error) { return [404,405,500,502,503,504].includes(error.status); }
       if (union) {
         var token = options.continuation;
         if (Object.keys(token).some(function(k) { return !['transport','token'].includes(k); }) || typeof token.token !== 'string') fail('Restart this search.', 'INVALID_CONTINUATION');
@@ -7457,12 +7509,29 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (!saved || saved.key !== key || Date.now() - saved.at > 120000) fail('This search page has expired. Start the search again.', 'INVALID_CONTINUATION');
         state = clone(saved.state); // Back/retry never consumes another cursor's buffers.
       } else {
-        // Validate every filter and scope through the indexed path first. Native
-        // discovery supplements the exact query, never a failed/wider query.
-        var indexed = await searchIndexedPagesWithin(Object.assign({},options,{skipInsightsRecovery:true}));
-        state = {index:indexed.results,indexNext:indexed.nextContinuation,native:[],nativeNext:null,nativeStarted:false,nativeKnown:[],seen:[],offset:0,cql:indexed.cql,total:indexed.total,changed:false,unavailableCount:indexed.unavailableCount || 0};
+        state = {index:[],indexNext:null,native:[],nativeNext:null,nativeStarted:false,nativeKnown:[],seen:[],offset:0,changed:false,unavailableCount:0};
+        parallelController = new AbortController(); readSignal = parallelController.signal;
+        if (options.signal) {
+          options.signal.addEventListener('abort',stopParallel,{once:true});
+          if (options.signal.aborted) stopParallel();
+        }
+        try {
+          // The indexed path validates filters, root and continuation first.
+          // Only then can the independent native collection read overlap it.
+          indexed = await searchIndexedPagesWithin(Object.assign({},options,{skipInsightsRecovery:true,signal:readSignal}),function () {
+            nativePending = readNative().then(function () { return null; },function (error) {
+              if (!unavailableSupplement(error)) { nativeFailure = error; stopParallel(); }
+              return error; // Observe every failure even if the index rejects first.
+            });
+          });
+          state.index = indexed.results; state.indexNext = indexed.nextContinuation;
+          state.cql = indexed.cql; state.total = indexed.total; state.unavailableCount = indexed.unavailableCount || 0;
+        } catch (error) {
+          stopParallel();
+          if (options.signal) options.signal.removeEventListener('abort',stopParallel);
+          throw nativeFailure || error;
+        }
       }
-      var search = dependencies.search || root.WCSSearch;
       async function readNative() {
         if (state.nativeStarted && !state.nativeNext) return;
         var cacheKey = JSON.stringify(searchExclusions(options));
@@ -7471,11 +7540,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           rows = clone(nativeDiscoveryCache.rows); next = clone(nativeDiscoveryCache.next);
         } else {
           do {
-            batch = await insightChildren({scope:'tree',types:[],limit:25,continuation:next,signal:options.signal,excludeIds:options.excludeIds,excludeAncestorIds:options.excludeAncestorIds},search,true);
+            batch = await insightChildren({scope:'tree',types:[],limit:25,continuation:next,signal:readSignal,excludeIds:options.excludeIds,excludeAncestorIds:options.excludeAncestorIds},search,true);
             rows.push.apply(rows,batch.results); next = batch.nextContinuation;
           } while (next && ++batches < 4);
-          throwIfAborted(options.signal);
-          if (!state.nativeStarted && generation === searchGeneration) nativeDiscoveryCache = {key:cacheKey,at:Date.now(),rows:clone(rows),next:clone(next)};
+          throwIfAborted(readSignal);
+          if (!state.nativeStarted) nativeCacheCandidate = {key:cacheKey,at:Date.now(),rows:clone(rows),next:clone(next)};
         }
         state.nativeStarted = true; state.nativeNext = next;
         state.orderingIncomplete = state.orderingIncomplete || !!next;
@@ -7484,14 +7553,20 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         rows.forEach(function(row) { native.delete(row.id); if (!seen.has(row.id) && discoveryMatches(row,options,types)) native.set(row.id,row); });
         state.native = Array.from(native.values()).sort(function(a,b) { return discoveryCompare(options,a,b); });
       }
-      try { await readNative(); }
+      try {
+        var nativeError = nativePending ? await nativePending : await readNative();
+        if (nativeError) throw nativeError;
+        throwIfAborted(readSignal);
+        if (nativeCacheCandidate && generation === searchGeneration) nativeDiscoveryCache = nativeCacheCandidate;
+      }
       catch (error) {
-        if (!union && [404,405,500,502,503,504].includes(error.status)) {
+        if (!union && unavailableSupplement(error)) {
           // Unsupported child expansion keeps the original scoped indexed path.
           return {results:state.index,total:null,start:0,limit:limit,nextStart:state.indexNext?.start || null,nextContinuation:state.indexNext,cql:state.cql,orderingComplete:false,insightsUnavailable:true};
         }
         throw error;
       }
+      finally { if (options.signal) options.signal.removeEventListener('abort',stopParallel); }
       if (!union && !state.nativeKnown.length && !state.nativeNext) return Object.assign({},indexed,{orderingComplete:true});
       var seen = new Set(state.seen), directIds = new Set(state.nativeKnown), results = [], indexReads = 0;
       // Any direct source can contain rows beyond the index page. A CQL count
@@ -7532,7 +7607,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if (state.unavailableCount) output.unavailableCount = state.unavailableCount;
       return output;
     }
-    async function searchIndexedPagesWithin(options) {
+    async function searchIndexedPagesWithin(options, onScoped) {
       options = options || {};
       if (mode !== 'confluence') fail('Page search requires Confluence mode.', 'CONFIGURATION');
       var search = dependencies.search || root.WCSSearch;
@@ -7623,6 +7698,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           });
         }
         throwIfAborted(options.signal);
+        if (onScoped) { var startSupplement = onScoped; onScoped = null; startSupplement(); }
         var url = endpoint(useContent ? '/rest/api/content/search' : '/rest/api/search');
         var params = new URLSearchParams({ cql: cql, limit: String(limit), expand: useContent ? expanded : expanded.split(',').map(function (field) { return 'content.' + field; }).join(',') });
         if (!useContent) params.set('excerpt', options.excerpt === false ? 'none' : 'indexed');
@@ -10898,5 +10974,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['saved'] = { version: '1ccd945fc0fd' };
+  modules['saved'] = { version: '0c980d9ae9be' };
 })();

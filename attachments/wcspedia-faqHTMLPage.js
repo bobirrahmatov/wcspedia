@@ -20,7 +20,7 @@
   }
 
   if (mount.dataset.wcsPageStarted) return;
-  if (!window.WCSPageModules || window.WCSPageModules['faq']?.version !== '1ccd945fc0fd') {
+  if (!window.WCSPageModules || window.WCSPageModules['faq']?.version !== '0c980d9ae9be') {
     failPage('Load wcspedia-faq.js before wcspedia-faqHTMLPage.js. Use both files from the same upload package and check their attachment URLs.');
     return;
   }
@@ -70,7 +70,7 @@
     else { adapter=window.WCSConfluence.create(config); session=await loading.wait(adapter.load({signal:startupController.signal,discoveryOnly:live&&isNativeDiscoveryRoute(),workspaceScope:requestedWorkspaceScope()})); }
     if(!session.data || !Array.isArray(session.data.documents)) throw new Error('The knowledge data could not be loaded.');
     loading.progress(1,3,'Loading saved items and content checks…');
-  function finishLoading(){if(startupFinished&&!pageReads.size){loading.hide();focusLandingSearch();}}
+  function finishLoading(){if(startupFinished&&!pageReads.size&&!fullSessionLoading){loading.hide();focusLandingSearch();}}
   function pageLoading(promise,message='Loading your page…'){
     const ticket={};pageReads.add(ticket);loading.show(message);
     void loading.wait(promise).catch(error=>{if(pageReads.has(ticket))toast(error.message,{type:'error'});}).finally(()=>{pageReads.delete(ticket);finishLoading();});
@@ -430,7 +430,7 @@
     if(!live){paintInsights();return;}
     if(insightsController||route().path!=='/insights')return;
     const key=insightsKey(),cached=insightsCache.get(key);
-    if(!append&&cached&&cached.state.items.length&&Date.now()-cached.at<nativeBrowseTTL){insightsState={...cached.state,loading:false,error:''};paintInsights();return;}
+    if(!append&&cached&&Date.now()-cached.at<nativeBrowseTTL){insightsState={...cached.state,loading:false,error:''};paintInsights();return;}
     const prior=insightsState?.key===key?insightsState:{key,items:[],next:null};
     if(append&&!prior.next)return;
     const controller=new AbortController();insightsController=controller;
@@ -446,7 +446,11 @@
       const byId=new Map((append?prior.items:[]).map(item=>[item.id,item]));
       result.results.forEach(item=>{const known=covers.get(item.id);byId.set(item.id,known&&known.version===item.version?{...item,cover:known.cover}:item);});
       insightsState={key,items:Array.from(byId.values()),next:result.nextContinuation,loading:false,error:'',retryAppend:false};
-      insightsCache.set(key,{at:Date.now(),state:insightsState});while(insightsCache.size>12)insightsCache.delete(insightsCache.keys().next().value);
+      // A partial native supplement is not evidence of an empty collection.
+      // Returning or retrying must recheck it instead of replaying a clean hit.
+      if(!result.insightsUnavailable&&result.orderingComplete!==false)insightsCache.set(key,{at:Date.now(),state:insightsState});
+      else insightsCache.delete(key);
+      while(insightsCache.size>12)insightsCache.delete(insightsCache.keys().next().value);
     }catch(error){if(!controller.signal.aborted&&key===insightsKey())insightsState={...prior,key,loading:false,error:error.message||'Insights could not be loaded.',retryAppend:append};}
     finally{if(insightsController===controller){insightsController=null;paintInsights();}}
   }
@@ -512,8 +516,12 @@
     cancelNativePrefetch();nativeBrowseCache.clear();nativePageLinks.clear();cancelNativeLanding(true);
   }
   function libraryNeeded(){
-    const path=route().path;
-    return !(live&&config.authoringMode==='confluence-session'&&(path==='/create'||path.startsWith('/edit/')||path==='/entitlements'));
+    if(!live||config.authoringMode!=='confluence-session')return true;
+    const {path,params}=route();
+    // Public cards use native search metadata. Personal saved-page hydration
+    // and private health reads serve readers/workspaces, not these lists.
+    const publicList=path==='/'||path==='/search'||path==='/insights'||path.startsWith('/topic/')||path==='/results'&&(!params.get('view')||params.get('view')==='published');
+    return !publicList&&path!=='/create'&&!path.startsWith('/edit/')&&path!=='/entitlements';
   }
   function loadLibrary(reset=false,settings={}){
     if(!library||!libraryNeeded())return Promise.resolve();
@@ -929,6 +937,9 @@
     // native query parameters and meaningful fragment filters/subroutes.
     const canonical=window.WCSNavigation.canonicalUrl(config,location.href);
     if(canonical!==location.href)history.replaceState(history.state,'',canonical);
+    // Returning to the already-loaded workspace (or opening a public reader)
+    // must abandon a different pending scope before it can replace the session.
+    if(!needsWorkspaceSession())cancelFullSession();
     if(!preparePublishedReader())return;
     if(needsWorkspaceSession()){
       if(fullSessionErrorScope!==requestedWorkspaceScope())fullSessionError=null;
@@ -937,7 +948,6 @@
       if(!fullSessionError)loadFullSession();
       cancelNativeLanding();return;
     }
-    if(isNativeDiscoveryRoute())cancelFullSession();
     if(library&&!libraryStarted&&libraryNeeded())void loadLibrary(true).then(()=>{if(!editor&&!modal&&root.isConnected)render();},()=>{});
     if(r.path==='/create'||r.path.startsWith('/edit/'))content=editorPage();
     else if(r.path==='/categories')content=categoriesPage();
