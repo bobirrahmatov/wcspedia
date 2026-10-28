@@ -1066,6 +1066,17 @@
  #wcspedia .entitlement-permission-grid{grid-template-columns:minmax(0,1fr)!important}
 }
 
+/* Access guidance is a calm amber notice, not another bordered content card. */
+#wcspedia .entitlement-notice{box-sizing:border-box!important;margin:0 0 24px!important;padding:18px 20px!important;border:0!important;border-radius:12px!important;box-shadow:none!important;background:var(--wcs-theme-warningBg,#fff4d6)!important;color:var(--wcs-theme-warning,#704b00)!important;font-size:14px!important;line-height:1.65!important;overflow-wrap:anywhere}
+#wcspedia .entitlement-scope-note{display:flex!important;align-items:flex-start!important;gap:12px!important}
+#wcspedia .entitlement-scope-note>svg{width:20px!important;height:20px!important;flex:0 0 20px!important;margin-top:2px!important;color:inherit!important}
+#wcspedia .entitlement-notice :is(h2,p,li,.quiet-note){color:inherit!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#wcspedia .entitlement-notice p{margin:0!important;font-size:14px!important;line-height:1.65!important}
+#wcspedia .entitlement-notice h2{margin:0 0 6px!important;font-size:16px!important;line-height:1.5!important;font-weight:700!important}
+#wcspedia .entitlement-notice .quiet-note{margin-top:10px!important;font-size:13px!important}
+#wcspedia .entitlement-notice ul{margin:10px 0 0!important;padding-left:22px!important}
+#wcspedia .entitlement-notice--success{background:var(--wcs-theme-successBg,#e5f2eb)!important;color:var(--wcs-theme-success,#24674d)!important}
+
 /* Reading estimates and view counts share the existing content typography. */
 #wcspedia .feature-metrics{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:12px;margin:18px 0 0}
 #wcspedia .document-reading-time,#wcspedia .document-view-count{white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -1483,13 +1494,13 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 /* Native sidebar skin, adapted from PAL / Lending Analytics. Reader-only host activation; Confluence retains geometry and native handlers. */
 .wcs-reader-navigation{font-family:var(--wcs-space-font,var(--wcs-resolved-space-font,"Citi-Sans-Text"))!important;color:var(--ds-text,var(--wcs-theme-text,#17385e))!important;border-color:var(--ds-border,var(--wcs-theme-border,#dce6ef))!important;box-shadow:0 3px 12px #17385e0b}
 /* Paint nested native panels too: the outer wrapper alone cannot override an
- * opaque host sidebar/content/footer. Match the resolved dashboard surface;
- * --wcs-sidebar-background remains an optional space override. */
+ * opaque host sidebar/content/footer. Use the same WCSpedia reader surface;
+ * native sidebar/dashboard overrides must not introduce a second colour. */
 .wcs-reader-navigation :is(.acs-side-bar,.acs-side-bar-content,.wcs-native-footer,.wcs-native-surface){color:var(--ds-text,var(--wcs-theme-text,#253b54))!important;border-color:var(--ds-border,var(--wcs-theme-border,#dce4ec))!important;box-shadow:none!important}
 /* The native body ID protects against Confluence's important footer rules.
  * Paint only structural surfaces; menu layers and interactive states stay native. */
 :is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation),
-:is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation) :is(.acs-side-bar,.acs-side-bar-content,.wcs-native-footer,.wcs-native-surface){background:var(--wcs-sidebar-background,var(--wcs-resolved-sidebar-background,var(--wcs-surface-background,var(--ds-surface,var(--wcs-theme-surface,#fff)))))!important}
+:is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation) :is(.acs-side-bar,.acs-side-bar-content,.wcs-native-footer,.wcs-native-surface){background:var(--wcs-reader-background,var(--wcs-theme-surface,#fff))!important}
 :is(.wcs-reader-navigation,#com-atlassian-confluence .wcs-reader-navigation) .wcs-native-toolbar-control:not(:hover):not(:focus-visible){background:transparent!important;color:inherit!important}
 .wcs-reader-navigation .wcs-native-toolbar-control:not(.aui-icon):not([class*="aui-iconfont-"]){font-family:var(--wcs-space-font,var(--wcs-resolved-space-font,"Citi-Sans-Text"))!important}
 .wcs-reader-navigation :is(ul,ol,li){list-style:none!important}
@@ -1624,6 +1635,12 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 #wcspedia .breadcrumbs [aria-current]{min-width:0;overflow-wrap:anywhere}
 
 @media print{#wcspedia .breadcrumbs{display:none!important}}
+
+/* The reader and native sidebar share an application-owned surface. Native
+   Confluence surface tokens can differ between the page and sidebar contexts. */
+#wcspedia:has(.detail-page),#wcspedia .detail-page,.wcs-native-article {
+  background:var(--wcs-reader-background,var(--wcs-theme-surface,#fff))!important;
+}
 
 /* Compact landing and help layouts. Included in the one shared stylesheet. */
 #wcspedia .wcs-home .discovery-hero{text-align:center!important}
