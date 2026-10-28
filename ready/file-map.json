@@ -224,11 +224,11 @@
     "source": "attachments/wcs-insight-cover-50.jpg"
   },
   "attachments/wcspedia-add-document.js": {
-    "sha256": "e66a995c54f90133f35ef8d81b9f0ac6a88251d55dcae8cb3a7c456277f85e2a",
+    "sha256": "f98175bc03439b79f45ce3febf103f493ce8af0c4c1424dff70e08d921d2b611",
     "source": "attachments/wcspedia-add-document.js"
   },
   "attachments/wcspedia-add-documentHTMLPage.js": {
-    "sha256": "03d7b6af999c4f1318ae399a0792976b9880bb71131734744282077011c0bd79",
+    "sha256": "a98641998822b7851162d8c1ca04770609cd0ec7310308627c6374ddac9c839d",
     "source": "attachments/wcspedia-add-documentHTMLPage.js"
   },
   "attachments/wcspedia-article-discussion-bootstrap.js": {
@@ -248,19 +248,19 @@
     "source": "attachments/wcspedia-document.mdx"
   },
   "attachments/wcspedia-entitlements.js": {
-    "sha256": "dcf226e8ca1ea538f90adbbf79b9cc3935ed01219d7f9014579171a257a15272",
+    "sha256": "041c36a05884f850a2d7416018a44eaac038f099af38e8a20707250a87db9430",
     "source": "attachments/wcspedia-entitlements.js"
   },
   "attachments/wcspedia-entitlementsHTMLPage.js": {
-    "sha256": "4e6ea275c0791f6249c67ad66651c26e1b71b3ad09b7c3189f41d85640723946",
+    "sha256": "548052fdbdf423e5ba9b1c4fbd6ea48d2d34473ffed65dd0bb8837f567bc2c2c",
     "source": "attachments/wcspedia-entitlementsHTMLPage.js"
   },
   "attachments/wcspedia-faq.js": {
-    "sha256": "9fd4cb1160ae4ec47eca88b8f2e91c5ad48280b1e9020a485c240a60c6ffa463",
+    "sha256": "9de905b0cbb0a45d7bae3087eefb60d8719ecf1ddebdc6f5b88bb449ea43eba0",
     "source": "attachments/wcspedia-faq.js"
   },
   "attachments/wcspedia-faqHTMLPage.js": {
-    "sha256": "fa889f92f898ebf1d57644084c9230758ac49955e6700883437659c00b58049c",
+    "sha256": "5aaa1451f08872ef91c585caa8e7f3202f08106e4461d32065dfb2bcefaa9e34",
     "source": "attachments/wcspedia-faqHTMLPage.js"
   },
   "attachments/wcspedia-file-drop-guard.js": {
@@ -268,19 +268,19 @@
     "source": "attachments/wcspedia-file-drop-guard.js"
   },
   "attachments/wcspedia-insights.js": {
-    "sha256": "00d929a28e1e6c9b3c6db26f460bab075ea0d1965c4a6e324b3bb6a237416fc7",
+    "sha256": "e8a6cc3f5c9a87ae88abcff67b1003802c6e00a3cf4b166d1e8ba44a970b482b",
     "source": "attachments/wcspedia-insights.js"
   },
   "attachments/wcspedia-insightsHTMLPage.js": {
-    "sha256": "4cca72d9bc018d4ba63745e7f3a599f4143e8daffd52f638c39b8def4949bba0",
+    "sha256": "94f0f98f0d8574eaaab2729d2e73f839c7b4089b0ccdc0ca8e4008181ed4913f",
     "source": "attachments/wcspedia-insightsHTMLPage.js"
   },
   "attachments/wcspedia-landing.js": {
-    "sha256": "4ced2c6f78f158903dad8cccbd0332b49ad3214aed2f2e9fdb7841c9ef9ea7bb",
+    "sha256": "87e7b2e76e7a929a1ecf3763712155797340873577c221aca8758a2cb89e43d6",
     "source": "attachments/wcspedia-landing.js"
   },
   "attachments/wcspedia-landingHTMLPage.js": {
-    "sha256": "e17ae08b256b3e6028acf4707a573787a1cc62660322981224da5e3c5699df5b",
+    "sha256": "c2e5c5f910a4999e77faf0d2082c31a5b663f9725aee4952fda8a293ebf3fdc4",
     "source": "attachments/wcspedia-landingHTMLPage.js"
   },
   "attachments/wcspedia-library-loader.js": {
@@ -296,11 +296,11 @@
     "source": "attachments/wcspedia-logo.png"
   },
   "attachments/wcspedia-my-workspace.js": {
-    "sha256": "454e7c43ac8c00df73d571fbf61a1f2a81f5b3e3866e17f78b2b0010980e203d",
+    "sha256": "b6f57040a0fc1238bd1f7c83f51102b2b0485ab5dbcf6293cc062ab532b771e6",
     "source": "attachments/wcspedia-my-workspace.js"
   },
   "attachments/wcspedia-my-workspaceHTMLPage.js": {
-    "sha256": "bcca7e5fa92719840ae861f43768e73b6cd058dba3a828f2a6c4862e9abbb619",
+    "sha256": "b3dd6744446d1df2c4501027d51f6aec104ebfa2f86a4a7345e05249b6705e42",
     "source": "attachments/wcspedia-my-workspaceHTMLPage.js"
   },
   "attachments/wcspedia-notifications.js": {
@@ -312,27 +312,31 @@
     "source": "attachments/wcspedia-page-style-flags.js"
   },
   "attachments/wcspedia-reader-sidebar.js": {
-    "sha256": "9a274cdf13987aacd67360c09f0814e66a602864572836d5f6bb45127e94db32",
+    "sha256": "dc56a766b0c3b4f7434c4fca8fdd2bd03861c9a9c2bde80ccf98dcd72a6d905c",
     "source": "attachments/wcspedia-reader-sidebar.js"
   },
   "attachments/wcspedia-reviewer-workspace.js": {
-    "sha256": "fda2f26125fdee0bb94d5d55c7571ff9fee1c24325e0998dbc91c6055d55d5dc",
+    "sha256": "3067a94a3828be0b0bcacfbce1190ec73c7ff596d8d81ac7378eb339671265d2",
     "source": "attachments/wcspedia-reviewer-workspace.js"
   },
   "attachments/wcspedia-reviewer-workspaceHTMLPage.js": {
-    "sha256": "eb4c52901d2eba389a083b344c8e536bd528d48ab8ae8cbca80ed48fef80e0d6",
+    "sha256": "8f35a68f2d02ed2ecf09748b89eaa98e304012273a2ace3f9c99076bbb8411cd",
     "source": "attachments/wcspedia-reviewer-workspaceHTMLPage.js"
   },
   "attachments/wcspedia-saved-items.js": {
-    "sha256": "832664b701a0bd60044721357290fd734cb6671dbd2f5dbf4bc6b72c2fe5aea9",
+    "sha256": "40b81b074998641d29690a6da9572e4a47cfc90d7b68c14851ffe167c7f29330",
     "source": "attachments/wcspedia-saved-items.js"
   },
   "attachments/wcspedia-saved-itemsHTMLPage.js": {
-    "sha256": "3ff6d6dccb6d22a81a77c054674f35b1868d2c0b9be6fe34be2c7f88ad15dbde",
+    "sha256": "0a75e2fbe065428945b9a78c6a0b86a5bde854362f10e58addea399659701ca8",
     "source": "attachments/wcspedia-saved-itemsHTMLPage.js"
   },
+  "attachments/wcspedia-space-typography.js": {
+    "sha256": "24e8c2201de3c30955bb26531110c38903cb1cdfee6422c3b5db66014a82c1ba",
+    "source": "attachments/wcspedia-space-typography.js"
+  },
   "attachments/wcspedia-style.css": {
-    "sha256": "97ea1c03e201edb2cafd697fae0360be7064fdde1fae3ff924f89487c4da848e",
+    "sha256": "bc127272ab9abeb4eaee3801e764d52979bbae95532b6af3e1694c3dca894625",
     "source": "attachments/wcspedia-style.css"
   },
   "docs/original-package-notes.md": {
@@ -370,6 +374,10 @@
   "licenses/pdfmake-LICENSE.txt": {
     "sha256": "009e509bbd25a0f7572b184781707263f5df9e89d2ed751c46e0f6edf0c5d42e",
     "source": "licenses/pdfmake-LICENSE.txt"
+  },
+  "licenses/sidebar-icons-LICENSE.txt": {
+    "sha256": "5da4951ea33d621d504e2ec7fa34aea954ac71e54857ac9a9a499baf3caf233f",
+    "source": "licenses/sidebar-icons-LICENSE.txt"
   },
   "licenses/wcspedia-logo-source.txt": {
     "sha256": "3889b430e6e227f4147b18bd1ce29e3b6c77f8a50e3e4fe5883d25aaaa9bbfc6",
@@ -448,7 +456,7 @@
     "source": "html/wcspedia-saved-items.html"
   },
   "shared/navbar.html": {
-    "sha256": "43a4204e544daead588f91e9698d380f42117d4e9ab5c93cfbcb59b034df0a97",
+    "sha256": "4916428dbcf2137debfd053c89aedd6d4e766800588eefe66524fe107ba946cb",
     "source": "html/wcspedia-navbar.html"
   },
   "templates/ARTICLE-DISCUSSION.md": {

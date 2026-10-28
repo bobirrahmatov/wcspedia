@@ -233,7 +233,7 @@ test('hosted CSS inherits host fonts, retains code fonts, and has no site-wide r
     for(const selector of ['#wcspedia','.wcs-loading-overlay','.wcs-add-document','.wcs-add-document-popover']){
       const fonts=rules.filter(rule=>rule.selectorText.split(',').some(s=>s.trim()===selector)).map(rule=>rule.style.getPropertyValue('font-family')).filter(Boolean);
       assert.ok(fonts.length,'Font declaration exists for '+selector);
-      assert.equal(fonts.at(-1).trim(),'inherit',selector+' uses the existing Confluence font');
+      assert.ok(['inherit','var(--wcs-space-font,var(--wcs-resolved-space-font,inherit))'].includes(fonts.at(-1).trim()),selector+' uses inherited or resolved existing Confluence fonts');
     }
     for(const rule of rules.filter(rule=>/highcharts-(?:container|root)/.test(rule.selectorText))){
       const family=rule.style.getPropertyValue('font-family');if(family)assert.equal(family.trim(),'inherit');
@@ -547,3 +547,14 @@ test('mixed build versions remain blocked before application startup',async t=>{
  assert.equal(d.querySelector('#wcspedia').dataset.wcsPageStarted,undefined);assert.equal(d.querySelector('.wcs-loading-overlay'),null);
 });
 
+
+
+test('shared PAL font helper is shipped once in navBar without sidebar activation or a font CDN',()=>{
+ const header=fs.readFileSync(path.join(__dirname,'../ready/shared/navbar.html'),'utf8');
+ assert.equal((header.match(/<script src="[^"\n]*wcspedia-space-typography\.js/g)||[]).length,1);
+ assert.doesNotMatch(header,/<script src="[^"\n]*wcspedia-reader-sidebar\.js/);
+ const helper=read('attachments/wcspedia-space-typography.js');
+ assert.equal(helper,fs.readFileSync(path.join(__dirname,'../space-typography.js'),'utf8'));
+ assert.doesNotMatch(helper,/fetch\(|https?:|new FontFace|WCSReaderSidebar/);
+ assert.ok(fs.existsSync(path.join(directory,'licenses/sidebar-icons-LICENSE.txt')));
+});

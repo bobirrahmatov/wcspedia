@@ -50,10 +50,55 @@
 
 ;
 
+/* Source: space-typography.js */
+/* PAL-compatible host typography. Uses only fonts already registered by the
+ * Confluence theme; no font URLs, header replacement or sidebar activation. */
+(function(w,d){
+ 'use strict';
+ if(w.WCSSpaceTypography){w.WCSSpaceTypography.refresh();return;}
+ var queued=false,observer,owned=new Map(),requested=new Set(),destroyed=false;
+ function active(){
+  if(d.querySelector('#editpageform,#content-editor,body.contenteditor'))return false;
+  var space=d.querySelector('meta[name="ajs-space-key"],meta[name="confluence-space-key"]')?.content;
+  var c=w.WCS_CONFIG||w.WCS_ARTICLE_DISCUSSION_CONFIG||w.WCS_ADD_DOCUMENT_CONFIG||{};
+  if(space&&space!==(c.spaceKey||'wcspedia'))return false;
+  return space===(c.spaceKey||'wcspedia')||!!d.querySelector('#wcspedia,.wcs-native-article');
+ }
+ function set(name,value){
+  if(!value||d.documentElement.style.getPropertyValue(name)===value)return;
+  if(!owned.has(name))owned.set(name,[d.documentElement.style.getPropertyValue(name),d.documentElement.style.getPropertyPriority(name)]);
+  d.documentElement.style.setProperty(name,value);
+ }
+ function reset(){owned.forEach(function(value,name){if(value[0])d.documentElement.style.setProperty(name,value[0],value[1]);else d.documentElement.style.removeProperty(name);});owned.clear();}
+ function registered(role){var found='';d.fonts?.forEach?.(function(face){var name=face.family.replace(/["']/g,'');if(new RegExp('^citi[ -]sans[ -]'+role+'$','i').test(name))found=name;});return found;}
+ function requestFont(name){
+  if(!name||!d.fonts?.load)return;
+  ['400','700'].forEach(function(weight){var descriptor=weight+' 16px '+JSON.stringify(name);if(requested.has(descriptor))return;requested.add(descriptor);d.fonts.load(descriptor).then(schedule,function(){});});
+ }
+ function refresh(){
+  if(destroyed||!d.body)return;if(!active()){reset();return;}
+  var bodyFamily=w.getComputedStyle(d.body).fontFamily||'sans-serif',text=registered('text'),display=registered('display');
+  var family=text?JSON.stringify(text)+', '+bodyFamily:bodyFamily;
+  var title=Array.from(d.querySelectorAll('h1,.font-display')).find(function(el){return !el.closest('#wcspedia,.wcs-native-article,.wcs-reader-navigation');});
+  set('--wcs-resolved-space-font',family);
+  set('--wcs-resolved-space-display-font',display?JSON.stringify(display)+', '+family:title?w.getComputedStyle(title).fontFamily||family:family);
+  requestFont(text);requestFont(display);
+ }
+ function schedule(){if(!queued&&!destroyed){queued=true;Promise.resolve().then(function(){queued=false;refresh();});}}
+ function start(){refresh();if(observer||!d.body)return;observer=new MutationObserver(function(changes){if(changes.some(function(c){return c.type==='childList'?Array.from(c.addedNodes).concat(Array.from(c.removedNodes)).some(function(n){return n.nodeType===1;}):c.target===d.body||c.target===d.documentElement||c.target.matches?.('meta[name="ajs-space-key"],meta[name="confluence-space-key"]');}))schedule();});observer.observe(d.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','data-color-mode','data-theme','content']});}
+ function stylesheetLoaded(e){if(e.target.matches?.('link[rel="stylesheet"]'))schedule();}
+ function destroy(){destroyed=true;observer?.disconnect();reset();d.fonts?.removeEventListener?.('loadingdone',schedule);d.removeEventListener('load',stylesheetLoaded,true);d.removeEventListener('DOMContentLoaded',start);}
+ w.WCSSpaceTypography={refresh:refresh,destroy:destroy};
+ d.fonts?.addEventListener?.('loadingdone',schedule);d.addEventListener('load',stylesheetLoaded,true);d.addEventListener('DOMContentLoaded',start);if(d.body)start();
+})(window,document);
+
+;
+
 
 /* Source: reader-sidebar.js */
 /* Reader-only styling of Confluence's own sidebar. Never creates navigation,
- * moves tree controls, replaces collapse handlers or fetches a second tree. */
+ * replaces collapse handlers or fetches a second tree. The PAL-style top button
+ * forwards to the original native collapse control, which stays mounted. */
 (function (w,d) {
   'use strict';
   if(w.WCSReaderSidebar)return;
@@ -75,23 +120,179 @@
       return (u.pathname.match(/\/spaces\/[^/]+\/pages\/([1-9]\d*)(?:\/|$)/)||[])[1]||null;
     }catch(_){return null;}
   }
+  // Exact filled TailAdmin paths used by PAL / Lending Analytics; see vendor/sidebar-icons-LICENSE.txt.
   var iconPaths={
-    insights:'M4 4h16v16H4z M8 8h8 M8 12h8 M8 16h4',
-    'credit-approval-control':'M12 3l8 4v5c0 5-8 9-8 9S4 17 4 12V7z M8 12l3 3 5-6',
-    'credit-information-management':'M3 5h18v14H3z M7 9h10 M7 13h4',
-    'credit-management-reporting':'M4 3v18h17 M8 17v-5 M13 17V7 M18 17V4',
-    'deal-closing':'M8 5V3h8v2 M5 5h14v16H5z M8 13l3 3 5-6',
-    'documentation-pledging':'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',
-    'emea-credit-admin':'M3 12h18 M12 3c-5 5-5 13 0 18 M12 3c5 5 5 13 0 18 M21 12a9 9 0 1 1-18 0 9 9 0 1 1 18 0',
-    'loan-management':'M3 9l9-6 9 6z M5 11v8 M10 11v8 M14 11v8 M19 11v8 M3 21h18',
-    'regional-operating-manuals':'M12 5C8 2 3 4 3 4v16s5-2 9 1c4-3 9-1 9-1V4s-5-2-9 1v16',
-    mine:'M3 7h18v14H3z M8 7V3h8v4 M3 12h18 M10 12v3h4v-3',
-    review:'M12 8a3 3 0 1 1-6 0 3 3 0 1 1 6 0 M3 21v-3a6 6 0 0 1 9-5 M15 17l2 2 4-5',
-    saved:'M6 3h12v18l-6-4-6 4z',
-    entitlements:'M5 10h14v11H5z M8 10V7a4 4 0 0 1 8 0v3 M12 14v3',
-    working:'M3 7V5h6l2 2h10v13H3z M9 13h6 M12 10v6',
-    home:'M3 11l9-8 9 8 M6 9v12h12V9 M10 21v-7h4v7'
-  };
+  "insights": "M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H18.5001C19.7427 20.75 20.7501 19.7426 20.7501 18.5V5.5C20.7501 4.25736 19.7427 3.25 18.5001 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H18.5001C18.9143 4.75 19.2501 5.08579 19.2501 5.5V18.5C19.2501 18.9142 18.9143 19.25 18.5001 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V5.5ZM6.25005 9.7143C6.25005 9.30008 6.58583 8.9643 7.00005 8.9643L17 8.96429C17.4143 8.96429 17.75 9.30008 17.75 9.71429C17.75 10.1285 17.4143 10.4643 17 10.4643L7.00005 10.4643C6.58583 10.4643 6.25005 10.1285 6.25005 9.7143ZM6.25005 14.2857C6.25005 13.8715 6.58583 13.5357 7.00005 13.5357H17C17.4143 13.5357 17.75 13.8715 17.75 14.2857C17.75 14.6999 17.4143 15.0357 17 15.0357H7.00005C6.58583 15.0357 6.25005 14.6999 6.25005 14.2857Z",
+  "credit-approval-control": "M3.70186 12.0001C3.70186 7.41711 7.41711 3.70186 12.0001 3.70186C16.5831 3.70186 20.2984 7.41711 20.2984 12.0001C20.2984 16.5831 16.5831 20.2984 12.0001 20.2984C7.41711 20.2984 3.70186 16.5831 3.70186 12.0001ZM12.0001 1.90186C6.423 1.90186 1.90186 6.423 1.90186 12.0001C1.90186 17.5772 6.423 22.0984 12.0001 22.0984C17.5772 22.0984 22.0984 17.5772 22.0984 12.0001C22.0984 6.423 17.5772 1.90186 12.0001 1.90186ZM15.6197 10.7395C15.9712 10.388 15.9712 9.81819 15.6197 9.46672C15.2683 9.11525 14.6984 9.11525 14.347 9.46672L11.1894 12.6243L9.6533 11.0883C9.30183 10.7368 8.73198 10.7368 8.38051 11.0883C8.02904 11.4397 8.02904 12.0096 8.38051 12.3611L10.553 14.5335C10.7217 14.7023 10.9507 14.7971 11.1894 14.7971C11.428 14.7971 11.657 14.7023 11.8257 14.5335L15.6197 10.7395Z",
+  "credit-information-management": "M3.25 5.5C3.25 4.25736 4.25736 3.25 5.5 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V18.5C20.75 19.7426 19.7426 20.75 18.5 20.75H5.5C4.25736 20.75 3.25 19.7426 3.25 18.5V5.5ZM5.5 4.75C5.08579 4.75 4.75 5.08579 4.75 5.5V8.58325L19.25 8.58325V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H5.5ZM19.25 10.0833H15.416V13.9165H19.25V10.0833ZM13.916 10.0833L10.083 10.0833V13.9165L13.916 13.9165V10.0833ZM8.58301 10.0833H4.75V13.9165H8.58301V10.0833ZM4.75 18.5V15.4165H8.58301V19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5ZM10.083 19.25V15.4165L13.916 15.4165V19.25H10.083ZM15.416 19.25V15.4165H19.25V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15.416Z",
+  "credit-management-reporting": "M12 2C11.5858 2 11.25 2.33579 11.25 2.75V12C11.25 12.4142 11.5858 12.75 12 12.75H21.25C21.6642 12.75 22 12.4142 22 12C22 6.47715 17.5228 2 12 2ZM12.75 11.25V3.53263C13.2645 3.57761 13.7659 3.66843 14.25 3.80098V3.80099C15.6929 4.19606 16.9827 4.96184 18.0104 5.98959C19.0382 7.01734 19.8039 8.30707 20.199 9.75C20.3316 10.2341 20.4224 10.7355 20.4674 11.25H12.75ZM2 12C2 7.25083 5.31065 3.27489 9.75 2.25415V3.80099C6.14748 4.78734 3.5 8.0845 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C15.9155 20.5 19.2127 17.8525 20.199 14.25H21.7459C20.7251 18.6894 16.7492 22 12 22C6.47715 22 2 17.5229 2 12Z",
+  "deal-closing": "M20.3662 1.11216C20.6592 0.8193 21.134 0.819349 21.4269 1.11227C21.7198 1.4052 21.7197 1.88007 21.4268 2.17293L17.0308 6.56803C16.7379 6.8609 16.263 6.86085 15.9701 6.56792C15.6773 6.275 15.6773 5.80013 15.9702 5.50726L20.3662 1.11216ZM16.6592 2.696C16.952 2.40308 16.952 1.9282 16.659 1.63534C16.3661 1.34248 15.8913 1.34253 15.5984 1.63545L14.0987 3.13545C13.8058 3.42837 13.8059 3.90325 14.0988 4.19611C14.3917 4.48897 14.8666 4.48892 15.1595 4.196L16.6592 2.696ZM11.8343 3.45488C11.7079 3.19888 11.4472 3.0368 11.1617 3.0368C10.8762 3.0368 10.6155 3.19888 10.4892 3.45488L8.06431 8.36817L2.64217 9.15605C2.35966 9.19711 2.12495 9.39499 2.03673 9.6665C1.94851 9.93801 2.02208 10.2361 2.22651 10.4353L6.15001 14.2598L5.2238 19.66C5.17554 19.9414 5.29121 20.2258 5.52216 20.3936C5.75312 20.5614 6.05932 20.5835 6.31201 20.4506L11.1617 17.901L16.0114 20.4506C16.2641 20.5835 16.5703 20.5614 16.8013 20.3936C17.0322 20.2258 17.1479 19.9414 17.0996 19.66L16.1734 14.2598L20.0969 10.4353C20.3014 10.2361 20.3749 9.93801 20.2867 9.6665C20.1985 9.39499 19.9638 9.19711 19.6813 9.15605L14.2591 8.36817L11.8343 3.45488ZM9.23491 9.3856L11.1617 5.48147L13.0885 9.3856C13.1978 9.60696 13.4089 9.76039 13.6532 9.79588L17.9617 10.4219L14.8441 13.4609C14.6673 13.6332 14.5866 13.8814 14.6284 14.1247L15.3643 18.4158L11.5107 16.3898C11.2922 16.275 11.0312 16.275 10.8127 16.3898L6.9591 18.4158L7.69508 14.1247C7.7368 13.8814 7.65614 13.6332 7.47938 13.4609L4.36174 10.4219L8.67021 9.79588C8.91449 9.76039 9.12567 9.60696 9.23491 9.3856ZM21.6514 5.12825C21.9443 5.42111 21.9444 5.89598 21.6515 6.18891L20.1518 7.68891C19.8589 7.98183 19.3841 7.98188 19.0912 7.68901C18.7982 7.39615 18.7982 6.92128 19.091 6.62836L20.5907 5.12836C20.8836 4.83543 21.3585 4.83538 21.6514 5.12825Z",
+  "documentation-pledging": "M8.50391 4.25C8.50391 3.83579 8.83969 3.5 9.25391 3.5H15.2777C15.4766 3.5 15.6674 3.57902 15.8081 3.71967L18.2807 6.19234C18.4214 6.333 18.5004 6.52376 18.5004 6.72268V16.75C18.5004 17.1642 18.1646 17.5 17.7504 17.5H16.248V17.4993H14.748V17.5H9.25391C8.83969 17.5 8.50391 17.1642 8.50391 16.75V4.25ZM14.748 19H9.25391C8.01126 19 7.00391 17.9926 7.00391 16.75V6.49854H6.24805C5.83383 6.49854 5.49805 6.83432 5.49805 7.24854V19.75C5.49805 20.1642 5.83383 20.5 6.24805 20.5H13.998C14.4123 20.5 14.748 20.1642 14.748 19.75L14.748 19ZM7.00391 4.99854V4.25C7.00391 3.00736 8.01127 2 9.25391 2H15.2777C15.8745 2 16.4468 2.23705 16.8687 2.659L19.3414 5.13168C19.7634 5.55364 20.0004 6.12594 20.0004 6.72268V16.75C20.0004 17.9926 18.9931 19 17.7504 19H16.248L16.248 19.75C16.248 20.9926 15.2407 22 13.998 22H6.24805C5.00541 22 3.99805 20.9926 3.99805 19.75V7.24854C3.99805 6.00589 5.00541 4.99854 6.24805 4.99854H7.00391Z",
+  "emea-credit-admin": "M8.80443 5.60156C7.59109 5.60156 6.60749 6.58517 6.60749 7.79851C6.60749 9.01185 7.59109 9.99545 8.80443 9.99545C10.0178 9.99545 11.0014 9.01185 11.0014 7.79851C11.0014 6.58517 10.0178 5.60156 8.80443 5.60156ZM5.10749 7.79851C5.10749 5.75674 6.76267 4.10156 8.80443 4.10156C10.8462 4.10156 12.5014 5.75674 12.5014 7.79851C12.5014 9.84027 10.8462 11.4955 8.80443 11.4955C6.76267 11.4955 5.10749 9.84027 5.10749 7.79851ZM4.86252 15.3208C4.08769 16.0881 3.70377 17.0608 3.51705 17.8611C3.48384 18.0034 3.5211 18.1175 3.60712 18.2112C3.70161 18.3141 3.86659 18.3987 4.07591 18.3987H13.4249C13.6343 18.3987 13.7992 18.3141 13.8937 18.2112C13.9797 18.1175 14.017 18.0034 13.9838 17.8611C13.7971 17.0608 13.4132 16.0881 12.6383 15.3208C11.8821 14.572 10.6899 13.955 8.75042 13.955C6.81096 13.955 5.61877 14.572 4.86252 15.3208ZM3.8071 14.2549C4.87163 13.2009 6.45602 12.455 8.75042 12.455C11.0448 12.455 12.6292 13.2009 13.6937 14.2549C14.7397 15.2906 15.2207 16.5607 15.4446 17.5202C15.7658 18.8971 14.6071 19.8987 13.4249 19.8987H4.07591C2.89369 19.8987 1.73504 18.8971 2.05628 17.5202C2.28015 16.5607 2.76117 15.2906 3.8071 14.2549ZM15.3042 11.4955C14.4702 11.4955 13.7006 11.2193 13.0821 10.7533C13.3742 10.3314 13.6054 9.86419 13.7632 9.36432C14.1597 9.75463 14.7039 9.99545 15.3042 9.99545C16.5176 9.99545 17.5012 9.01185 17.5012 7.79851C17.5012 6.58517 16.5176 5.60156 15.3042 5.60156C14.7039 5.60156 14.1597 5.84239 13.7632 6.23271C13.6054 5.73284 13.3741 5.26561 13.082 4.84371C13.7006 4.37777 14.4702 4.10156 15.3042 4.10156C17.346 4.10156 19.0012 5.75674 19.0012 7.79851C19.0012 9.84027 17.346 11.4955 15.3042 11.4955ZM19.9248 19.8987H16.3901C16.7014 19.4736 16.9159 18.969 16.9827 18.3987H19.9248C20.1341 18.3987 20.2991 18.3141 20.3936 18.2112C20.4796 18.1175 20.5169 18.0034 20.4837 17.861C20.2969 17.0607 19.913 16.088 19.1382 15.3208C18.4047 14.5945 17.261 13.9921 15.4231 13.9566C15.2232 13.6945 14.9995 13.437 14.7491 13.1891C14.5144 12.9566 14.262 12.7384 13.9916 12.5362C14.3853 12.4831 14.8044 12.4549 15.2503 12.4549C17.5447 12.4549 19.1291 13.2008 20.1936 14.2549C21.2395 15.2906 21.7206 16.5607 21.9444 17.5202C22.2657 18.8971 21.107 19.8987 19.9248 19.8987Z",
+  "loan-management": "M10.75 2.29248C10.75 1.87827 10.4143 1.54248 10 1.54248C9.58583 1.54248 9.25004 1.87827 9.25004 2.29248V2.83613C6.08266 3.20733 3.62504 5.9004 3.62504 9.16748V14.4591H3.33337C2.91916 14.4591 2.58337 14.7949 2.58337 15.2091C2.58337 15.6234 2.91916 15.9591 3.33337 15.9591H4.37504H15.625H16.6667C17.0809 15.9591 17.4167 15.6234 17.4167 15.2091C17.4167 14.7949 17.0809 14.4591 16.6667 14.4591H16.375V9.16748C16.375 5.9004 13.9174 3.20733 10.75 2.83613V2.29248ZM14.875 14.4591V9.16748C14.875 6.47509 12.6924 4.29248 10 4.29248C7.30765 4.29248 5.12504 6.47509 5.12504 9.16748V14.4591H14.875ZM8.00004 17.7085C8.00004 18.1228 8.33583 18.4585 8.75004 18.4585H11.25C11.6643 18.4585 12 18.1228 12 17.7085C12 17.2943 11.6643 16.9585 11.25 16.9585H8.75004C8.33583 16.9585 8.00004 17.2943 8.00004 17.7085Z",
+  "regional-operating-manuals": "M7.75586 5.50098C7.75586 5.08676 8.09165 4.75098 8.50586 4.75098H18.4985C18.9127 4.75098 19.2485 5.08676 19.2485 5.50098L19.2485 15.4956C19.2485 15.9098 18.9127 16.2456 18.4985 16.2456H8.50586C8.09165 16.2456 7.75586 15.9098 7.75586 15.4956V5.50098ZM8.50586 3.25098C7.26322 3.25098 6.25586 4.25834 6.25586 5.50098V6.26318H5.50195C4.25931 6.26318 3.25195 7.27054 3.25195 8.51318V18.4995C3.25195 19.7422 4.25931 20.7495 5.50195 20.7495H15.4883C16.7309 20.7495 17.7383 19.7421 17.7383 18.4995L17.7383 17.7456H18.4985C19.7411 17.7456 20.7485 16.7382 20.7485 15.4956L20.7485 5.50097C20.7485 4.25833 19.7411 3.25098 18.4985 3.25098H8.50586ZM16.2383 17.7456H8.50586C7.26322 17.7456 6.25586 16.7382 6.25586 15.4956V7.76318H5.50195C5.08774 7.76318 4.75195 8.09897 4.75195 8.51318V18.4995C4.75195 18.9137 5.08774 19.2495 5.50195 19.2495H15.4883C15.9025 19.2495 16.2383 18.9137 16.2383 18.4995L16.2383 17.7456Z",
+  "home": "M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V8.99998C3.25 10.2426 4.25736 11.25 5.5 11.25H9C10.2426 11.25 11.25 10.2426 11.25 8.99998V5.5C11.25 4.25736 10.2426 3.25 9 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H9C9.41421 4.75 9.75 5.08579 9.75 5.5V8.99998C9.75 9.41419 9.41421 9.74998 9 9.74998H5.5C5.08579 9.74998 4.75 9.41419 4.75 8.99998V5.5ZM5.5 12.75C4.25736 12.75 3.25 13.7574 3.25 15V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H9C10.2426 20.75 11.25 19.7427 11.25 18.5V15C11.25 13.7574 10.2426 12.75 9 12.75H5.5ZM4.75 15C4.75 14.5858 5.08579 14.25 5.5 14.25H9C9.41421 14.25 9.75 14.5858 9.75 15V18.5C9.75 18.9142 9.41421 19.25 9 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V15ZM12.75 5.5C12.75 4.25736 13.7574 3.25 15 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V8.99998C20.75 10.2426 19.7426 11.25 18.5 11.25H15C13.7574 11.25 12.75 10.2426 12.75 8.99998V5.5ZM15 4.75C14.5858 4.75 14.25 5.08579 14.25 5.5V8.99998C14.25 9.41419 14.5858 9.74998 15 9.74998H18.5C18.9142 9.74998 19.25 9.41419 19.25 8.99998V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H15ZM15 12.75C13.7574 12.75 12.75 13.7574 12.75 15V18.5C12.75 19.7426 13.7574 20.75 15 20.75H18.5C19.7426 20.75 20.75 19.7427 20.75 18.5V15C20.75 13.7574 19.7426 12.75 18.5 12.75H15ZM14.25 15C14.25 14.5858 14.5858 14.25 15 14.25H18.5C18.9142 14.25 19.25 14.5858 19.25 15V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15C14.5858 19.25 14.25 18.9142 14.25 18.5V15Z",
+  "mine": "M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V8.99998C3.25 10.2426 4.25736 11.25 5.5 11.25H9C10.2426 11.25 11.25 10.2426 11.25 8.99998V5.5C11.25 4.25736 10.2426 3.25 9 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H9C9.41421 4.75 9.75 5.08579 9.75 5.5V8.99998C9.75 9.41419 9.41421 9.74998 9 9.74998H5.5C5.08579 9.74998 4.75 9.41419 4.75 8.99998V5.5ZM5.5 12.75C4.25736 12.75 3.25 13.7574 3.25 15V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H9C10.2426 20.75 11.25 19.7427 11.25 18.5V15C11.25 13.7574 10.2426 12.75 9 12.75H5.5ZM4.75 15C4.75 14.5858 5.08579 14.25 5.5 14.25H9C9.41421 14.25 9.75 14.5858 9.75 15V18.5C9.75 18.9142 9.41421 19.25 9 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V15ZM12.75 5.5C12.75 4.25736 13.7574 3.25 15 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V8.99998C20.75 10.2426 19.7426 11.25 18.5 11.25H15C13.7574 11.25 12.75 10.2426 12.75 8.99998V5.5ZM15 4.75C14.5858 4.75 14.25 5.08579 14.25 5.5V8.99998C14.25 9.41419 14.5858 9.74998 15 9.74998H18.5C18.9142 9.74998 19.25 9.41419 19.25 8.99998V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H15ZM15 12.75C13.7574 12.75 12.75 13.7574 12.75 15V18.5C12.75 19.7426 13.7574 20.75 15 20.75H18.5C19.7426 20.75 20.75 19.7427 20.75 18.5V15C20.75 13.7574 19.7426 12.75 18.5 12.75H15ZM14.25 15C14.25 14.5858 14.5858 14.25 15 14.25H18.5C18.9142 14.25 19.25 14.5858 19.25 15V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15C14.5858 19.25 14.25 18.9142 14.25 18.5V15Z",
+  "review": "M8.80443 5.60156C7.59109 5.60156 6.60749 6.58517 6.60749 7.79851C6.60749 9.01185 7.59109 9.99545 8.80443 9.99545C10.0178 9.99545 11.0014 9.01185 11.0014 7.79851C11.0014 6.58517 10.0178 5.60156 8.80443 5.60156ZM5.10749 7.79851C5.10749 5.75674 6.76267 4.10156 8.80443 4.10156C10.8462 4.10156 12.5014 5.75674 12.5014 7.79851C12.5014 9.84027 10.8462 11.4955 8.80443 11.4955C6.76267 11.4955 5.10749 9.84027 5.10749 7.79851ZM4.86252 15.3208C4.08769 16.0881 3.70377 17.0608 3.51705 17.8611C3.48384 18.0034 3.5211 18.1175 3.60712 18.2112C3.70161 18.3141 3.86659 18.3987 4.07591 18.3987H13.4249C13.6343 18.3987 13.7992 18.3141 13.8937 18.2112C13.9797 18.1175 14.017 18.0034 13.9838 17.8611C13.7971 17.0608 13.4132 16.0881 12.6383 15.3208C11.8821 14.572 10.6899 13.955 8.75042 13.955C6.81096 13.955 5.61877 14.572 4.86252 15.3208ZM3.8071 14.2549C4.87163 13.2009 6.45602 12.455 8.75042 12.455C11.0448 12.455 12.6292 13.2009 13.6937 14.2549C14.7397 15.2906 15.2207 16.5607 15.4446 17.5202C15.7658 18.8971 14.6071 19.8987 13.4249 19.8987H4.07591C2.89369 19.8987 1.73504 18.8971 2.05628 17.5202C2.28015 16.5607 2.76117 15.2906 3.8071 14.2549ZM15.3042 11.4955C14.4702 11.4955 13.7006 11.2193 13.0821 10.7533C13.3742 10.3314 13.6054 9.86419 13.7632 9.36432C14.1597 9.75463 14.7039 9.99545 15.3042 9.99545C16.5176 9.99545 17.5012 9.01185 17.5012 7.79851C17.5012 6.58517 16.5176 5.60156 15.3042 5.60156C14.7039 5.60156 14.1597 5.84239 13.7632 6.23271C13.6054 5.73284 13.3741 5.26561 13.082 4.84371C13.7006 4.37777 14.4702 4.10156 15.3042 4.10156C17.346 4.10156 19.0012 5.75674 19.0012 7.79851C19.0012 9.84027 17.346 11.4955 15.3042 11.4955ZM19.9248 19.8987H16.3901C16.7014 19.4736 16.9159 18.969 16.9827 18.3987H19.9248C20.1341 18.3987 20.2991 18.3141 20.3936 18.2112C20.4796 18.1175 20.5169 18.0034 20.4837 17.861C20.2969 17.0607 19.913 16.088 19.1382 15.3208C18.4047 14.5945 17.261 13.9921 15.4231 13.9566C15.2232 13.6945 14.9995 13.437 14.7491 13.1891C14.5144 12.9566 14.262 12.7384 13.9916 12.5362C14.3853 12.4831 14.8044 12.4549 15.2503 12.4549C17.5447 12.4549 19.1291 13.2008 20.1936 14.2549C21.2395 15.2906 21.7206 16.5607 21.9444 17.5202C22.2657 18.8971 21.107 19.8987 19.9248 19.8987Z",
+  "saved": "M8.50391 4.25C8.50391 3.83579 8.83969 3.5 9.25391 3.5H15.2777C15.4766 3.5 15.6674 3.57902 15.8081 3.71967L18.2807 6.19234C18.4214 6.333 18.5004 6.52376 18.5004 6.72268V16.75C18.5004 17.1642 18.1646 17.5 17.7504 17.5H16.248V17.4993H14.748V17.5H9.25391C8.83969 17.5 8.50391 17.1642 8.50391 16.75V4.25ZM14.748 19H9.25391C8.01126 19 7.00391 17.9926 7.00391 16.75V6.49854H6.24805C5.83383 6.49854 5.49805 6.83432 5.49805 7.24854V19.75C5.49805 20.1642 5.83383 20.5 6.24805 20.5H13.998C14.4123 20.5 14.748 20.1642 14.748 19.75L14.748 19ZM7.00391 4.99854V4.25C7.00391 3.00736 8.01127 2 9.25391 2H15.2777C15.8745 2 16.4468 2.23705 16.8687 2.659L19.3414 5.13168C19.7634 5.55364 20.0004 6.12594 20.0004 6.72268V16.75C20.0004 17.9926 18.9931 19 17.7504 19H16.248L16.248 19.75C16.248 20.9926 15.2407 22 13.998 22H6.24805C5.00541 22 3.99805 20.9926 3.99805 19.75V7.24854C3.99805 6.00589 5.00541 4.99854 6.24805 4.99854H7.00391Z",
+  "entitlements": "M3.70186 12.0001C3.70186 7.41711 7.41711 3.70186 12.0001 3.70186C16.5831 3.70186 20.2984 7.41711 20.2984 12.0001C20.2984 16.5831 16.5831 20.2984 12.0001 20.2984C7.41711 20.2984 3.70186 16.5831 3.70186 12.0001ZM12.0001 1.90186C6.423 1.90186 1.90186 6.423 1.90186 12.0001C1.90186 17.5772 6.423 22.0984 12.0001 22.0984C17.5772 22.0984 22.0984 17.5772 22.0984 12.0001C22.0984 6.423 17.5772 1.90186 12.0001 1.90186ZM15.6197 10.7395C15.9712 10.388 15.9712 9.81819 15.6197 9.46672C15.2683 9.11525 14.6984 9.11525 14.347 9.46672L11.1894 12.6243L9.6533 11.0883C9.30183 10.7368 8.73198 10.7368 8.38051 11.0883C8.02904 11.4397 8.02904 12.0096 8.38051 12.3611L10.553 14.5335C10.7217 14.7023 10.9507 14.7971 11.1894 14.7971C11.428 14.7971 11.657 14.7023 11.8257 14.5335L15.6197 10.7395Z",
+  "working": "M7.75586 5.50098C7.75586 5.08676 8.09165 4.75098 8.50586 4.75098H18.4985C18.9127 4.75098 19.2485 5.08676 19.2485 5.50098L19.2485 15.4956C19.2485 15.9098 18.9127 16.2456 18.4985 16.2456H8.50586C8.09165 16.2456 7.75586 15.9098 7.75586 15.4956V5.50098ZM8.50586 3.25098C7.26322 3.25098 6.25586 4.25834 6.25586 5.50098V6.26318H5.50195C4.25931 6.26318 3.25195 7.27054 3.25195 8.51318V18.4995C3.25195 19.7422 4.25931 20.7495 5.50195 20.7495H15.4883C16.7309 20.7495 17.7383 19.7421 17.7383 18.4995L17.7383 17.7456H18.4985C19.7411 17.7456 20.7485 16.7382 20.7485 15.4956L20.7485 5.50097C20.7485 4.25833 19.7411 3.25098 18.4985 3.25098H8.50586ZM16.2383 17.7456H8.50586C7.26322 17.7456 6.25586 16.7382 6.25586 15.4956V7.76318H5.50195C5.08774 7.76318 4.75195 8.09897 4.75195 8.51318V18.4995C4.75195 18.9137 5.08774 19.2495 5.50195 19.2495H15.4883C15.9025 19.2495 16.2383 18.9137 16.2383 18.4995L16.2383 17.7456Z"
+};
+  var iconViewBoxes={"insights": "0 0 24 24", "credit-approval-control": "0 0 24 24", "credit-information-management": "0 0 24 24", "credit-management-reporting": "0 0 24 24", "deal-closing": "0 0 24 24", "documentation-pledging": "0 0 24 24", "emea-credit-admin": "0 0 24 24", "loan-management": "0 0 20 20", "regional-operating-manuals": "0 0 24 24", "home": "0 0 24 24", "mine": "0 0 24 24", "review": "0 0 24 24", "saved": "0 0 24 24", "entitlements": "0 0 24 24", "working": "0 0 24 24"};
+  var decorations=new Map(),createdClassAttributes=new Set(),nativeFooters=new Set(),toggles=new Map();
+  var topToggle=null,topToggleSlot=null,topToggleTarget=null;
+  var sidebarToggle = '.acs-side-bar-toggle,.ia-toggle-button,.expand-collapse-trigger,[aria-label="Expand sidebar"],[aria-label="Collapse sidebar"],[title="Expand sidebar"],[title="Collapse sidebar"]';
+  var sidebarFooter = '.acs-side-bar-footer,.acs-side-bar-bottom';
+  var spaceToolsTrigger = '[aria-controls="space-tools-menu"],[aria-owns="space-tools-menu"],#space-tools-menu-trigger';
+  var nativeMenu = 'aui-dropdown-menu,.aui-dropdown2,.aui-layer,[role="menu"],[role="listbox"],[role="dialog"]';
+  function nativeControls(selector) {
+    return Array.from(host.querySelectorAll(selector)).filter(function (el) {
+      return !el.closest(nativeMenu + ',[data-wcs-sidebar-owned]');
+    });
+  }
+  function isSpaceTools(control) {
+    if (control.matches(sidebarToggle) || control.closest(nativeMenu)) return false;
+    var name = (control.getAttribute('aria-label') || control.getAttribute('title') || control.textContent).trim().replace(/\s+/g, ' ');
+    return control.matches(spaceToolsTrigger) || /^space tools$/i.test(name);
+  }
+  function restoreToggle(control, record) {
+    record.icon.remove();
+    if (control.getAttribute('aria-label') === record.generatedLabel) restoreAttribute(control, 'aria-label', record.ariaLabel);
+    toggles.delete(control);
+  }
+  function enhanceToggles() {
+    toggles.forEach(function (record, control) {
+      if (!host.contains(control) || !control.matches(sidebarToggle) || control.closest(nativeMenu)) restoreToggle(control, record);
+    });
+    nativeControls(sidebarToggle).forEach(function (control) {
+      var record = toggles.get(control);
+      if (!record) {
+        var icon = d.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('width', '20'); icon.setAttribute('height', '20');
+        icon.setAttribute('aria-hidden', 'true'); icon.setAttribute('focusable', 'false'); icon.setAttribute('class', 'wcs-native-toggle-icon');
+        var path = d.createElementNS(icon.namespaceURI, 'path'); path.setAttribute('d', 'M14.25 5.25 7.5 12l6.75 6.75'); icon.append(path);
+        record = {icon: icon, ariaLabel: control.getAttribute('aria-label'), generatedLabel: null}; toggles.set(control, record);
+      }
+      // Native handlers sometimes replace inner text when state changes. Restore
+      // only our glyph; keep the original control, listeners and hit target.
+      if (record.icon.parentElement !== control) control.append(record.icon);
+    });
+  }
+  function removeTopToggle() {
+    topToggleSlot?.remove(); topToggle = null; topToggleSlot = null; topToggleTarget = null;
+  }
+  function enhanceTopToggle() {
+    var controls = nativeControls(sidebarToggle);
+    var target = controls.find(function (el) { return el.matches('.expand-collapse-trigger'); }) || controls[0];
+    if (!target) { removeTopToggle(); return; }
+    topToggleTarget = target;
+    if (!topToggle) {
+      topToggleSlot = d.createElement('div'); topToggleSlot.className = 'wcs-native-toggle-slot';
+      topToggleSlot.setAttribute('data-wcs-sidebar-owned', 'true');
+      topToggle = d.createElement('button'); topToggle.type = 'button'; topToggle.className = 'wcs-native-top-toggle';
+      var icon = toggles.get(target).icon.cloneNode(true);
+      var label = d.createElement('span'); label.className = 'wcs-native-top-toggle-label';
+      topToggle.append(icon, label); topToggleSlot.append(topToggle);
+      topToggle.addEventListener('click', function () {
+        // Keep Confluence's native handler, persisted preference and layout work.
+        // The original control remains mounted in its now-hidden footer.
+        if (topToggleTarget?.isConnected && host?.contains(topToggleTarget)) {
+          topToggleTarget.click(); schedule();
+        }
+      });
+    }
+    var rail = host.matches('.acs-side-bar') ? host : host.querySelector('.acs-side-bar') || host;
+    if (topToggleSlot.parentElement !== rail || rail.firstElementChild !== topToggleSlot) rail.prepend(topToggleSlot);
+  }
+  function findFooters() {
+    nativeFooters = new Set(Array.from(host.querySelectorAll(sidebarFooter)).filter(function (el) { return !el.closest(nativeMenu); }));
+    var controls = nativeControls(sidebarToggle + ',' + spaceToolsTrigger);
+    var toggle = controls.find(function (el) { return el.matches(sidebarToggle); });
+    var tools = controls.find(function (el) { return el.matches(spaceToolsTrigger); });
+    var common = tools?.parentElement;
+    while (common && common !== host && toggle && !common.contains(toggle)) common = common.parentElement;
+    controls.forEach(function (control) {
+      var footer = control.closest(sidebarFooter) || (toggle && tools && common !== host ? common : control.parentElement);
+      if (footer && footer !== host && !footer.querySelector('.plugin_pagetree_children_list,.plugin_pagetree_children_content,[data-wcs-native-page-link]')) nativeFooters.add(footer);
+    });
+  }
+  function eligibleLink(a) {
+    return !a.matches('[role=button],[aria-expanded],.plugin_pagetree_childtoggle,[data-type=toggle]') && !a.closest(sidebarFooter + ',' + nativeMenu) && !Array.from(nativeFooters).some(function (footer) { return footer.contains(a); });
+  }
+  function restoreClassAttribute(el) {
+    if (!createdClassAttributes.has(el)) return;
+    if (el.getAttribute('class') === '') el.removeAttribute('class');
+    createdClassAttributes.delete(el);
+  }
+  function decorateTree() {
+    var desired = new Map();
+    function mark(el, name) { if (!el) return; if (!desired.has(el)) desired.set(el, new Set()); desired.get(el).add(name); }
+    if (topToggle) mark(host, 'wcs-native-has-top-toggle');
+    links.forEach(function (record, a) {
+      if (!eligibleLink(a)) return;
+      if(compactLinks.has(a)) for (var parent = a.parentElement; parent && parent !== host; parent = parent.parentElement) mark(parent, 'wcs-native-compact-path');
+      mark(a.closest('li'), 'wcs-native-link-row');
+      // Hide only redundant native decoration, never a native interactive control.
+      a.querySelectorAll('.wcs-native-page-label :is(svg,img,.icon,.aui-icon,[class*="aui-iconfont-"])').forEach(function (el) {
+        if (!el.closest('button,[role=button]') && !el.querySelector('a,button,[role=button]')) mark(el, 'wcs-native-replaced-icon');
+      });
+      var content = a.closest('.plugin_pagetree_children_content'), row = content?.parentElement;
+      if (!row) return;
+      mark(content, 'wcs-native-page-content');
+      content.querySelectorAll('.icon,.aui-icon,[class*="aui-iconfont-"]').forEach(function (el) {
+        if (!el.closest('a,button,[role=button]') && !el.querySelector('a,button,[role=button]')) mark(el, 'wcs-native-replaced-icon');
+      });
+      var toggle = Array.from(row.children).find(function (el) { return el.classList.contains('plugin_pagetree_childtoggle_container'); });
+      if (toggle) {
+        mark(row, 'wcs-native-tree-row');
+        if (!toggle.querySelector('a,button,[role=button],[data-type=toggle]')) mark(toggle, 'wcs-native-leaf-marker');
+      }
+    });
+    // Confluence themes can put the configuration action beside the native
+    // toggle, or use a bottom section instead of the standard footer wrapper.
+    var footers = new Set(nativeFooters);
+    // Native themes use different footer wrappers. Derive those paths from the
+    // existing controls, stopping before any container holding the page tree.
+    nativeControls(sidebarToggle + ',' + spaceToolsTrigger).forEach(function (control) {
+      mark(control, 'wcs-native-toolbar-control');
+      if (control.matches(sidebarToggle)) mark(control, 'wcs-native-sidebar-toggle');
+      if (isSpaceTools(control)) mark(control, 'wcs-native-space-tools');
+      for (var parent = control.parentElement; parent && parent !== host && !parent.querySelector('[data-wcs-native-page-link]'); parent = parent.parentElement) {
+        if (parent.matches(nativeMenu)) break;
+        footers.add(parent);
+        mark(parent, 'wcs-native-surface');
+      }
+    });
+    nativeControls('a,button,[role="button"]').forEach(function (el) {
+      if (isSpaceTools(el)) mark(el, 'wcs-native-space-tools');
+      var name = (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent).trim().replace(/\s+/g, ' ');
+      if (!/^configure sidebar$/i.test(name) || el.matches(sidebarToggle)) return;
+      mark(el, 'wcs-native-configure');
+      var parent = el.parentElement;
+      if (parent !== host && parent.textContent.trim().replace(/\s+/g, ' ') === name && !parent.querySelector(sidebarToggle)) footers.add(parent);
+    });
+    footers.forEach(function (footer) {
+      mark(footer, 'wcs-native-footer');
+      footer.querySelectorAll(sidebarToggle).forEach(function (toggle) {
+        mark(toggle, 'wcs-native-toggle-path');
+        for (var parent = toggle.parentElement; parent && parent !== footer; parent = parent.parentElement) mark(parent, 'wcs-native-toggle-path');
+      });
+    });
+    decorations.forEach(function (names, el) {
+      names.forEach(function (name) { if (!desired.get(el)?.has(name)) { el.classList.remove(name); names.delete(name); } });
+      if (!names.size) { decorations.delete(el); restoreClassAttribute(el); }
+    });
+    desired.forEach(function (names, el) {
+      names.forEach(function (name) {
+        if (el.classList.contains(name)) return;
+        if (!el.hasAttribute('class')) createdClassAttributes.add(el);
+        el.classList.add(name); if (!decorations.has(el)) decorations.set(el, new Set()); decorations.get(el).add(name);
+      });
+    });
+  }
+  function restoreAttribute(element, name, value) {
+    if (value === null) element.removeAttribute(name); else element.setAttribute(name, value);
+  }
   function nativeId(a){
     var id=pageId(a.getAttribute('href'));if(id)return id;
     try{var u=new URL(a.getAttribute('href'),w.location.href);if(u.origin!==w.location.origin||u.hash||!u.pathname.includes('/display/'))return null;
@@ -134,7 +335,7 @@
     checks.set(key,promise);pump();return promise;
   }
   function enhance(){
-    var c=config(),epoch=generation;markLeaves();
+    var c=config(),epoch=generation;findFooters();enhanceToggles();enhanceTopToggle();markLeaves();
     host.querySelectorAll('.plugin_pagetree_childtoggle_container').forEach(function(toggle){
       var row=toggle.parentElement;
       if(Array.from(row.children).some(function(child){return child.classList.contains('plugin_pagetree_children_content');})){
@@ -142,10 +343,10 @@
       }
     });
     host.querySelectorAll('a[href]').forEach(function(a){
-      if(links.has(a)||a.matches('[role=button],[aria-expanded],.plugin_pagetree_childtoggle,[data-type=toggle]')||a.closest('.acs-side-bar-footer'))return;
+      if(!eligibleLink(a)||a.closest('[data-wcs-sidebar-owned]')||links.has(a)||a.matches('[role=button],[aria-expanded],.plugin_pagetree_childtoggle,[data-type=toggle]')||a.closest('.acs-side-bar-footer'))return;
       var original=a.getAttribute('href'),id=nativeId(a);if(!id)return;
       var icon=d.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('width','16');icon.setAttribute('height','16');icon.setAttribute('aria-hidden','true');icon.setAttribute('focusable','false');icon.setAttribute('class','wcs-native-page-icon');
-      var path=d.createElementNS(icon.namespaceURI,'path');var menu=c&&Object.keys(c.menus).find(function(key){return String(c.menus[key])===id;});path.setAttribute('d',iconPaths[menu]||(c&&c.excluded.includes(id)?iconPaths.working:iconPaths['documentation-pledging']));icon.append(path);
+      var path=d.createElementNS(icon.namespaceURI,'path');var menu=c&&Object.keys(c.menus).find(function(key){return String(c.menus[key])===id;});path.setAttribute('d',iconPaths[menu]||(c&&c.excluded.includes(id)?iconPaths.working:iconPaths['documentation-pledging']));icon.setAttribute('viewBox',iconViewBoxes[menu]||'0 0 24 24');icon.setAttribute('fill','currentColor');icon.setAttribute('stroke','none');path.setAttribute('fill-rule','evenodd');path.setAttribute('clip-rule','evenodd');icon.append(path);
       var label=d.createElement('span');label.className='wcs-native-page-label';while(a.firstChild)label.append(a.firstChild);a.append(label);a.prepend(icon);
       var record={original:original,rewritten:null,icon:icon,label:label,ariaLabel:a.getAttribute('aria-label')};links.set(a,record);a.setAttribute('data-wcs-native-page-link','');
       if(menu==='insights'||Object.prototype.hasOwnProperty.call(c?.menus||{},menu)&&!['home','mine','review','saved','entitlements','working'].includes(menu)){
@@ -157,7 +358,7 @@
         }
       }
       if(!c||!c.excluded.includes(id))cleanTitle(a,id,record);
-      if(record.ariaLabel===null)a.setAttribute('aria-label',label.textContent.trim());
+      if(record.ariaLabel===null){var accessibleLabel=label.cloneNode(true);accessibleLabel.querySelectorAll('svg,img,.icon,.aui-icon,[class*="aui-iconfont-"]').forEach(function(el){el.remove();});a.setAttribute('aria-label',accessibleLabel.textContent.trim());}
       if(c&&c.excluded.includes(id))return;if(!c)return;
       verified(id,c).then(function(ok){
         if(!ok||destroyed||epoch!==generation||!active()||!host?.contains(a)||a.getAttribute('href')!==original)return;
@@ -165,6 +366,7 @@
         a.setAttribute('href',record.rewritten);
       });
     });
+    decorateTree();
     compactLinks.forEach(function(a){
       var row=a.closest('li'),selected=!!row&&(row.matches('.plugin_pagetree_current')||!!row.querySelector('.plugin_pagetree_current,a[aria-current="page"]'));
       if(a.getAttribute('data-wcs-current-collection')!==String(selected))a.setAttribute('data-wcs-current-collection',String(selected));
@@ -188,16 +390,20 @@
   function escapeTooltip(event){if(event.key==='Escape')hideTooltip();}
   function compactState(){
     if(!host)return;
-    var width=host.getBoundingClientRect().width;
+    var rail=host.querySelector('.acs-side-bar')||host,width=rail.getBoundingClientRect().width;
     var compact=host.matches('.ia-splitter-left-collapsed,.acs-side-bar-collapsed')||!!host.closest('.ia-splitter-left-collapsed')||(width>0&&width<=96);
     // Only retain existing collection links. Never create a replacement rail.
     compact=compact&&Array.from(compactLinks).some(function(a){return host.contains(a);});
     if(host.getAttribute('data-wcs-native-compact')!==String(compact)){host.setAttribute('data-wcs-native-compact',String(compact));hideTooltip();}
+    var label=compact?'Expand sidebar':'Collapse sidebar';
+    toggles.forEach(function(record,control){if(record.ariaLabel===null||record.generatedLabel){if(control.getAttribute('aria-label')!==label)control.setAttribute('aria-label',label);record.generatedLabel=label;}});
+    if(topToggle){if(topToggle.getAttribute('aria-label')!==label){topToggle.setAttribute('aria-label',label);topToggle.title=label;topToggle.querySelector('.wcs-native-top-toggle-label').textContent=label;}if(topToggle.getAttribute('aria-expanded')!==String(!compact))topToggle.setAttribute('aria-expanded',String(!compact));}
+
   }
   function defaultCollapsed(){
     if(!host||defaultedHosts.has(host))return;
     if(host.getAttribute('data-wcs-native-compact')==='true'){defaultedHosts.add(host);return;}
-    var toggle=host.querySelector('.ia-toggle-button,.acs-side-bar-toggle,[aria-label="Collapse sidebar"],[title="Collapse sidebar"]');
+    var toggle=nativeControls(sidebarToggle)[0];
     if(!toggle||toggle.disabled)return;
     defaultedHosts.add(host);
     // Invoke the existing native control. Its own handler owns widths, offsets
@@ -206,7 +412,7 @@
   }
   function attachHost(){
     host.addEventListener('mouseover',showTooltip);host.addEventListener('focusin',showTooltip);host.addEventListener('mouseout',leaveTooltip);host.addEventListener('focusout',leaveTooltip);
-    if(w.ResizeObserver){resizeObserver=new w.ResizeObserver(compactState);resizeObserver.observe(host);}
+    if(w.ResizeObserver){resizeObserver=new w.ResizeObserver(compactState);resizeObserver.observe(host);var rail=host.querySelector('.acs-side-bar');if(rail)resizeObserver.observe(rail);}
   }
   function active(){
     if(!w.location||w.top!==w.self)return false;
@@ -215,7 +421,8 @@
     return !!d.querySelector('#main-content .wcs-native-article,.wiki-content .wcs-native-article')&&!!d.body.getAttribute('data-wcs-active-style-flags');
   }
   function reset(){
-    hideTooltip();resizeObserver?.disconnect();resizeObserver=null;
+    hideTooltip();resizeObserver?.disconnect();resizeObserver=null;removeTopToggle();toggles.forEach(function(record,control){restoreToggle(control,record);});
+    decorations.forEach(function(names,el){names.forEach(function(name){el.classList.remove(name);});restoreClassAttribute(el);});decorations.clear();nativeFooters.clear();
     if(host){host.removeEventListener('mouseover',showTooltip);host.removeEventListener('focusin',showTooltip);host.removeEventListener('mouseout',leaveTooltip);host.removeEventListener('focusout',leaveTooltip);host.removeAttribute('data-wcs-native-compact');}
     compactPaths.forEach(function(el){el.classList.remove('wcs-native-compact-path');});compactPaths.clear();compactLinks.forEach(function(a){a.removeAttribute('data-wcs-compact-link');a.removeAttribute('data-wcs-current-collection');});compactLinks.clear();
     generation++;controllers.forEach(function(c){c.abort();});checks.clear();
@@ -10357,5 +10564,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['saved'] = { version: '7daf674c9c4a' };
+  modules['saved'] = { version: 'f005e3f92394' };
 })();

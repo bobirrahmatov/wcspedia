@@ -157,6 +157,9 @@ for(const item of JSON.parse(read('vendor/library-sources.json'))){
 }
 copy('vendor/library-sources.json','licenses/library-sources.json');
 copy('library-loader.js','attachments/wcspedia-library-loader.js');
+copy('space-typography.js','attachments/wcspedia-space-typography.js');
+copy('vendor/sidebar-icons-LICENSE.txt','licenses/sidebar-icons-LICENSE.txt');
+put('html/wcspedia-typography-header.html','<!-- Shared PAL-compatible font resolver; uses existing Confluence theme faces only. -->\n<script src="/confluence/download/attachments/REPLACE_WITH_ATTACHMENTS_PAGE_ID/wcspedia-space-typography.js?api=v2"></script>\n');
 put('html/wcspedia-library-header.html','<!-- Shared, on-demand attachment loader; libraries are fetched only when a feature needs them. -->\n<script src="/confluence/download/attachments/REPLACE_WITH_ATTACHMENTS_PAGE_ID/wcspedia-library-loader.js?api=v2"></script>\n');
 put('attachments/wcspedia-page-style-flags.js',read('page-style-flags.js'));
 copy('reader-sidebar.js','attachments/wcspedia-reader-sidebar.js');

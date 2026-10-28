@@ -1,5 +1,8 @@
 **Installation files:** open [ready/](ready/README.md) for upload attachments, page HTML macros, the shared navBar helper and exact destination page IDs. Regenerate with `python3 prepare-ready.py` after rebuilding the configured package.
 
+**PAL styling update (2026-10-28):** the native reader sidebar now reuses Lending Analytics SVGs, navigation spacing and font resolution. Space tools and Configure sidebar are hidden in reader mode. Update the attachments and existing navBar helper from `ready/`; preserve the host Citi theme and live JSON. Expanded/collapsed and light/dark states were checked using the local native-tree fixture; the internal Confluence instance still needs a deployment check.
+
+
 **Current space-only deployment:** use [NATIVE-SPACE-SETUP.md](NATIVE-SPACE-SETUP.md). The configured package uses native-session persistence for authoring, approval, entitlements, favourites and suggestions. Custom service instructions below are legacy reference and are not required for this installation.
 
 # WCSpedia · Wealth Credit Services knowledge base

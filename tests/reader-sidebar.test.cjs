@@ -107,3 +107,20 @@ test('reader uses native collapse once and preserves a subsequent manual expansi
  w.eval(source);await settle();assert.equal(clicks,1);assert.equal(d.querySelector('#sidebar').getAttribute('data-wcs-native-compact'),'true');
  button.click();d.querySelector('#main-content').append(d.createElement('p'));await settle();assert.equal(clicks,2);assert.equal(d.querySelector('#sidebar').getAttribute('data-wcs-native-compact'),'false');
 });
+
+test('PAL top button forwards native collapse and restores original controls on reader exit',async t=>{
+ const w=setup(t,'<div id="wcspedia"><div class="detail-page">Reader</div></div>'),d=w.document,host=d.querySelector('#sidebar');routing(w);
+ host.insertAdjacentHTML('beforeend','<div class="acs-side-bar-footer"><button class="expand-collapse-trigger" aria-label="Sidebar">«</button><button aria-controls="space-tools-menu">Space tools</button><a href="#">Configure sidebar</a></div><div class="aui-dropdown2" role="menu"><a href="?pageId=999">Native administration</a></div>');
+ const native=host.querySelector('.expand-collapse-trigger'),footer=native.parentElement,original=footer.innerHTML;let clicks=0;
+ native.onclick=()=>{clicks++;d.body.classList.toggle('ia-splitter-left-collapsed');};
+ w.eval(source);await settle();const proxy=host.querySelector('.wcs-native-top-toggle');assert.ok(proxy);assert.equal(host.querySelectorAll('.wcs-native-top-toggle').length,1);
+ proxy.click();await settle();assert.equal(clicks,2);assert.equal(proxy.getAttribute('aria-expanded'),'true');assert.ok(host.querySelector('.wcs-native-space-tools'));assert.ok(host.querySelector('.wcs-native-configure'));
+ assert.equal(host.querySelector('[role=menu] a').getAttribute('data-wcs-native-page-link'),null);assert.equal(host.querySelector('[role=menu] a').textContent,'Native administration');
+ assert.equal(host.querySelector('.expand-collapse-trigger'),native);assert.equal(host.querySelector('.wcs-native-page-icon').getAttribute('fill'),'currentColor');
+ d.querySelector('.detail-page').remove();w.WCSReaderSidebar.refresh();assert.equal(host.querySelector('.wcs-native-top-toggle'),null);assert.equal(footer.innerHTML,original);assert.equal(host.querySelector('.expand-collapse-trigger'),native);
+});
+test('PAL skin does not hide the whole rail when the native collapse control has no footer',t=>{
+ const w=setup(t,'<div id="wcspedia"><div class="detail-page">Reader</div></div>'),d=w.document; routing(w);
+ const host=d.querySelector('#sidebar');host.innerHTML='<div class="acs-side-bar"><button class="expand-collapse-trigger">Collapse</button><ul class="plugin_pagetree_children_list"><li><a href="?pageId=700"><span class="aui-icon">▣</span>Blogs</a></li></ul></div>';
+ w.eval(source);assert.equal(host.querySelector('.acs-side-bar').classList.contains('wcs-native-footer'),false);assert.equal(host.querySelector('[data-wcs-native-page-link]').getAttribute('aria-label'),'Insights');assert.ok(host.querySelector('.aui-icon').classList.contains('wcs-native-replaced-icon'));
+});

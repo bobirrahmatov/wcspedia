@@ -35,7 +35,7 @@ for folder in ('attachments', 'html', 'templates', 'licenses'):
 # One installable navbar fragment; do not ship overlapping alternatives.
 header_parts = [
     'wcspedia-file-drop-guard-header.html', 'wcspedia-library-header.html',
-    'wcspedia-global-styles.html', 'wcspedia-loading-header.html', 'wcspedia-notifications-header.html',
+    'wcspedia-global-styles.html', 'wcspedia-typography-header.html', 'wcspedia-loading-header.html', 'wcspedia-notifications-header.html',
     'wcspedia-header-widget.html', 'wcspedia-page-style-flags-header.html',
     'wcspedia-article-discussion-header.html',
 ]

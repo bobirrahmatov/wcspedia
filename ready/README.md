@@ -32,6 +32,8 @@ Open each existing Confluence page below, edit its application **HTML macro**, a
 
 Use **[shared/navbar.html](shared/navbar.html)** in the existing **navBar** HTML macro, replacing only the previous WCSpedia helper fragment. Preserve the branded navigation and the existing `{include:wcspedia:navBar}` include. Do not add a second header or put a page application macro here. The supplied helper loads the shared WCSpedia stylesheet; retain the existing Citi Look and Feel theme.
 
+The PAL styling update adds `wcspedia-space-typography.js` to this shared helper. It resolves the Citi Text and Display faces already registered by the host theme; no new font files or second stylesheet are needed. Upload the matching `wcspedia-style.css`, page logic files and `wcspedia-reader-sidebar.js` together. The existing native sidebar retains its tree, widths and native collapse handler, uses PAL SVGs, and hides Space tools/Configure sidebar while a document reader is active. The top collapse button forwards to the original hidden native control. Landing, collection, workspace and editor pages do not activate the reader sidebar.
+
 ## 4. Keep live data and refresh
 
 **Keep the live entitlements.json and existing document data unchanged.** [first-install-only/](first-install-only/) contains starter files for a new installation, not an update. Working-root **3961735834** remains a protected workflow storage page; it does not receive an application macro.

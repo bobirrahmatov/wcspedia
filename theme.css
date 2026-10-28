@@ -35,3 +35,10 @@
 #wcspedia .highcharts-container :is(.highcharts-subtitle,.highcharts-axis-labels text,.highcharts-axis-title) { fill:var(--ds-text-subtle,var(--wcs-theme-muted,#5b6c7e))!important; }
 #wcspedia .highcharts-tooltip-box { fill:var(--ds-surface-overlay,var(--wcs-theme-surface,#fff))!important;stroke:var(--ds-border,var(--wcs-theme-border,#dce4ec))!important; }
 #wcspedia .highcharts-grid-line { stroke:var(--ds-border,var(--wcs-theme-border,#dce4ec))!important; }
+
+/* Match PAL's host-owned Citi Text / Citi Display faces across every WCSpedia
+   surface. These tokens are resolved from the theme, never bundled font URLs. */
+:is(#wcspedia,.wcs-native-article,.wcs-reader-navigation,.wcs-native-sidebar-tooltip,.wcs-article-discussion,.wcs-loading-overlay,.wcs-add-document-popover,.wcs-ui-popover,.wcs-notifications){font-family:var(--wcs-space-font,var(--wcs-resolved-space-font,inherit))!important}
+:is(#wcspedia,.wcs-native-article,.wcs-article-discussion,.wcs-add-document-popover) :is(h1,h2,h3,h4,h5,h6,p,button,input,select,textarea,table,th,td){font-family:inherit!important}
+:is(#wcspedia,.wcs-native-article) :is(h1,.font-display){font-family:var(--wcs-space-display-font,var(--wcs-resolved-space-display-font,inherit))!important}
+#wcspedia :is(.highcharts-container,.highcharts-root,.highcharts-container text){font-family:inherit!important}
