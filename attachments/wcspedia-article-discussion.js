@@ -108,7 +108,7 @@
   function avatar(person,options){
     options=options||{};
     var extra=String(options.className||'').replace(/[^a-zA-Z0-9 _-]/g,'');
-    return '<span class="avatar wcs-avatar'+(person&&person.role==='Manager'?' manager':'')+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
+    return '<span class="wcs-avatar'+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
   }
   return Object.freeze({svg:svg,node:node,avatar:avatar,has:has});
 });
@@ -223,8 +223,9 @@
     function user(value) {
       value = object(value) ? value : {};
       var userId = clean(value.userKey || value.username, 255);
-      return { id: userId, displayName: clean(value.displayName, 255) || (userId ? 'Confluence user' : 'Anonymous'), authenticated: value.type !== 'anonymous' && value.type !== 'unknown' && !!userId };
+      return { id: userId, userKey: clean(value.userKey, 255), username: clean(value.username, 255), displayName: clean(value.displayName, 255) || (userId ? 'Confluence user' : 'Anonymous'), authenticated: value.type !== 'anonymous' && value.type !== 'unknown' && !!userId };
     }
+    function sameUser(a,b) { if (a.userKey && b.userKey) return a.userKey === b.userKey; return !!(a.id && a.id === b.id || a.username && b.username && a.username.toLowerCase() === b.username.toLowerCase()); }
     function commentsSetting(page) {
       var body = page.body && page.body.storage && page.body.storage.value;
       if (typeof body !== 'string' || body.length > 800000 || typeof Parser !== 'function') throw problem('The article comment setting could not be verified. Comments are unavailable until the setting can be read.', 'COMMENTS_SETTINGS_UNAVAILABLE');
@@ -264,7 +265,7 @@
       if (!options.force && cached && clock() - cached.at < 30000) return Object.assign({}, cached.value, { user: Object.assign({}, cached.value.user), canComment: cached.value.canComment && !denied.has(pageId) });
       var results = await Promise.all([
         request(endpoint('/content/' + rootId, { expand: 'space' }), { signal: options.signal }),
-        request(endpoint('/content/' + pageId, { expand: 'space,ancestors,operations,body.storage' }), { signal: options.signal }),
+        request(endpoint('/content/' + pageId, { expand: 'space,ancestors,operations,version,body.storage' }), { signal: options.signal }),
         request(endpoint('/user/current'), { signal: options.signal })
       ]);
       abort(options.signal);
@@ -280,7 +281,7 @@
       // submit a request; the native endpoint always decides whether to accept it.
       // A local UI entitlement is never used to grant native comment permission.
       var explicit = Array.isArray(page.operations) && page.operations.some(function (operation) { return operation.operation === 'create' && operation.targetType === 'comment'; });
-      var result = { pageId: pageId, title: clean(page.title), url: pageUrl(pageId), areaId: areaId, spaceKey: spaceKey, commentsEnabled: commentsEnabled, user: actor, canComment: commentsEnabled && actor.authenticated && !denied.has(pageId), permissionKnown: !!explicit };
+      var result = { pageId: pageId, title: clean(page.title), url: pageUrl(pageId), areaId: areaId, spaceKey: spaceKey, commentsEnabled: commentsEnabled, user: actor, canComment: commentsEnabled && actor.authenticated && !denied.has(pageId), permissionKnown: !!explicit, nativePage: JSON.parse(JSON.stringify(page)) };
       if (scopes.size >= 10) scopes.delete(scopes.keys().next().value);
       scopes.set(pageId, { at: clock(), value: result }); return Object.assign({}, result, { user: Object.assign({}, actor) });
     }
@@ -300,7 +301,7 @@
       var history = value.history || {}, version = value.version || {}, author = user(history.createdBy || version.by);
       var parent = null;
       (Array.isArray(value.ancestors) ? value.ancestors : []).forEach(function (ancestor) { if (ancestor.type === 'comment' && id(ancestor.id)) parent = id(ancestor.id); });
-      return { id: id(value.id), pageId: pageId, text: typeof html === 'string' ? plain(html) : fallback || '', author: { id: author.id, displayName: author.id || author.displayName !== 'Anonymous' ? author.displayName : 'Confluence user' }, createdAt: timestamp(history.createdDate || version.when), updatedAt: timestamp(version.when), url: pageUrl(pageId, id(value.id)), parentId: parent };
+      return { id: id(value.id), pageId: pageId, text: typeof html === 'string' ? plain(html) : fallback || '', version: Number.isSafeInteger(version.number) && version.number > 0 ? version.number : null, author: { id: author.id, userKey: author.userKey, username: author.username, displayName: author.id || author.displayName !== 'Anonymous' ? author.displayName : 'Confluence user' }, createdAt: timestamp(history.createdDate || version.when), updatedAt: timestamp(version.when), url: pageUrl(pageId, id(value.id)), parentId: parent };
     }
     function nextStart(value, pageId, start, count) {
       var link = value._links && value._links.next;
@@ -316,7 +317,7 @@
     }
     async function list(pageId, options) {
       options = options || {}; var scope = await resolve(pageId, options); pageId = scope.pageId;
-      if (!scope.commentsEnabled) throw problem('Comments are disabled for this article. Existing comments remain in Confluence.', 'COMMENTS_DISABLED');
+      if (!scope.commentsEnabled && !options.includeDisabled) throw problem('Comments are disabled for this article. Existing comments remain in Confluence.', 'COMMENTS_DISABLED');
       var start = options.start == null ? 0 : options.start;
       if (!Number.isSafeInteger(start) || start < 0 || start > 1000000) throw problem('Invalid comment offset.', 'VALIDATION');
       var result = await request(endpoint('/content/' + pageId + '/child/comment', { expand: 'body.view,history,version,ancestors,container', location: 'footer', depth: 'all', start: String(start), limit: String(PAGE_SIZE) }), { signal: options.signal });
@@ -325,11 +326,21 @@
       var total = result.totalSize == null ? result.totalCount : result.totalSize;
       return { comments: comments, start: start, limit: PAGE_SIZE, nextStart: nextStart(result, pageId, start, result.results.length), total: Number.isSafeInteger(total) && total >= start + result.results.length ? total : null, canComment: scope.canComment, user: scope.user };
     }
+    async function getComment(pageId, commentId, options) {
+      options = options || {}; pageId = id(pageId); commentId = id(commentId);
+      if (!pageId || !commentId) throw problem('Use a native article and comment ID.', 'VALIDATION');
+      await resolve(pageId, options);
+      var value = await request(endpoint('/content/' + commentId, { expand: 'body.view,history,version,ancestors,container' }), { signal: options.signal });
+      if (!object(value.container) || id(value.container.id) !== pageId) throw problem('The comment does not belong to this article.', 'OUT_OF_SCOPE');
+      if (id(value.id) !== commentId) throw problem('Confluence returned another comment.', 'INVALID_DATA');
+      return normalize(value, pageId);
+    }
     async function createComment(pageId, input) {
       input = input || {}; var content;
       try { content = storage(input.text); } catch (error) { error.outcome = 'rejected'; throw error; }
       pageId = id(pageId);
-      if (input.parentId != null) throw problem('Reply in native Confluence to keep the existing thread.', 'VALIDATION', 'rejected');
+      var parentId = input.parentId == null ? null : id(input.parentId);
+      if (input.parentId != null && !parentId) throw problem('Use a native parent comment ID.', 'VALIDATION', 'rejected');
       if (!pageId) throw problem('An article page ID is required.', 'VALIDATION', 'rejected');
       if (activeWrites.has(pageId)) throw problem('A comment is already being sent for this article.', 'BUSY', 'rejected');
       activeWrites.add(pageId);
@@ -340,24 +351,25 @@
         if (!scope.canComment) throw problem('Sign in with a Confluence account allowed to comment.', 'FORBIDDEN', 'rejected');
         // Consumers can pin their recovery record to this fresh authenticated
         // scope without repeating the same root/page/current-user reads.
-        if (typeof input.beforeSubmit === 'function') input.beforeSubmit(Object.assign({}, scope, { user: Object.assign({}, scope.user) }));
+        if (parentId) await getComment(pageId, parentId, { signal: input.signal });
+        if (typeof input.beforeSubmit === 'function') await input.beforeSubmit(Object.assign({}, scope, { user: Object.assign({}, scope.user) }));
         abort(input.signal);
         var result;
         postAttempted = true;
         // Navigation may cancel preflight reads, but cannot safely undo a POST
         // once sent. Keep observing its bounded result rather than claiming an
         // aborted browser request means Confluence did not save the comment.
-        try { result = await request(endpoint('/content', { expand: 'body.view,history,version,ancestors,container' }), { body: { type: 'comment', container: { id: pageId, type: 'page' }, body: { storage: { value: content.html, representation: 'storage' } } } }); }
+        try { result = await request(endpoint('/content', { expand: 'body.view,history,version,ancestors,container' }), { body: Object.assign({ type: 'comment', container: { id: pageId, type: 'page' }, body: { storage: { value: content.html, representation: 'storage' } } }, parentId ? { ancestors: [{ id: parentId, type: 'comment' }] } : {}) }); }
         catch (error) { if (error.code === 'FORBIDDEN') { denied.add(pageId); scopes.delete(pageId); } throw error; }
         // No post retry and no invented author/time. The response confirms the ID.
-        try { return normalize(result, pageId, content.text); } catch (_) { throw unknown(); }
+        try { var saved = normalize(result, pageId, content.text); if (saved.text !== content.text || !sameUser(saved.author, scope.user) || saved.parentId !== parentId) throw unknown(); return saved; } catch (_) { throw unknown(); }
       } catch (error) {
         if (!postAttempted && !error.outcome) error.outcome = 'rejected';
         throw error;
       } finally { activeWrites.delete(pageId); }
     }
     function clear() { scopes.clear(); denied.clear(); }
-    return Object.freeze({ resolve: resolve, list: list, createComment: createComment, clear: clear });
+    return Object.freeze({ resolve: resolve, list: list, getComment: getComment, createComment: createComment, clear: clear });
   }
   return Object.freeze({ create: create, pageSize: PAGE_SIZE, maxTextLength: MAX_TEXT });
 }));

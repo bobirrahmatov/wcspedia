@@ -107,7 +107,7 @@
   function avatar(person,options){
     options=options||{};
     var extra=String(options.className||'').replace(/[^a-zA-Z0-9 _-]/g,'');
-    return '<span class="avatar wcs-avatar'+(person&&person.role==='Manager'?' manager':'')+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
+    return '<span class="wcs-avatar'+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
   }
   return Object.freeze({svg:svg,node:node,avatar:avatar,has:has});
 });

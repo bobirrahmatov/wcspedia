@@ -134,7 +134,7 @@
   function avatar(person,options){
     options=options||{};
     var extra=String(options.className||'').replace(/[^a-zA-Z0-9 _-]/g,'');
-    return '<span class="avatar wcs-avatar'+(person&&person.role==='Manager'?' manager':'')+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
+    return '<span class="wcs-avatar'+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
   }
   return Object.freeze({svg:svg,node:node,avatar:avatar,has:has});
 });
@@ -5756,8 +5756,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     function user(value) {
       value = object(value) ? value : {};
       var userId = clean(value.userKey || value.username, 255);
-      return { id: userId, displayName: clean(value.displayName, 255) || (userId ? 'Confluence user' : 'Anonymous'), authenticated: value.type !== 'anonymous' && value.type !== 'unknown' && !!userId };
+      return { id: userId, userKey: clean(value.userKey, 255), username: clean(value.username, 255), displayName: clean(value.displayName, 255) || (userId ? 'Confluence user' : 'Anonymous'), authenticated: value.type !== 'anonymous' && value.type !== 'unknown' && !!userId };
     }
+    function sameUser(a,b) { if (a.userKey && b.userKey) return a.userKey === b.userKey; return !!(a.id && a.id === b.id || a.username && b.username && a.username.toLowerCase() === b.username.toLowerCase()); }
     function commentsSetting(page) {
       var body = page.body && page.body.storage && page.body.storage.value;
       if (typeof body !== 'string' || body.length > 800000 || typeof Parser !== 'function') throw problem('The article comment setting could not be verified. Comments are unavailable until the setting can be read.', 'COMMENTS_SETTINGS_UNAVAILABLE');
@@ -5797,7 +5798,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if (!options.force && cached && clock() - cached.at < 30000) return Object.assign({}, cached.value, { user: Object.assign({}, cached.value.user), canComment: cached.value.canComment && !denied.has(pageId) });
       var results = await Promise.all([
         request(endpoint('/content/' + rootId, { expand: 'space' }), { signal: options.signal }),
-        request(endpoint('/content/' + pageId, { expand: 'space,ancestors,operations,body.storage' }), { signal: options.signal }),
+        request(endpoint('/content/' + pageId, { expand: 'space,ancestors,operations,version,body.storage' }), { signal: options.signal }),
         request(endpoint('/user/current'), { signal: options.signal })
       ]);
       abort(options.signal);
@@ -5813,7 +5814,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // submit a request; the native endpoint always decides whether to accept it.
       // A local UI entitlement is never used to grant native comment permission.
       var explicit = Array.isArray(page.operations) && page.operations.some(function (operation) { return operation.operation === 'create' && operation.targetType === 'comment'; });
-      var result = { pageId: pageId, title: clean(page.title), url: pageUrl(pageId), areaId: areaId, spaceKey: spaceKey, commentsEnabled: commentsEnabled, user: actor, canComment: commentsEnabled && actor.authenticated && !denied.has(pageId), permissionKnown: !!explicit };
+      var result = { pageId: pageId, title: clean(page.title), url: pageUrl(pageId), areaId: areaId, spaceKey: spaceKey, commentsEnabled: commentsEnabled, user: actor, canComment: commentsEnabled && actor.authenticated && !denied.has(pageId), permissionKnown: !!explicit, nativePage: JSON.parse(JSON.stringify(page)) };
       if (scopes.size >= 10) scopes.delete(scopes.keys().next().value);
       scopes.set(pageId, { at: clock(), value: result }); return Object.assign({}, result, { user: Object.assign({}, actor) });
     }
@@ -5833,7 +5834,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var history = value.history || {}, version = value.version || {}, author = user(history.createdBy || version.by);
       var parent = null;
       (Array.isArray(value.ancestors) ? value.ancestors : []).forEach(function (ancestor) { if (ancestor.type === 'comment' && id(ancestor.id)) parent = id(ancestor.id); });
-      return { id: id(value.id), pageId: pageId, text: typeof html === 'string' ? plain(html) : fallback || '', author: { id: author.id, displayName: author.id || author.displayName !== 'Anonymous' ? author.displayName : 'Confluence user' }, createdAt: timestamp(history.createdDate || version.when), updatedAt: timestamp(version.when), url: pageUrl(pageId, id(value.id)), parentId: parent };
+      return { id: id(value.id), pageId: pageId, text: typeof html === 'string' ? plain(html) : fallback || '', version: Number.isSafeInteger(version.number) && version.number > 0 ? version.number : null, author: { id: author.id, userKey: author.userKey, username: author.username, displayName: author.id || author.displayName !== 'Anonymous' ? author.displayName : 'Confluence user' }, createdAt: timestamp(history.createdDate || version.when), updatedAt: timestamp(version.when), url: pageUrl(pageId, id(value.id)), parentId: parent };
     }
     function nextStart(value, pageId, start, count) {
       var link = value._links && value._links.next;
@@ -5849,7 +5850,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     }
     async function list(pageId, options) {
       options = options || {}; var scope = await resolve(pageId, options); pageId = scope.pageId;
-      if (!scope.commentsEnabled) throw problem('Comments are disabled for this article. Existing comments remain in Confluence.', 'COMMENTS_DISABLED');
+      if (!scope.commentsEnabled && !options.includeDisabled) throw problem('Comments are disabled for this article. Existing comments remain in Confluence.', 'COMMENTS_DISABLED');
       var start = options.start == null ? 0 : options.start;
       if (!Number.isSafeInteger(start) || start < 0 || start > 1000000) throw problem('Invalid comment offset.', 'VALIDATION');
       var result = await request(endpoint('/content/' + pageId + '/child/comment', { expand: 'body.view,history,version,ancestors,container', location: 'footer', depth: 'all', start: String(start), limit: String(PAGE_SIZE) }), { signal: options.signal });
@@ -5858,11 +5859,21 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var total = result.totalSize == null ? result.totalCount : result.totalSize;
       return { comments: comments, start: start, limit: PAGE_SIZE, nextStart: nextStart(result, pageId, start, result.results.length), total: Number.isSafeInteger(total) && total >= start + result.results.length ? total : null, canComment: scope.canComment, user: scope.user };
     }
+    async function getComment(pageId, commentId, options) {
+      options = options || {}; pageId = id(pageId); commentId = id(commentId);
+      if (!pageId || !commentId) throw problem('Use a native article and comment ID.', 'VALIDATION');
+      await resolve(pageId, options);
+      var value = await request(endpoint('/content/' + commentId, { expand: 'body.view,history,version,ancestors,container' }), { signal: options.signal });
+      if (!object(value.container) || id(value.container.id) !== pageId) throw problem('The comment does not belong to this article.', 'OUT_OF_SCOPE');
+      if (id(value.id) !== commentId) throw problem('Confluence returned another comment.', 'INVALID_DATA');
+      return normalize(value, pageId);
+    }
     async function createComment(pageId, input) {
       input = input || {}; var content;
       try { content = storage(input.text); } catch (error) { error.outcome = 'rejected'; throw error; }
       pageId = id(pageId);
-      if (input.parentId != null) throw problem('Reply in native Confluence to keep the existing thread.', 'VALIDATION', 'rejected');
+      var parentId = input.parentId == null ? null : id(input.parentId);
+      if (input.parentId != null && !parentId) throw problem('Use a native parent comment ID.', 'VALIDATION', 'rejected');
       if (!pageId) throw problem('An article page ID is required.', 'VALIDATION', 'rejected');
       if (activeWrites.has(pageId)) throw problem('A comment is already being sent for this article.', 'BUSY', 'rejected');
       activeWrites.add(pageId);
@@ -5873,24 +5884,25 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (!scope.canComment) throw problem('Sign in with a Confluence account allowed to comment.', 'FORBIDDEN', 'rejected');
         // Consumers can pin their recovery record to this fresh authenticated
         // scope without repeating the same root/page/current-user reads.
-        if (typeof input.beforeSubmit === 'function') input.beforeSubmit(Object.assign({}, scope, { user: Object.assign({}, scope.user) }));
+        if (parentId) await getComment(pageId, parentId, { signal: input.signal });
+        if (typeof input.beforeSubmit === 'function') await input.beforeSubmit(Object.assign({}, scope, { user: Object.assign({}, scope.user) }));
         abort(input.signal);
         var result;
         postAttempted = true;
         // Navigation may cancel preflight reads, but cannot safely undo a POST
         // once sent. Keep observing its bounded result rather than claiming an
         // aborted browser request means Confluence did not save the comment.
-        try { result = await request(endpoint('/content', { expand: 'body.view,history,version,ancestors,container' }), { body: { type: 'comment', container: { id: pageId, type: 'page' }, body: { storage: { value: content.html, representation: 'storage' } } } }); }
+        try { result = await request(endpoint('/content', { expand: 'body.view,history,version,ancestors,container' }), { body: Object.assign({ type: 'comment', container: { id: pageId, type: 'page' }, body: { storage: { value: content.html, representation: 'storage' } } }, parentId ? { ancestors: [{ id: parentId, type: 'comment' }] } : {}) }); }
         catch (error) { if (error.code === 'FORBIDDEN') { denied.add(pageId); scopes.delete(pageId); } throw error; }
         // No post retry and no invented author/time. The response confirms the ID.
-        try { return normalize(result, pageId, content.text); } catch (_) { throw unknown(); }
+        try { var saved = normalize(result, pageId, content.text); if (saved.text !== content.text || !sameUser(saved.author, scope.user) || saved.parentId !== parentId) throw unknown(); return saved; } catch (_) { throw unknown(); }
       } catch (error) {
         if (!postAttempted && !error.outcome) error.outcome = 'rejected';
         throw error;
       } finally { activeWrites.delete(pageId); }
     }
     function clear() { scopes.clear(); denied.clear(); }
-    return Object.freeze({ resolve: resolve, list: list, createComment: createComment, clear: clear });
+    return Object.freeze({ resolve: resolve, list: list, getComment: getComment, createComment: createComment, clear: clear });
   }
   return Object.freeze({ create: create, pageSize: PAGE_SIZE, maxTextLength: MAX_TEXT });
 }));
@@ -6111,7 +6123,9 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       const comments=deps.comments||api?.create(config,deps);
       if(!comments)throw problem('CONFIGURATION','The native article comments helper is unavailable.');
       const requests=new Map(), denied=new Set();
+      function sameNative(a,b){if(a?.userKey&&b?.userKey)return a.userKey===b.userKey;return !!(a?.id&&a.id===b?.id||a?.username&&b?.username&&a.username.toLowerCase()===b.username.toLowerCase());}
       function confirmed(state,result){
+        rememberSuggestion(state,result);
         if(!state.announced){
           state.announced=true;
           if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')root.dispatchEvent(new root.CustomEvent('wcs:article-comment-created',{detail:{pageId:state.pageId,comment:clone(result)}}));
@@ -6145,7 +6159,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       async function recover(state,signal){
         let start=0,seen=0;
         do{const result=await comments.list(state.pageId,{start,signal});seen+=result.comments.length;
-          const found=result.comments.filter(c=>c.author.id===state.userId&&c.text===state.text);
+          const found=result.comments.filter(c=>sameNative(c.author,state.user||{id:state.userId})&&c.text===state.text);
           if(found.length===1){state.result=found[0];return confirmed(state,state.result);}if(found.length>1)throw unknown();
           start=result.nextStart;if(seen>=1000&&start!==null)throw unknown();
         }while(start!==null);
@@ -6163,7 +6177,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           const pageId=target(payload.context);if(!pageId)throw problem('OUT_OF_SCOPE','Open the published document to send a suggestion. You can still copy this request.');
           function pin(scope){
             if(state.userId&&state.userId!==scope.user.id)throw problem('IDENTITY','Your Confluence session changed. Check the document comments.');
-            state.userId=scope.user.id;state.pageId=scope.pageId;
+            state.userId=scope.user.id;state.user=clone(scope.user);state.pageId=scope.pageId;
           }
           if(state.uncertain){pin(await prepare(payload.context,input));return recover(state,input?.signal);}
           if(denied.has(pageId))throw problem('FORBIDDEN','Confluence does not permit sending a comment on this document. You can still copy your request.');
@@ -6172,9 +6186,228 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         })();
         const pending=state.pending;pending.then(()=>{state.pending=null;},()=>{state.pending=null;});return pending;
       }
-      return Object.freeze({prepare,submit,canTriage:()=>false,canList:false,native:true,live:true,available:true,storeKey:null,
-        list:async()=>{throw problem('NATIVE_COMMENTS','Suggestions are stored as comments on their published document. Open the document’s discussion to follow up; content changes still use review and approval.');},
-        decide:async()=>{throw problem('NATIVE_COMMENTS','Reply on the document discussion. A suggestion does not change or approve its content.');},
+      const Parser=deps.DOMParser||root.DOMParser, inboxRows=new Map(), decisionRequests=new Map();
+      let inboxIdentity='';
+      const entitlement=deps.entitlements||root.WCSEntitlements||(typeof require==='function'?require('./entitlements.js'):null);
+      const requestPattern=/^[A-Za-z0-9][A-Za-z0-9._:-]{7,159}$/;
+      function receiptStore(){try{return deps.receiptStorage===undefined?root.sessionStorage:deps.receiptStorage;}catch(_){return null;}}
+      function receiptKey(identity){return 'wcspedia.suggestion-receipts.v1:'+JSON.stringify([address.origin,context,spaceKey,rootId,identity]);}
+      function receiptRows(identity){
+        let rows=[];try{const raw=receiptStore()?.getItem(receiptKey(identity));if(raw&&raw.length<20000)rows=JSON.parse(raw);}catch(_){}
+        return Array.isArray(rows)?rows.filter(r=>pageId(r.pageId)&&pageId(r.commentId)&&Number.isFinite(r.at)&&r.at<=Date.now()&&Date.now()-r.at<86400000).slice(-100):[];
+      }
+      function rememberSuggestion(state,result){
+        if(!state.userId||!pageId(result.id))return;
+        const rows=receiptRows(state.userId).filter(r=>r.commentId!==result.id).concat({pageId:state.pageId,commentId:result.id,at:Date.now()}).slice(-100);
+        try{receiptStore()?.setItem(receiptKey(state.userId),JSON.stringify(rows));}catch(_){}
+      }
+      function pinInbox(user){
+        const id=user?.id||user?.userKey||user?.username;
+        if(!id||user.type==='anonymous'||user.type==='unknown'||user.authenticated===false)throw problem('IDENTITY','Sign in to Confluence to read suggestions.');
+        if(inboxIdentity&&inboxIdentity!==id){inboxRows.clear();throw problem('IDENTITY','Your Confluence account changed. Reload suggestions.');}
+        inboxIdentity=id;return {id,userKey:String(user.userKey||''),username:String(user.username||''),displayName:String(user.displayName||'Confluence user')};
+      }
+      async function limited(items,run){const out=new Array(items.length);let cursor=0;await Promise.all(Array.from({length:Math.min(4,items.length)},async()=>{while(cursor<items.length){const i=cursor++;out[i]=await run(items[i]);}}));return out;}
+      function searchOffset(result,start){
+        if(!Array.isArray(result?.results)||result.results.length>50||result.start!=null&&result.start!==start)throw problem('INVALID_DATA','Confluence returned invalid suggestion discovery data.');
+        const link=result?._links?.next;if(!link)return null;
+        let url;try{url=new URL(link,address.origin+context+'/');}catch(_){throw problem('INVALID_DATA','Invalid suggestion pagination.');}
+        const raw=url.searchParams.get('start'),next=Number(raw);
+        if(url.origin!==address.origin||url.username||url.password||url.hash||![context+'/rest/api/content/search','/rest/api/content/search'].includes(url.pathname)||!/^\d+$/.test(raw||'')||!Number.isSafeInteger(next)||next<=start||next>start+result.results.length)throw problem('INVALID_DATA','Invalid suggestion pagination.');
+        return next;
+      }
+      async function search(cql,expand,signal){
+        const rows=[],seen=new Set();let start=0;
+        do{
+          const result=await (deps.storage||storage()).request('/rest/api/content/search?'+new URLSearchParams({cql,expand,start:String(start),limit:'50'}),{signal});abort(signal);
+          const next=searchOffset(result,start);
+          for(const row of result.results){const id=pageId(row?.id);if(!id||seen.has(id))throw problem('INVALID_DATA','Suggestion discovery returned duplicate or invalid content.');seen.add(id);rows.push(row);}
+          if(rows.length>1000||next!==null&&next>=1000)throw problem('SUGGESTIONS_LIMIT','Suggestion discovery exceeds 1,000 results. Open the document discussion to continue; this inbox is not complete.');
+          start=next;
+        }while(start!==null);
+        return rows;
+      }
+      function publicDocument(scope,historical){
+        const page=historical?Object.assign({},historical,{status:'current',ancestors:Array.isArray(historical.ancestors)&&historical.ancestors.length?historical.ancestors:scope.nativePage?.ancestors}):scope.nativePage;
+        if(!page||typeof Parser!=='function')return null;
+        try{
+          article(page);const body=page.body?.storage?.value;
+          if(typeof body!=='string'||body.length>800000)return null;
+          const xml=new Parser().parseFromString('<root xmlns:ac="urn:ac" xmlns:ri="urn:ri" xmlns:at="urn:at">'+body+'</root>','application/xml');
+          if(xml.querySelector('parsererror'))return null;
+          const snapshots=[];
+          for(const macro of Array.from(xml.getElementsByTagNameNS('urn:ac','structured-macro'))){
+            let nested=false;for(let parent=macro.parentElement;parent&&parent!==xml.documentElement;parent=parent.parentElement)if(parent.namespaceURI==='urn:ac'||['pre','code'].includes(parent.localName))nested=true;
+            if(nested||macro.getAttributeNS('urn:ac','name')!=='html')continue;
+            const plain=Array.from(macro.children).find(n=>n.localName==='plain-text-body');if(!plain)continue;
+            const html=new Parser().parseFromString(plain.textContent,'text/html');snapshots.push(...html.querySelectorAll('script#wcs-published-reader[type="application/json"]'));
+          }
+          if(snapshots.length!==1)return null;
+          const node=snapshots[0],data=JSON.parse(node.textContent),doc=data.document;
+          if(data.format!==1||data.pageId!==scope.pageId||node.getAttribute('data-wcs-reader-root')!==rootId||!Number.isSafeInteger(data.nativeVersion)||data.nativeVersion!==page.version?.number||!doc||typeof doc.id!=='string'||doc.deletedAt||doc.confluencePageId||doc.publishedConfluencePageId)return null;
+          const contentAPI=root.WCSEditorContent||(typeof require==='function'?require('./editor-content.js'):null);
+          const destination=contentAPI?.isDirectPublication(doc)?insightsId:pageId(publication.areaPageIds?.[doc.area]);
+          if(pageId(page.ancestors.at(-1)?.id)!==destination)return null;
+          return doc;
+        }catch(_){return null;}
+      }
+      function actorIds(user){
+        const ids=new Set(),username=String(user?.username||'').trim().toLowerCase();
+        if(!/^[a-z0-9]{2,32}$/.test(username))return ids;
+        ids.add('wcs-user-'+username);
+        const actors=[options.getActor?.(),...(options.getPeople?.()||[])];
+        for(const person of actors){if(person&&typeof person.id==='string'&&String(person.soeid||person.username||person.confluenceUsername||person.confluence?.username||'').toLowerCase()===username)ids.add(person.id);}
+        return ids;
+      }
+      function assigned(doc,user){const ids=actorIds(user);return !!doc&&[doc.ownerId,doc.reviewerId,doc.approverId].some(id=>id&&ids.has(id));}
+      async function currentPolicy(signal){
+        if(typeof options.loadPolicy!=='function'||!entitlement)throw problem('POLICY_UNAVAILABLE','The current entitlement policy is unavailable. Refresh this workspace before reviewing suggestions.');
+        return entitlement.validatePolicy(await options.loadPolicy({signal}));
+      }
+      function permitted(doc,user,policy){return assigned(doc,user)&&!!policy&&entitlement.hasGrant(policy,{soeid:user.username},'content.edit',doc.id);}
+      async function pageComments(id,signal){
+        let start=0;const rows=[],seen=new Set();
+        do{const result=await comments.list(id,{start,signal,includeDisabled:true});abort(signal);
+          if(!Array.isArray(result?.comments))throw problem('INVALID_DATA','Confluence did not return article comments.');
+          for(const row of result.comments){if(seen.has(row.id))throw problem('INVALID_DATA','Confluence returned duplicate article comments.');seen.add(row.id);rows.push(row);}
+          if(rows.length>1000||result.nextStart!==null&&rows.length>=1000)throw problem('SUGGESTIONS_LIMIT','This document has more than 1,000 comments. Open its native discussion; the inbox is not complete.');
+          if(result.nextStart!==null&&(!Number.isSafeInteger(result.nextStart)||result.nextStart<=start))throw problem('INVALID_DATA','Invalid article comment pagination.');
+          start=result.nextStart;
+        }while(start!==null);return rows;
+      }
+      function sourceRecord(comment,scope,doc){
+        if(comment.parentId||!comment.author?.id||!pageId(comment.id))return null;
+        const match=String(comment.text||'').match(/^WCSpedia (Correction|Improvement|Training request) suggestion(?:\nDocument version (\d+)(?: · revision (\d+))?)?\n\nSuggested change\n([\s\S]*?)\n\nReason or supporting context\n([\s\S]*?)\n\nThis is a suggestion, not an edit or approval\.\nWCSpedia request: ([A-Za-z0-9][A-Za-z0-9._:-]{7,159})$/);
+        if(!match)return null;
+        let reason=match[5],anchor={};const selected=reason.match(/\n\nSelected passage(?: — ([^\n]*))?\n([\s\S]*)$/);if(selected){reason=reason.slice(0,selected.index);anchor={heading:selected[1]||'',exact:selected[2]};}
+        const v=doc?.versions?.find(v=>v.version===doc.publishedVersion),version=Number.isSafeInteger(comment.version)?comment.version:1;
+        return {id:'native-suggestion-'+scope.pageId+'-'+comment.id,requestId:match[6],type:match[1],correction:match[4],reason,context:{title:v?.title||scope.title||'Document',url:nativeHref(scope.pageId),nativePageId:scope.pageId,documentId:doc?.id||'',version:match[2]?Number(match[2]):null,revision:match[3]?Number(match[3]):null,ownerId:doc?.ownerId||'',reviewerId:doc?.reviewerId||'',approverId:doc?.approverId||'',anchor},status:'Open',revision:version,createdAt:comment.createdAt,createdBy:{id:comment.author.id,userKey:comment.author.userKey||'',username:comment.author.username||'',name:comment.author.displayName||'Confluence user',role:'Reader'},history:[{id:comment.id,action:'Submitted',at:comment.createdAt,actor:{id:comment.author.id,name:comment.author.displayName||'Confluence user',role:'Reader'},comment:'',requestId:match[6]}],nativePageId:scope.pageId,nativeCommentId:comment.id,nativeCommentVersion:version,nativeUrl:comment.url||nativeHref(scope.pageId)+'&focusedCommentId='+comment.id+'#comment-'+comment.id,documentUrl:doc?nativeHref(rootId)+'#/published/'+scope.pageId:nativeHref(scope.pageId),canTriage:false,conflict:false};
+      }
+      function decisionData(comment){
+        if(!comment.parentId||!comment.author?.id||!String(comment.text||'').startsWith('WCSpedia suggestion decision\n'))return null;
+        try{const data=JSON.parse(comment.text.slice('WCSpedia suggestion decision\n'.length));
+          if(data.schema!==1||!pageId(data.sourceId)||!requestPattern.test(data.requestId)||!requestPattern.test(data.sourceRequest)||!Number.isSafeInteger(data.sourceVersion)||data.sourceVersion<1||!Number.isSafeInteger(data.expectedRevision)||data.expectedRevision<1||!['Resolved','Dismissed'].includes(data.status)||typeof data.comment!=='string'||!data.comment.trim()||data.comment.length>3000||data.sourceId!==comment.parentId||(!Number.isSafeInteger(data.documentNativeVersion)||data.documentNativeVersion<1))return null;
+          return data;
+        }catch(_){return null;}
+      }
+      async function decisionContexts(scope,rows,signal){
+        const current=scope.nativePage?.version?.number,currentAt=Date.parse(scope.nativePage?.version?.when),history=new Map(),versions=new Set(),pages=new Map([[current,scope.nativePage]]),doc=publicDocument(scope);
+        const sources=new Map(rows.map(row=>sourceRecord(row,scope,doc)).filter(Boolean).map(row=>[row.nativeCommentId,row]));
+        for(const row of rows){const value=decisionData(row),source=value&&sources.get(value.sourceId);
+          if(!source||value.sourceVersion!==source.nativeCommentVersion||value.sourceRequest!==source.requestId||value.documentNativeVersion>=current)continue;
+          history.set(value.documentNativeVersion,{unavailable:true});
+          // A newly posted/edited comment cannot acquire old assignment authority
+          // by claiming an earlier page version in its user-controlled JSON.
+          const at=Date.parse(row.createdAt);
+          if(row.version===1&&Number.isFinite(at)&&Number.isFinite(currentAt)&&at<currentAt&&versions.size<20)versions.add(value.documentNativeVersion);
+        }
+        const needed=new Set();for(const version of versions){needed.add(version);if(version+1<current)needed.add(version+1);}
+        await limited(Array.from(needed),async version=>{
+          try{
+            const page=await (deps.storage||storage()).request('/rest/api/content/'+scope.pageId+'?'+new URLSearchParams({status:'historical',version:String(version),expand:'space,ancestors,version,body.storage'}),{signal});
+            if(pageId(page?.id)===scope.pageId&&page.version?.number===version&&page.type==='page'&&page.space?.key===spaceKey&&page.status==='historical')pages.set(version,page);
+          }catch(error){if(error.name==='AbortError')throw error;/* One unverified protocol record must not hide the other requests. */}
+        });
+        for(const version of versions){const page=pages.get(version);if(!page)continue;const prior=publicDocument(scope,page),start=Date.parse(page.version.when),end=Date.parse(pages.get(version+1)?.version?.when);
+          if(prior&&Number.isFinite(start)&&Number.isFinite(end)&&end>=start)history.set(version,{doc:prior,start,end});}
+        scope.suggestionHistory=history;
+      }
+      function recordsFor(scope,rows,user,policy){
+        const doc=publicDocument(scope),records=[];
+        for(const source of rows){const record=sourceRecord(source,scope,doc);if(!record)continue;
+          const decisions=[],seenRequests=new Map();
+          for(const reply of rows){const value=decisionData(reply);if(!value||value.sourceId!==source.id||value.sourceVersion!==record.nativeCommentVersion||value.sourceRequest!==record.requestId)continue;
+            const evidence=value.documentNativeVersion!==scope.nativePage?.version?.number?scope.suggestionHistory?.get(value.documentNativeVersion):{doc,start:Date.parse(scope.nativePage?.version?.when),end:Infinity},assignment=evidence?.doc;
+            if(evidence?.unavailable){record.historyUnavailable=true;continue;}
+            if(!assignment||assignment.id!==doc?.id||!assigned(assignment,reply.author))continue;
+            const at=Date.parse(reply.version>1?reply.updatedAt:reply.createdAt);if(!Number.isFinite(at)||!Number.isFinite(evidence.start)||at<evidence.start||at>=evidence.end){record.historyUnavailable=true;continue;}const unverified=reply.version!==1;
+            const key=reply.author.id+':'+value.requestId,previous=seenRequests.get(key);if(previous&&JSON.stringify(previous)===JSON.stringify(value))continue;seenRequests.set(key,value);decisions.push({reply,value,unverified});}
+          decisions.sort((a,b)=>a.value.expectedRevision-b.value.expectedRevision||a.reply.id.localeCompare(b.reply.id));
+          let cursor=record.nativeCommentVersion;
+          for(let i=0;i<decisions.length;){const base=decisions[i].value.expectedRevision,group=[];while(i<decisions.length&&decisions[i].value.expectedRevision===base)group.push(decisions[i++]);
+            if(base!==cursor||group.length!==1||group.some(event=>event.unverified)){record.conflict=true;record.status='Open';}else {record.conflict=false;record.status=group[0].value.status;}
+            cursor+=group.length;
+            for(const event of group)record.history.push({id:event.reply.id,action:event.unverified?'Unverified decision':event.value.status,at:event.reply.createdAt,actor:{id:event.reply.author.id,name:event.reply.author.displayName||'Confluence user',role:'Reviewer'},comment:event.value.comment,requestId:event.value.requestId});
+          }
+          record.revision=cursor;record.conflictMessage=record.conflict&&decisions.some(event=>event.unverified)?'A decision was edited or its assignment time could not be verified. Review the native discussion.':record.conflict?'Conflicting decisions were recorded. Review the discussion and record a new decision.':'';
+          record.canTriage=scope.commentsEnabled&&scope.canComment&&permitted(doc,user,policy);record.assignmentUnavailable=!doc;
+          records.push(record);
+        }return {doc,records};
+      }
+      async function list(input){
+        input=input||{};if(!['mine','review'].includes(input.scope||'mine'))throw problem('VALIDATION','Choose My suggestions or Reviewer suggestions.');
+        const signal=input.signal,db=deps.storage||storage(),scopeName=input.scope||'mine';abort(signal);
+        const [native,rootPage]=await Promise.all([db.user({signal}),db.page(rootId,'space',{signal})]);
+        if(pageId(rootPage.id)!==rootId||rootPage.space?.key!==spaceKey)throw problem('OUT_OF_SCOPE','The configured WCSpedia root is unavailable.');
+        const user=pinInbox(native);let policy=null,policyNotice='';
+        if(scopeName==='review'){try{policy=await currentPolicy(signal);}catch(error){if(error.name==='AbortError')throw error;policyNotice=error.message;}}
+        const pageRows=await search('type = page AND space = '+JSON.stringify(spaceKey)+' AND ancestor = '+rootId+' ORDER BY id ASC','space,ancestors',signal),ids=[];
+        for(let page of pageRows){try{if(!Array.isArray(page.ancestors)||!page.ancestors.length)page=await db.page(page.id,'space,ancestors',{signal});ids.push(article(page));}catch(error){if(error.code!=='OUT_OF_SCOPE'&&![403,404].includes(error.status))throw error;}}
+        const candidates=new Set(),indexed=new Set();
+        const batches=[];for(let i=0;i<ids.length;i+=50)batches.push(ids.slice(i,i+50));
+        await limited(batches,async batch=>{
+          const allowed=new Set(batch),query='type = comment AND space = '+JSON.stringify(spaceKey)+' AND container IN ('+batch.join(',')+') AND text ~ "WCSpedia"'+(scopeName==='mine'?' AND creator = currentUser()':'')+' ORDER BY id ASC';
+          for(const row of await search(query,'container',signal)){const parent=pageId(row.container?.id);if(row.type!=='comment'||!allowed.has(parent))throw problem('OUT_OF_SCOPE','Confluence returned a suggestion outside the verified article tree.');candidates.add(parent);indexed.add(pageId(row.id));}
+        });
+        const receipts=receiptRows(user.id);for(const receipt of receipts)candidates.add(receipt.pageId);
+        if(scopeName==='review')for(const doc of options.getDocuments?.()||[]){const id=pageId(doc.publishedConfluencePageId||(doc.publishedVersion?doc.confluencePageId:''));if(id)candidates.add(id);}
+        if(candidates.size>200)throw problem('SUGGESTIONS_LIMIT','More than 200 document discussions match. Open a document discussion to continue; the inbox is not complete.');
+        const result=[];let assignmentUnavailable=0,historyUnavailable=0;await limited(Array.from(candidates),async id=>{
+          let scope;try{scope=await comments.resolve(id,{force:true,signal});}catch(error){if(error.code==='OUT_OF_SCOPE'||[403,404].includes(error.status))return;throw error;}
+          const current=pinInbox(scope.user);if(current.id!==user.id)throw problem('IDENTITY','Your Confluence account changed. Reload suggestions.');
+          const rows=await pageComments(id,signal);await decisionContexts(scope,rows,signal);const group=recordsFor(scope,rows,user,policy);
+          if(scopeName==='review'&&!group.doc)assignmentUnavailable+=group.records.length;
+          historyUnavailable+=group.records.filter(record=>record.historyUnavailable).length;
+          for(const row of group.records)if(scopeName==='mine'?sameNative(row.createdBy,user):assigned(group.doc,user))result.push(row);
+        });
+        pinInbox(await db.user({signal}));abort(signal);result.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))||a.id.localeCompare(b.id));
+        inboxRows.clear();for(const row of result)inboxRows.set(row.id,clone(row));
+        // IDs bridge index lag only; every visible request above was reread natively.
+        const pending=receipts.filter(r=>!indexed.has(r.commentId));try{receiptStore()?.setItem(receiptKey(user.id),JSON.stringify(pending));}catch(_){}
+        result.listingNotice=[policyNotice,historyUnavailable?historyUnavailable+' request(s) include unverified historical decision records. Open the native discussion; their decision history may be incomplete.':'',assignmentUnavailable?assignmentUnavailable+' request(s) have unavailable or stale published assignment metadata. Open their native discussions; this reviewer inbox is incomplete.':'','Confluence search indexing may delay newly submitted requests. Recent requests in this browser and known published workspace documents are checked directly.'].filter(Boolean).join(' ');
+        return result;
+      }
+      async function decide(recordId,command,requestId){
+        const match=String(recordId||'').match(/^native-suggestion-([1-9]\d*)-([1-9]\d*)$/);
+        if(!match||!requestPattern.test(requestId||'')||!command||!['Resolved','Dismissed'].includes(command.status)||!Number.isSafeInteger(command.expectedRevision)||typeof command.comment!=='string'||!command.comment.trim()||command.comment.length>3000)throw problem('VALIDATION','Choose a decision, provide a reason and refresh the suggestion revision.');
+        const page=match[1],source=match[2],key=JSON.stringify([recordId,command]),old=decisionRequests.get(requestId);
+        if(old&&old.key!==key)throw problem('CONFLICT','This decision request ID belongs to different details.');
+        if(old?.pending)return old.pending;
+        const state=old||{key};decisionRequests.set(requestId,state);
+        const run=async()=>{
+          let verified,scope,rows,user,policy;
+          async function inspect(fresh,checkPolicy){
+            scope=fresh||await comments.resolve(page,{force:true});user=pinInbox(scope.user);
+            if(state.userId&&state.userId!==user.id)throw problem('IDENTITY','Your Confluence account changed. Reload this request.');state.userId=user.id;
+            const values=await Promise.all([pageComments(page),checkPolicy?currentPolicy():Promise.resolve(policy)]);rows=values[0];policy=values[1];await decisionContexts(scope,rows);
+            verified=recordsFor(scope,rows,user,policy).records.find(r=>r.nativeCommentId===source);
+            if(!verified)throw problem('NOT_FOUND','The original suggestion no longer exists or was changed. Open the document discussion.');
+            const recovered=rows.filter(r=>sameNative(r.author,user)&&r.parentId===source&&decisionData(r)?.requestId===requestId);
+            if(recovered.length>1)throw problem('CONFLICT','Duplicate decision records need review in the native discussion.');
+            if(recovered.length===1){const data=decisionData(recovered[0]);if(data.status!==command.status||data.comment!==command.comment.trim()||data.expectedRevision!==command.expectedRevision)throw problem('CONFLICT','This request ID already records a different decision.');
+              if(data.sourceVersion!==verified.nativeCommentVersion||data.sourceRequest!==verified.requestId||verified.conflict||verified.status!==command.status)throw Object.assign(problem('CONFLICT','The decision was recorded, but the original request or another decision changed. Refresh the discussion before deciding again.'),{committed:true});
+              pinInbox(await (deps.storage||storage()).user());return true;}
+            return false;
+          }
+          if(await inspect())return verified;
+          if(state.uncertain)throw unknown();
+          if(!scope.commentsEnabled||!scope.canComment||!assigned(publicDocument(scope),user))throw problem('FORBIDDEN','Only the current owner, reviewer or approver with a current edit entitlement and native comment permission can decide this request.');
+          if(verified.revision!==command.expectedRevision)throw problem('CONFLICT','This suggestion changed. Refresh before recording a decision.');
+          const data={schema:1,sourceId:source,sourceVersion:verified.nativeCommentVersion,sourceRequest:verified.requestId,documentNativeVersion:scope.nativePage.version.number,expectedRevision:command.expectedRevision,status:command.status,comment:command.comment.trim(),requestId};
+          try{
+            await comments.createComment(page,{parentId:source,text:'WCSpedia suggestion decision\n'+JSON.stringify(data),beforeSubmit:async fresh=>{
+              if(await inspect(fresh,true))throw problem('CONFLICT','This decision is already recorded. Refresh the inbox.');
+              if(!verified.canTriage)throw problem('FORBIDDEN','Your current assignment, edit entitlement or native comment permission does not permit this decision.');
+              if(verified.revision!==command.expectedRevision||verified.nativeCommentVersion!==data.sourceVersion||verified.requestId!==data.sourceRequest||scope.nativePage?.version?.number!==data.documentNativeVersion)throw problem('CONFLICT','The suggestion or its assignment changed. Refresh before recording a decision.');
+            }});
+            state.uncertain=true;
+          }catch(error){if(error.outcome==='unknown'||error.code==='OUTCOME_UNKNOWN')state.uncertain=true;throw error;}
+          if(!await inspect())throw unknown();
+          state.uncertain=false;inboxRows.set(verified.id,clone(verified));options.onChange?.();return verified;
+        };
+        state.pending=run();try{return await state.pending;}finally{state.pending=null;}
+      }
+      return Object.freeze({prepare,submit,list,decide,canTriage:record=>inboxRows.get(record?.id)?.canTriage===true,canList:true,native:true,live:true,available:true,storeKey:null,
         deliveryDescription:'Your suggestion is posted as a comment on this document using your Confluence account. It does not edit or approve the content. Confluence controls comment permissions and any watcher notifications.'});
     }
     return Object.freeze({bookmarks,suggestions});
@@ -8242,7 +8475,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       output.complete = true; emit();
       return output;
     }
-    return Object.freeze({ load: load, loadAccess: loadAccess, inspectEntitlementRecovery: inspectEntitlementRecovery, reconcileEntitlementAttachment: reconcileEntitlementAttachment, loadMetrics: loadMetrics, recordView: recordView, submitAction: submitAction, deleteDocument: deleteDocument, submitEntitlementCommand: submitEntitlementCommand, syncEntitlementAccess: syncEntitlementAccess, saveAttachment: saveAttachment, searchPages: searchPages, loadLanding: loadLanding, loadPublishedArticle: loadPublishedArticle, invalidateSearch: clearSearchReads, info: function () { return { mode: mode, authoringMode: nativeSession ? 'confluence-session' : 'service', rootPageId: pageId, searchSpaceKey: verifiedSearchSpace, attachmentPageId: attachmentPageId, attachmentFilename: filename, workflowConfigured: nativeSession || !!workflowURL, workspaceConfigured: nativeSession || !!workspaceURL, entitlementsConfigured: policyConfigured, entitlementsPageId: entitlementPageId, entitlementsSource: entitlementSource, entitlementsFilename: entitlementFilename, entitlementServiceConfigured: nativeSession || !!entitlementURL, metricsConfigured: mode === 'confluence' && (nativeSession || !!metricsURL), directAttachmentWrites: config.allowAttachmentWrites === true, nativePublicationEnabled: publicationEnabled }; } });
+    return Object.freeze({ load: load, loadSuggestionPolicy: async function(options) { return (await readEntitlementAttachment(options && options.signal)).policy; }, loadAccess: loadAccess, inspectEntitlementRecovery: inspectEntitlementRecovery, reconcileEntitlementAttachment: reconcileEntitlementAttachment, loadMetrics: loadMetrics, recordView: recordView, submitAction: submitAction, deleteDocument: deleteDocument, submitEntitlementCommand: submitEntitlementCommand, syncEntitlementAccess: syncEntitlementAccess, saveAttachment: saveAttachment, searchPages: searchPages, loadLanding: loadLanding, loadPublishedArticle: loadPublishedArticle, invalidateSearch: clearSearchReads, info: function () { return { mode: mode, authoringMode: nativeSession ? 'confluence-session' : 'service', rootPageId: pageId, searchSpaceKey: verifiedSearchSpace, attachmentPageId: attachmentPageId, attachmentFilename: filename, workflowConfigured: nativeSession || !!workflowURL, workspaceConfigured: nativeSession || !!workspaceURL, entitlementsConfigured: policyConfigured, entitlementsPageId: entitlementPageId, entitlementsSource: entitlementSource, entitlementsFilename: entitlementFilename, entitlementServiceConfigured: nativeSession || !!entitlementURL, metricsConfigured: mode === 'confluence' && (nativeSession || !!metricsURL), directAttachmentWrites: config.allowAttachmentWrites === true, nativePublicationEnabled: publicationEnabled }; } });
   }
   return Object.freeze({ create: create, validateData: validateData, addCategory: addCategory, facetLabel: facetLabel });
 });
@@ -8460,7 +8693,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       find('#editor-slug-help').textContent=slugMode==='auto'?'Generated from the title as you type. You can customize it if needed.':slugMode==='saved'?'The saved slug stays unchanged when you update the title.':'Use lowercase letters, numbers, and hyphens. Use title restores automatic generation.';
     }
     function html(){
-      return '<section class="authoring-page discovery-container"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="#/">WCSpedia</a><span class="wcs-breadcrumb-separator" aria-hidden="true">/</span><a href="#/results?view=mine">My documents</a><span class="wcs-breadcrumb-separator" aria-hidden="true">/</span><span aria-current="page">'+(doc?'Edit document':'Create content')+'</span></nav><form id="editor-form" class="authoring-surface" novalidate><div class="editor-topbar"><div><h1 class="editor-heading">'+(doc?'Edit document':'Create something worth sharing.')+'</h1><span id="editor-save-status" class="editor-save-status" role="status">'+(doc?(options.editingPublished?'Editing published version '+v.version+' · saved changes create a new draft':'Version '+v.version+' · revision '+v.revision):'New draft')+'</span></div><div class="editor-actions"><button type="button" class="editor-cancel editor-focus-exit" data-editor-action="focus-exit" hidden>Exit expanded view</button><button type="button" class="editor-cancel" data-editor-action="cancel">Cancel</button><button type="button" class="button secondary" data-editor-action="preview">Preview</button><button type="submit" class="button" id="editor-save-button">Save draft '+svg('arrow')+'</button></div></div><div id="editor-error" class="form-error" role="alert" hidden></div><div class="editor-writing"><div class="editor-body"><div class="editor-main">'+input('editor-title','Title',initial.title,'required maxlength="160" placeholder="Give your content a clear, useful title"')+'<div class="editor-content-label"><label id="body-label" for="editor-source">Content</label><div class="editor-mode-actions"><button type="button" data-editor-action="template" class="source-toggle">Markdown template</button><button type="button" data-editor-action="paste-markdown" class="source-toggle">Paste MDX / Markdown</button><button type="button" data-editor-action="copy-markdown" class="source-toggle">Copy Markdown</button><button type="button" data-editor-action="source" class="source-toggle" aria-pressed="false">Markdown</button></div></div><div class="rich-editor"><div class="editor-toolbar" role="toolbar" aria-label="Text formatting"><select aria-label="Paragraph style" id="paragraph-style"><option value="p">Normal text</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="h4">Heading 4</option></select>'+tool('bold','Bold · Ctrl / ⌘ B','bold','<b>B</b>')+tool('italic','Italic · Ctrl / ⌘ I','italic','<i>I</i>')+tool('underline','Underline · Ctrl / ⌘ U','underline','<u>U</u>')+tool('strikeThrough','Strikethrough','strike','<s>S</s>')+'<span class="toolbar-divider"></span>'+tool('link','Insert link','link')+tool('quote','Block quote','quote','&quot;')+tool('code','Inline code','embed')+tool('image','Insert image','image')+tool('video','Insert training video','video')+'<span class="toolbar-break" aria-hidden="true"></span>'+tool('insertUnorderedList','Bullet list','list','List')+tool('insertOrderedList','Numbered list','ordered-list','1.')+tool('codeblock','Code block','codeblock')+tool('table','Insert table','table')+tool('divider','Horizontal divider','divider')+tool('clear','Clear formatting','clear')+tool('embed','Embed a resource','embed')+'<span class="toolbar-divider"></span>'+tool('undo','Undo','undo')+tool('redo','Redo','redo')+tool('fullscreen','Expand editor','fullscreen')+'</div><div class="editor-table-tools" hidden><span>Table</span><button type="button" data-table="row">Add row</button><button type="button" data-table="column">Add column</button><button type="button" data-table="before">Text before table</button><button type="button" data-table="after">Text after table</button><button type="button" data-table="remove">Remove table</button></div><div id="editor-rich" class="rich-body document-body" contenteditable="true" role="textbox" aria-label="Document content" aria-multiline="true" spellcheck="true" data-placeholder="Write here, paste Markdown, or insert an image into your content…">'+renderBody(initial.bodyMarkdown)+'</div><textarea id="editor-source" aria-label="Markdown content" class="markdown-source" hidden>'+escape(initial.bodyMarkdown)+'</textarea><div class="editor-body-bottom"><span>Paste Markdown, images, or formatted text. In a table, Ctrl / ⌘ Enter moves below it.</span><span id="editor-word-count"></span></div></div>'+textarea('editor-highlights','Key highlights <small>Optional · one per line, up to 5</small>',initial.highlights.join('\n'),'rows="3" placeholder="What should a reader take away?"')+'<section class="editor-attachments" aria-label="Supporting attachments"><div class="editor-section-title"><div><h2>Attachments</h2><p>Add supporting documents, templates, or training materials.</p></div><label class="button secondary attachment-upload" for="editor-attachment-file">'+svg('attachment')+'Add files<input id="editor-attachment-file" type="file" multiple accept=".pdf,.txt,.md,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.gif" class="sr-only"></label></div><div id="editor-attachment-list"></div><p class="editor-field-hint">PDF, Office, text, Markdown, CSV, and images · up to 5 MB per file.</p></section>'+governanceSection() +textarea('editor-comment','Change summary',doc?'':'Initial draft.','required maxlength="2000" rows="2" placeholder="Explain what you created or changed for the audit trail."')+'<div class="editor-help">'+options.icon('shield')+'<p>Save your draft, then submit it for review. Your assigned manager approves the reviewed revision before it is published.</p></div></div><aside class="editor-sidebar" aria-label="Document settings"><h2>Document settings</h2>'+select('editor-type','Content type',editorTypes(),initialType(),!!doc)+commentsSetting()+'<p id="editor-insights-destination" hidden><strong>Destination: Insights</strong><br>Published inside WCSpedia.</p>'+select('editor-area','Business area',options.areas.map(a=>({id:a.id,name:a.title})),doc?.area||options.area||options.areas[0]?.id,!!doc)+slugField()+textarea('editor-summary','Excerpt',initial.summary,'required maxlength="1000" rows="4" placeholder="A short summary for search results and the article introduction."')+'<div id="editor-source-metadata">'+sourceMetadataSummary()+'</div><section class="editor-tag-settings"><h2>Make it discoverable</h2>'+tagField('tags','Topics',initial.tags,'For example: collateral, controls')+'<details class="editor-extra-tags"><summary>More organisation options</summary>'+tagField('processes','Processes',initial.processes,'For example: onboarding, annual review')+tagField('regions','Regions / markets',initial.regions,'For example: Global, EMEA, United Kingdom')+'</details><p class="editor-field-hint">Press Enter or comma to add a tag. Matching topics, processes, and markets connect related content.</p></section><div class="editor-cover-settings"><span class="editor-settings-label">Cover image <small>Optional</small></span><div id="editor-cover-preview"></div><label class="cover-upload" for="editor-cover-file">'+options.icon('plus')+'<strong>Upload cover image</strong><span>PNG, JPG, WebP, or GIF · up to 1 MB</span><input type="file" id="editor-cover-file" accept="image/png,image/jpeg,image/webp,image/gif" class="sr-only"></label><details class="cover-url"><summary>Use an image link</summary>'+input('editor-cover-url','Image URL',cover&&!cover.src.startsWith('data:')?cover.src:'','placeholder="https://… or /confluence/download/…"')+'<button type="button" class="link" data-editor-action="cover-url">Apply image</button></details>'+input('editor-cover-alt','Image description',cover?.alt||'','maxlength="300" placeholder="Describe the image for readers"')+input('editor-cover-caption','Caption',cover?.caption||'','maxlength="500" placeholder="Optional caption or source"')+'</div><div class="editor-ownership"><h2>Ownership & review</h2><div class="editor-owner">'+(root.WCSIcons?root.WCSIcons.avatar(options.people.find(p=>p.id===doc?.ownerId)||options.actor):'<span class="avatar" aria-hidden="true">'+options.icon('users')+'</span>')+'<div><strong>'+escape((options.people.find(p=>p.id===doc?.ownerId)||options.actor).name)+'</strong><span>Document owner</span></div></div>'+select('editor-reviewer','Reviewer',reviewers,doc?.reviewerId||managers[0]?.id||reviewers[0]?.id,!!doc)+select('editor-approver','Manager approver',managers,doc?.approverId||managers[0]?.id,!!doc)+'<div class="editor-approval-note">Approval date is recorded automatically when the manager approves this revision.</div></div></aside></div></div><div id="editor-reader" hidden></div></form></section>';
+      return '<section class="authoring-page discovery-container"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="#/">WCSpedia</a><span class="wcs-breadcrumb-separator" aria-hidden="true">/</span><a href="#/results?view=mine">My documents</a><span class="wcs-breadcrumb-separator" aria-hidden="true">/</span><span aria-current="page">'+(doc?'Edit document':'Create content')+'</span></nav><form id="editor-form" class="authoring-surface" novalidate><div class="editor-topbar"><div><h1 class="editor-heading">'+(doc?'Edit document':'Create something worth sharing.')+'</h1><span id="editor-save-status" class="editor-save-status" role="status">'+(doc?(options.editingPublished?'Editing published version '+v.version+' · saved changes create a new draft':'Version '+v.version+' · revision '+v.revision):'New draft')+'</span></div><div class="editor-actions"><button type="button" class="editor-cancel editor-focus-exit" data-editor-action="focus-exit" hidden>Exit expanded view</button><button type="button" class="editor-cancel" data-editor-action="cancel">Cancel</button><button type="button" class="button secondary" data-editor-action="preview">Preview</button><button type="submit" class="button" id="editor-save-button">Save draft '+svg('arrow')+'</button></div></div><div id="editor-error" class="form-error" role="alert" hidden></div><div class="editor-writing"><div class="editor-body"><div class="editor-main">'+input('editor-title','Title',initial.title,'required maxlength="160" placeholder="Give your content a clear, useful title"')+'<div class="editor-content-label"><label id="body-label" for="editor-source">Content</label><div class="editor-mode-actions"><button type="button" data-editor-action="template" class="source-toggle">Markdown template</button><button type="button" data-editor-action="paste-markdown" class="source-toggle">Paste MDX / Markdown</button><button type="button" data-editor-action="copy-markdown" class="source-toggle">Copy Markdown</button><button type="button" data-editor-action="source" class="source-toggle" aria-pressed="false">Markdown</button></div></div><div class="rich-editor"><div class="editor-toolbar" role="toolbar" aria-label="Text formatting"><select aria-label="Paragraph style" id="paragraph-style"><option value="p">Normal text</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="h4">Heading 4</option></select>'+tool('bold','Bold · Ctrl / ⌘ B','bold','<b>B</b>')+tool('italic','Italic · Ctrl / ⌘ I','italic','<i>I</i>')+tool('underline','Underline · Ctrl / ⌘ U','underline','<u>U</u>')+tool('strikeThrough','Strikethrough','strike','<s>S</s>')+'<span class="toolbar-divider"></span>'+tool('link','Insert link','link')+tool('quote','Block quote','quote','&quot;')+tool('code','Inline code','embed')+tool('image','Insert image','image')+tool('video','Insert training video','video')+'<span class="toolbar-break" aria-hidden="true"></span>'+tool('insertUnorderedList','Bullet list','list','List')+tool('insertOrderedList','Numbered list','ordered-list','1.')+tool('codeblock','Code block','codeblock')+tool('table','Insert table','table')+tool('divider','Horizontal divider','divider')+tool('clear','Clear formatting','clear')+tool('embed','Embed a resource','embed')+'<span class="toolbar-divider"></span>'+tool('undo','Undo','undo')+tool('redo','Redo','redo')+tool('fullscreen','Expand editor','fullscreen')+'</div><div class="editor-table-tools" hidden><span>Table</span><button type="button" data-table="row">Add row</button><button type="button" data-table="column">Add column</button><button type="button" data-table="before">Text before table</button><button type="button" data-table="after">Text after table</button><button type="button" data-table="remove">Remove table</button></div><div id="editor-rich" class="rich-body document-body" contenteditable="true" role="textbox" aria-label="Document content" aria-multiline="true" spellcheck="true" data-placeholder="Write here, paste Markdown, or insert an image into your content…">'+renderBody(initial.bodyMarkdown)+'</div><textarea id="editor-source" aria-label="Markdown content" class="markdown-source" hidden>'+escape(initial.bodyMarkdown)+'</textarea><div class="editor-body-bottom"><span>Paste Markdown, images, or formatted text. In a table, Ctrl / ⌘ Enter moves below it.</span><span id="editor-word-count"></span></div></div>'+textarea('editor-highlights','Key highlights <small>Optional · one per line, up to 5</small>',initial.highlights.join('\n'),'rows="3" placeholder="What should a reader take away?"')+'<section class="editor-attachments" aria-label="Supporting attachments"><div class="editor-section-title"><div><h2>Attachments</h2><p>Add supporting documents, templates, or training materials.</p></div><label class="button secondary attachment-upload" for="editor-attachment-file">'+svg('attachment')+'Add files<input id="editor-attachment-file" type="file" multiple accept=".pdf,.txt,.md,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.gif" class="sr-only"></label></div><div id="editor-attachment-list"></div><p class="editor-field-hint">PDF, Office, text, Markdown, CSV, and images · up to 5 MB per file.</p></section>'+governanceSection() +textarea('editor-comment','Change summary',doc?'':'Initial draft.','required maxlength="2000" rows="2" placeholder="Explain what you created or changed for the audit trail."')+'<div class="editor-help">'+options.icon('shield')+'<p>Save your draft, then submit it for review. Your assigned manager approves the reviewed revision before it is published.</p></div></div><aside class="editor-sidebar" aria-label="Document settings"><h2>Document settings</h2>'+select('editor-type','Content type',editorTypes(),initialType(),!!doc)+commentsSetting()+'<p id="editor-insights-destination" hidden><strong>Destination: Insights</strong><br>Published inside WCSpedia.</p>'+select('editor-area','Business area',options.areas.map(a=>({id:a.id,name:a.title})),doc?.area||options.area||options.areas[0]?.id,!!doc)+slugField()+textarea('editor-summary','Excerpt',initial.summary,'required maxlength="1000" rows="4" placeholder="A short summary for search results and the article introduction."')+'<div id="editor-source-metadata">'+sourceMetadataSummary()+'</div><section class="editor-tag-settings"><h2>Make it discoverable</h2>'+tagField('tags','Topics',initial.tags,'For example: collateral, controls')+'<details class="editor-extra-tags"><summary>More organisation options</summary>'+tagField('processes','Processes',initial.processes,'For example: onboarding, annual review')+tagField('regions','Regions / markets',initial.regions,'For example: Global, EMEA, United Kingdom')+'</details><p class="editor-field-hint">Press Enter or comma to add a tag. Matching topics, processes, and markets connect related content.</p></section><div class="editor-cover-settings"><span class="editor-settings-label">Cover image <small>Optional</small></span><div id="editor-cover-preview"></div><label class="cover-upload" for="editor-cover-file">'+options.icon('plus')+'<strong>Upload cover image</strong><span>PNG, JPG, WebP, or GIF · up to 1 MB</span><input type="file" id="editor-cover-file" accept="image/png,image/jpeg,image/webp,image/gif" class="sr-only"></label><details class="cover-url"><summary>Use an image link</summary>'+input('editor-cover-url','Image URL',cover&&!cover.src.startsWith('data:')?cover.src:'','placeholder="https://… or /confluence/download/…"')+'<button type="button" class="link" data-editor-action="cover-url">Apply image</button></details>'+input('editor-cover-alt','Image description',cover?.alt||'','maxlength="300" placeholder="Describe the image for readers"')+input('editor-cover-caption','Caption',cover?.caption||'','maxlength="500" placeholder="Optional caption or source"')+'</div><div class="editor-ownership"><h2>Ownership & review</h2><div class="editor-owner">'+(root.WCSIcons?root.WCSIcons.avatar(options.people.find(p=>p.id===doc?.ownerId)||options.actor):'<span class="wcs-avatar" aria-hidden="true">'+options.icon('users')+'</span>')+'<div><strong>'+escape((options.people.find(p=>p.id===doc?.ownerId)||options.actor).name)+'</strong><span>Document owner</span></div></div>'+select('editor-reviewer','Reviewer',reviewers,doc?.reviewerId||managers[0]?.id||reviewers[0]?.id,!!doc)+select('editor-approver','Manager approver',managers,doc?.approverId||managers[0]?.id,!!doc)+'<div class="editor-approval-note">Approval date is recorded automatically when the manager approves this revision.</div></div></aside></div></div><div id="editor-reader" hidden></div></form></section>';
     }
     const tagValues={tags:clone(initial.tags),processes:clone(initial.processes),regions:clone(initial.regions)};
     function tagField(kind,label,values,placeholder){return '<div class="editor-field editor-tag-field"><label for="editor-'+kind+'">'+label+'</label><div class="editor-tag-list" data-tag-list="'+kind+'">'+tagChips(kind,values)+'</div><input id="editor-'+kind+'" data-tag-input="'+kind+'" aria-label="Add '+label.toLowerCase()+'" placeholder="'+placeholder+'" maxlength="80"></div>';}
@@ -9310,13 +9543,20 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
   function niceDate(value) {const date=new Date(value);return Number.isFinite(+date)?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'Date unavailable';}
   function quoteView(context) {const a=context.anchor||{};return a.exact?'<div class="suggestion-selection"><span>Selected passage'+(a.heading?' · '+escape(a.heading):'')+'</span><blockquote>'+escape(a.exact)+'</blockquote></div>':'<p class="suggestion-page-context">This request applies to the whole page.</p>';}
   function contextView(context) {return '<div class="suggestion-context"><span>For this page</span><strong>'+escape(context.title)+'</strong>'+(context.documentId?'<small>Version '+escape(context.version||'—')+' · revision '+escape(context.revision||'—')+'</small>':'')+'</div>'+quoteView(context);}
+  function recordLinks(record) {
+    const links=[];
+    for(const [value,label] of [[record.documentUrl,'Open document'],[record.nativeUrl,'Open Confluence discussion']]){
+      try {const url=new URL(value,global.location.href);if(!value||!['http:','https:'].includes(url.protocol)||url.origin!==global.location.origin||url.username||url.password)continue;links.push('<a class="button secondary compact" href="'+escape(url.href)+'">'+(global.WCSIcons?global.WCSIcons.svg('link'):'')+label+'</a>');}catch(_){}
+    }
+    return links.length?'<nav class="suggestion-record-links" aria-label="Suggestion context">'+links.join('')+'</nav>':'';
+  }
   async function copyText(value,UI) {
     try {await global.navigator.clipboard.writeText(value);return true;}catch(_){UI.dialog({title:'Copy suggestion request',description:'Select the request below and copy it to your clipboard.',body:'<textarea class="suggestion-copy" readonly aria-label="Suggestion request">'+escape(value)+'</textarea>',onMount(handle){handle.body.querySelector('textarea').select();}});return false;}
   }
   function mount(options) {
     options=options||{};const root=options.root,UI=global.WCSUI;if(!root||!UI)throw Error('WCSpedia controls must be mounted before suggestions.');
     const notify=options.notify||function(){},onChange=options.onChange||function(){};
-    const service=options.service||createService({config:options.config,getActor:options.getActor});
+    const service=options.service||createService({config:options.config,getActor:options.getActor,getDocuments:options.getDocuments,getPeople:options.getPeople,loadPolicy:options.loadPolicy});
     const doc=root.ownerDocument,widget=doc.createElement('div');widget.className='wcs-suggestion-widget';
     widget.innerHTML='<button type="button" class="suggestion-launch" aria-label="Suggest an edit or correction" aria-keyshortcuts="Alt+Shift+S">'+icon()+'<span>Suggest an edit</span></button><button type="button" class="suggestion-pending" aria-label="View my suggestions" hidden><span>0</span> open</button>';
     root.append(widget);let destroyed=false,dialog=null,popup=null,point=null,selection=null,historyDialog=null,historyInbox=null;
@@ -9333,7 +9573,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     global.addEventListener('resize',positionWidget,{signal});global.addEventListener('scroll',positionWidget,{signal,passive:true});
     global.visualViewport?.addEventListener('resize',positionWidget,{signal});global.visualViewport?.addEventListener('scroll',positionWidget,{signal,passive:true});
     positionWidget();
-    async function refresh(){if(!service.available||service.canList===false)return;try{const rows=await service.list({scope:'mine'});if(destroyed)return;const count=widget.querySelector('.suggestion-pending');count.hidden=!rows.length;count.querySelector('span').textContent=String(rows.filter(row=>row.status==='Open').length);positionWidget();}catch(_){/* Opening the queue shows service/storage errors; never fake a pending count. */}}
+    async function refresh(){if(!service.available||service.canList===false)return;const count=widget.querySelector('.suggestion-pending');if(service.native){count.hidden=false;count.textContent='My suggestions';positionWidget();return;}try{const rows=await service.list({scope:'mine',signal});if(destroyed)return;count.hidden=!rows.length;count.querySelector('span').textContent=String(rows.filter(row=>row.status==='Open').length);positionWidget();}catch(_){/* Opening the queue shows service/storage errors; never fake a pending count. */}}
     function changed(){if(destroyed)return;refresh();onChange();}
     function open(anchor) {
       if(destroyed||dialog&&dialog.element.isConnected)return;
@@ -9351,7 +9591,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         form.querySelector('[data-suggestion-copy]').onclick=async event=>{event.preventDefault();event.stopPropagation();return UI.runButton(event.currentTarget,async()=>{try {const copied=await copyText(requestMarkdown(draft()),UI);if(copied)notify('Suggestion request copied.',{type:'success'});}catch(error){showError(error);}});};
         form.addEventListener('submit',async event=>{event.preventDefault();event.stopPropagation();if(handle.busy)return;if(!deliveryReady){showError(new Error('Sending is unavailable. Copy your request to share it with the document owner.'),'warning');return;}let value;try{value=pendingPayload||payload();}catch(error){showError(error,'warning');return;}
           const serialized=JSON.stringify(value);if(lastPayload&&lastPayload!==serialized)requestId=id();lastPayload=serialized;handle.setBusy(true);form.querySelectorAll('button,input,textarea,select').forEach(field=>field.disabled=true);submit.textContent='Saving…';errorBox.hidden=true;
-          try {await service.submit(value,requestId);handle.setBusy(false);handle.close('submitted');if(!destroyed){notify(service.native?'Suggestion posted to the document comments.':service.live?'Suggestion received for review.':'Suggestion saved to the local demo queue.',{type:'success'});changed();}}
+          try {await service.submit(value,requestId);handle.setBusy(false);handle.close('submitted');if(!destroyed){notify(service.native?(service.canList===false?'Suggestion posted to the document comments.':'Suggestion sent. Track it in My suggestions.'):service.live?'Suggestion received for review.':'Suggestion saved to the local demo queue.',{type:'success'});changed();}}
           catch(error){handle.setBusy(false);if(service.native&&(error.code==='OUTCOME_UNKNOWN'||error.outcome==='unknown'))pendingPayload=value;form.querySelectorAll('button').forEach(field=>field.disabled=false);form.querySelectorAll('input,textarea,select').forEach(field=>field.disabled=!!pendingPayload);if(service.native&&['FORBIDDEN','COMMENTS_DISABLED','OUT_OF_SCOPE'].includes(error.code))deliveryReady=false;submit.disabled=!deliveryReady;submit.textContent=deliveryReady?(pendingPayload?'Check submission':service.live?'Send suggestion':'Save suggestion'):'Sending unavailable';showError(error);}
         });
       }});
@@ -9373,11 +9613,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
   }
   function mountInbox(container,options) {
     options=options||{};const service=options.service,UI=global.WCSUI,Table=global.WCSDataTable;if(!container||!service||!UI||!Table||!global.WCSPagination)throw Error('A suggestion service, shared table, pagination and controls are required.');
-    const scope=options.scope==='review'?'review':'mine',notify=options.notify||function(){};let destroyed=false,generation=0,rows=[],filter='Open',query='',page=1,active=null,requestId=null;
+    const scope=options.scope==='review'?'review':'mine',notify=options.notify||function(){};let destroyed=false,generation=0,rows=[],filter='Open',query='',page=1,active=null,requestId=null,listAbort=null,listingNotice='';
     const pageSize=10,searchId='suggestion-search-'+id(),columns=[{label:'Request / document',className:'suggestion-request-cell'},{label:'Submitted by'},{label:'Submitted'},{label:'Status'},{label:'Actions',visuallyHidden:true,actions:true}];
     container.classList.add('suggestion-inbox');
     function changed(){if(destroyed)return;refresh();if(options.onChange)options.onChange();}
-    function heading(){return '<div class="suggestion-inbox-heading"><div><h2>'+(scope==='review'?'Suggestions to review':'Your suggestions')+'</h2><p>'+(scope==='review'?'Corrections and learning requests for your knowledge areas.':'Track the corrections, ideas, and learning requests you have raised.')+'</p></div><div class="suggestion-filters" role="group" aria-label="Suggestion status">'+['Open','Resolved','Dismissed','All'].map(status=>'<button type="button" data-suggestion-filter="'+status+'" aria-pressed="'+(filter===status)+'">'+status+'</button>').join('')+'</div></div>';}
+    function heading(){return '<div class="suggestion-inbox-heading"><div><h2>'+(scope==='review'?'Suggestions to review':'Your suggestions')+'</h2><p>'+(scope==='review'?'Corrections and learning requests for your knowledge areas.':'Track the corrections, ideas, and learning requests you have raised.')+'</p></div><div class="suggestion-inbox-controls"><button type="button" class="button secondary compact" data-suggestion-refresh>Refresh</button><div class="suggestion-filters" role="group" aria-label="Suggestion status">'+['Open','Resolved','Dismissed','All'].map(status=>'<button type="button" data-suggestion-filter="'+status+'" aria-pressed="'+(filter===status)+'">'+status+'</button>').join('')+'</div></div></div>';}
     function render() {
       const needle=query.toLocaleLowerCase(),shown=rows.filter(row=>(filter==='All'||row.status===filter)&&(!needle||[row.context.title,row.context.documentId,row.correction,row.type,row.createdBy.name,row.createdBy.id].some(value=>String(value||'').toLocaleLowerCase().includes(needle))));
       const pages=Math.max(1,Math.ceil(shown.length/pageSize));page=Math.max(1,Math.min(page,pages));
@@ -9388,22 +9628,38 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         Table.html('<span class="suggestion-status '+escape(row.status.toLowerCase())+'">'+escape(row.status)+'</span>'),
         Table.html('<div class="wcs-data-table-actions"><button type="button" class="button secondary compact" data-suggestion-open="'+escape(row.id)+'" aria-label="'+(scope==='review'&&row.status==='Open'?'Review':'View')+' request: '+escape(row.context.title)+'">'+(scope==='review'&&row.status==='Open'?'Review request':'View request')+'</button></div>')
       ]})),empty:{title:query?'No matching suggestions':filter==='Open'?'No open suggestions':'No '+filter.toLowerCase()+' suggestions to show',description:query?'Try another document, person, or keyword.':'New requests will appear here when they are submitted.'}});
-      container.innerHTML=heading()+'<form class="wcs-data-table-search suggestion-search" data-suggestion-search><label class="sr-only" for="'+searchId+'">Search suggestions</label><input id="'+searchId+'" type="search" name="q" maxlength="150" placeholder="Search by document, person, or keyword" value="'+escape(query)+'"><button class="button" type="submit">Search</button>'+(query?'<button type="button" class="link" data-suggestion-clear>Clear</button>':'')+'</form><div class="wcs-data-table-results-label" role="status">'+shown.length+' '+(shown.length===1?'suggestion':'suggestions')+(query?' matching “'+escape(query)+'”':'')+'</div>'+table+(shown.length?'<div class="discovery-pagination"><span>Showing '+((page-1)*pageSize+1)+'–'+Math.min(page*pageSize,shown.length)+' of '+shown.length+'</span>'+global.WCSPagination.render({totalPages:pages,currentPage:page,href:n=>'#suggestion-page-'+n,ariaLabel:'Suggestion pages'})+'</div>':'');
+      container.innerHTML=heading()+(listingNotice?'<p class="suggestion-listing-notice" role="status">'+escape(listingNotice)+'</p>':'')+'<form class="wcs-data-table-search suggestion-search" data-suggestion-search><label class="sr-only" for="'+searchId+'">Search suggestions</label><input id="'+searchId+'" type="search" name="q" maxlength="150" placeholder="Search by document, person, or keyword" value="'+escape(query)+'"><button class="button" type="submit">Search</button>'+(query?'<button type="button" class="link" data-suggestion-clear>Clear</button>':'')+'</form><div class="wcs-data-table-results-label" role="status">'+shown.length+' '+(shown.length===1?'suggestion':'suggestions')+(query?' matching “'+escape(query)+'”':'')+'</div>'+table+(shown.length?'<div class="discovery-pagination"><span>Showing '+((page-1)*pageSize+1)+'–'+Math.min(page*pageSize,shown.length)+' of '+shown.length+'</span>'+global.WCSPagination.render({totalPages:pages,currentPage:page,href:n=>'#suggestion-page-'+n,ariaLabel:'Suggestion pages'})+'</div>':'');
     }
     async function refresh() {
-      const turn=++generation;
+      const turn=++generation;listAbort?.abort();listAbort=new global.AbortController();
       if(service.canList===false){container.removeAttribute('aria-busy');container.innerHTML='<div class="suggestion-inbox-heading"><div><h2>Suggestions</h2><p>Follow up in the document discussion.</p></div></div>'+Table.render({label:'Document suggestions',columns,empty:{title:'Suggestions stay with their document',description:'Suggestions are Confluence comments on the published document. Open its discussion to read and reply. Edits still follow the review and approval workflow.'}});return;}
       container.setAttribute('aria-busy','true');
       if(!rows.length)container.innerHTML=heading()+Table.render({label:'Suggestions',columns,loading:true,loadingLabel:'Loading suggestions…'});
-      try{const next=await service.list({scope});if(destroyed||turn!==generation)return;rows=next;render();}
+      try{const next=await service.list({scope,signal:listAbort.signal});if(destroyed||turn!==generation)return;rows=next;listingNotice=typeof next.listingNotice==='string'?next.listingNotice:'';render();}
       catch(error){if(destroyed||turn!==generation)return;rows=[];container.innerHTML=heading()+Table.render({label:'Suggestions',columns,empty:{title:error.code==='UNCONFIGURED'?'Suggestions are not connected yet':'Suggestions unavailable',description:error.message,action:error.code==='UNCONFIGURED'?undefined:Table.html('<button type="button" class="button secondary" data-suggestion-retry>Try again</button>')}});}
       finally {if(!destroyed&&turn===generation)container.removeAttribute('aria-busy');}
     }
     function openRecord(record) {
       const allowed=scope==='review'&&record.status==='Open'&&service.canTriage(record);requestId=id();
-      active=UI.dialog({title:record.type+' request',size:'wide',description:'A suggestion does not change or approve the document.',body:contextView(record.context)+'<div class="suggestion-request-copy"><h3>Suggested change</h3><p>'+escape(record.correction)+'</p><h3>Reason or supporting context</h3><p>'+escape(record.reason)+'</p></div><div class="suggestion-history"><h3>Request history</h3><ol>'+record.history.map(event=>'<li><strong>'+escape(event.action)+'</strong><span>'+escape(event.actor.name)+' · '+escape(niceDate(event.at))+'</span>'+(event.comment?'<p>'+escape(event.comment)+'</p>':'')+'</li>').join('')+'</ol></div>'+(allowed?'<form class="suggestion-decision" novalidate><div class="form-group"><label for="suggestion-decision-comment">Decision and follow-up</label><textarea id="suggestion-decision-comment" name="comment" required maxlength="3000" placeholder="Explain the decision. For a correction, reference the approved revision or follow-up action."></textarea></div><p class="suggestion-delivery">Resolve only after the request is addressed. Any content change must use the document’s review and approval workflow.</p><div class="form-error" role="alert" hidden></div><div class="modal-actions"><button class="button secondary" type="submit" name="decision" value="Dismissed">Dismiss with reason</button><button class="button" type="submit" name="decision" value="Resolved">Mark resolved</button></div></form>':'')+'<div class="suggestion-request-close"><button type="button" class="button secondary compact" data-suggestion-close>Close request</button></div>',onClose(){active=null;},onMount(handle){handle.body.querySelector('[data-suggestion-close]').onclick=()=>handle.close('close');const form=handle.body.querySelector('form');if(!form)return;let lastDecision=null;form.addEventListener('submit',async event=>{event.preventDefault();if(handle.busy)return;const errorBox=form.querySelector('.form-error'),decision={status:event.submitter?.value||'',comment:form.elements.comment.value,expectedRevision:record.revision},serialized=JSON.stringify(decision);if(lastDecision&&lastDecision!==serialized)requestId=id();lastDecision=serialized;handle.setBusy(true);form.querySelectorAll('button').forEach(button=>button.disabled=true);errorBox.hidden=true;
-          try{await service.decide(record.id,decision,requestId);handle.setBusy(false);handle.close('decided');if(!destroyed){notify('Suggestion '+decision.status.toLowerCase()+'.',{type:'success'});changed();}}
-          catch(error){handle.setBusy(false);form.querySelectorAll('button').forEach(button=>button.disabled=false);errorBox.textContent=error.message;errorBox.hidden=false;if(!destroyed)notify(error.message,{type:'error'});}
+      active=UI.dialog({title:record.type+' request',size:'wide',description:'A suggestion does not change or approve the document.',body:contextView(record.context)+recordLinks(record)+(record.conflict?'<p class="suggestion-listing-notice" role="alert">'+escape(record.conflictMessage||'This request has conflicting decisions. Review its history before recording a follow-up outcome.')+'</p>':'')+'<div class="suggestion-request-copy"><h3>Suggested change</h3><p>'+escape(record.correction)+'</p><h3>Reason or supporting context</h3><p>'+escape(record.reason)+'</p></div><div class="suggestion-history"><h3>Request history</h3><ol>'+record.history.map(event=>'<li><strong>'+escape(event.action)+'</strong><span>'+escape(event.actor.name)+' · '+escape(niceDate(event.at))+'</span>'+(event.comment?'<p>'+escape(event.comment)+'</p>':'')+'</li>').join('')+'</ol></div>'+(allowed?'<form class="suggestion-decision" novalidate><div class="form-group"><label for="suggestion-decision-comment">Decision and follow-up</label><textarea id="suggestion-decision-comment" name="comment" required maxlength="3000" placeholder="Explain the decision. For a correction, reference the approved revision or follow-up action."></textarea></div><p class="suggestion-delivery">Resolve only after the request is addressed. Any content change must use the document’s review and approval workflow.</p><div class="form-error" role="alert" hidden></div><div class="modal-actions"><button class="button secondary" type="submit" name="decision" value="Dismissed">Dismiss with reason</button><button class="button" type="submit" name="decision" value="Resolved">Mark resolved</button></div></form>':'')+'<div class="suggestion-request-close"><button type="button" class="button secondary compact" data-suggestion-close>Close request</button></div>',onClose(){active=null;},onMount(handle){handle.body.querySelector('[data-suggestion-close]').onclick=()=>handle.close('close');const form=handle.body.querySelector('form');if(!form)return;let lastDecision=null,pendingDecision=null,pendingButton=null;
+        const labels=new Map(Array.from(form.querySelectorAll('button')).map(button=>[button,button.textContent]));
+        form.addEventListener('submit',async event=>{
+          event.preventDefault();event.stopPropagation();if(handle.busy)return;
+          const errorBox=form.querySelector('.form-error'),decision=pendingDecision||{status:event.submitter?.value||'',comment:form.elements.comment.value,expectedRevision:record.revision},serialized=JSON.stringify(decision);
+          if(lastDecision&&lastDecision!==serialized)requestId=id();lastDecision=serialized;
+          handle.setBusy(true);form.querySelectorAll('button,textarea').forEach(field=>field.disabled=true);errorBox.hidden=true;
+          try{
+            const result=await service.decide(record.id,decision,requestId);
+            if(service.native&&(!result||result.status!==decision.status||result.conflict))fail('The decision could not be confirmed as the current outcome. Refresh this request and check the discussion.','CONFLICT');
+            handle.setBusy(false);handle.close('decided');
+            if(!destroyed){notify('Suggestion '+decision.status.toLowerCase()+'.',{type:'success'});changed();}
+          }catch(error){
+            handle.setBusy(false);
+            if(service.native&&(error.code==='OUTCOME_UNKNOWN'||error.outcome==='unknown')){pendingDecision=decision;pendingButton=pendingButton||event.submitter;}
+            form.querySelectorAll('button').forEach(button=>{button.disabled=!!pendingDecision&&button!==pendingButton;button.textContent=pendingDecision&&button===pendingButton?'Check decision':labels.get(button);});
+            form.elements.comment.disabled=!!pendingDecision;
+            errorBox.textContent=error.message;errorBox.hidden=false;if(!destroyed)notify(error.message,{type:'error'});
+          }
         });}});
     }
     function click(event){
@@ -9411,12 +9667,12 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(control.hasAttribute('data-page')){event.preventDefault();event.stopPropagation();page=Number(control.dataset.page)||1;render();container.querySelector('.wcs-data-table-scroll')?.focus({preventScroll:true});}
       else if(control.dataset.suggestionFilter){filter=control.dataset.suggestionFilter;page=1;render();}
       else if(control.hasAttribute('data-suggestion-clear')){query='';page=1;render();container.querySelector('[name=q]')?.focus();}
-      else if(control.hasAttribute('data-suggestion-retry'))UI.runButton(control,refresh);
+      else if(control.hasAttribute('data-suggestion-retry')||control.hasAttribute('data-suggestion-refresh'))UI.runButton(control,refresh);
       else if(control.dataset.suggestionOpen){const record=rows.find(row=>row.id===control.dataset.suggestionOpen);if(record)openRecord(record);}
     }
     function search(event){if(!event.target.hasAttribute('data-suggestion-search'))return;event.preventDefault();event.stopPropagation();query=String(new FormData(event.target).get('q')||'').trim().slice(0,150);page=1;render();container.querySelector('.wcs-data-table-scroll')?.focus({preventScroll:true});}
     const storageChanged=event=>{if(event.key===STORE)refresh();};container.addEventListener('click',click);container.addEventListener('submit',search);global.addEventListener('storage',storageChanged);refresh();
-    return {refresh,destroy(){destroyed=true;generation++;container.removeEventListener('click',click);container.removeEventListener('submit',search);global.removeEventListener('storage',storageChanged);if(active){active.setBusy(false);active.close('destroy');}}};
+    return {refresh,destroy(){destroyed=true;generation++;listAbort?.abort();container.removeEventListener('click',click);container.removeEventListener('submit',search);global.removeEventListener('storage',storageChanged);if(active){active.setBusy(false);active.close('destroy');}}};
   }
   return {createService,mount,mountInbox,captureSelection,normalizePayload,canTriage,requestMarkdown,storeKey:STORE};
 }));
@@ -11248,5 +11504,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 
 ;
 
-  modules['mine'] = { version: '66913248758f' };
+  modules['mine'] = { version: '7ab540d82742' };
 })();
