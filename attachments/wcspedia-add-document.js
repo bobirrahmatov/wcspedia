@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === 'c15fe3c8ad5b') return;
+  if (registry.addDocument && registry.addDocument.version === '31017340734c') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -3503,6 +3503,30 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       accessLast = access;
       return clone(access);
     }
+    async function loadNavigationAccess(options) {
+      options = options || {};
+      // This read only decides whether to offer the local authoring screen.
+      // It must not compute native mutation permissions or hydrate a workspace.
+      // Saving still obtains fresh identity, policy and native page permissions.
+      if (!nativeSession || mode !== 'confluence') return loadAccess(options);
+      throwIfAborted(options.signal);
+      var startup = await Promise.all([
+        waitForSearchSpace(options.signal),
+        request(endpoint('/rest/api/user/current'), { signal: options.signal }).then(json)
+      ]);
+      throwIfAborted(options.signal);
+      config.spaceKey = startup[0];
+      var user = startup[1], E = entitlementHelper();
+      if (!object(user)) fail('Unexpected Confluence current-user response.');
+      observeSearchIdentity(user);
+      var identity = E.identity(user);
+      if (!identity || !policyConfigured) return { identity: identity, canOpenDocumentEditor: false };
+      // The verified policy reader performs its own native host/scope check.
+      // Reading root/host operations again adds no authority to this UI grant.
+      var attachment = await readEntitlementAttachment(options.signal);
+      throwIfAborted(options.signal);
+      return { identity: identity, canOpenDocumentEditor: E.hasGrant(attachment.policy, identity, 'content.create', '*') };
+    }
     async function loadAccess(options) {
       options = options || {};
       throwIfAborted(options.signal);
@@ -4858,7 +4882,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       output.complete = true; emit();
       return output;
     }
-    return Object.freeze({ load: load, loadSuggestionPolicy: async function(options) { return (await readEntitlementAttachment(options && options.signal)).policy; }, loadAccess: loadAccess, inspectEntitlementRecovery: inspectEntitlementRecovery, reconcileEntitlementAttachment: reconcileEntitlementAttachment, loadMetrics: loadMetrics, recordView: recordView, submitAction: submitAction, deleteDocument: deleteDocument, submitEntitlementCommand: submitEntitlementCommand, syncEntitlementAccess: syncEntitlementAccess, saveAttachment: saveAttachment, searchPages: searchPages, loadLanding: loadLanding, loadPublishedArticle: loadPublishedArticle, invalidateSearch: clearSearchReads, info: function () { return { mode: mode, authoringMode: nativeSession ? 'confluence-session' : 'service', rootPageId: pageId, searchSpaceKey: verifiedSearchSpace, attachmentPageId: attachmentPageId, attachmentFilename: filename, workflowConfigured: nativeSession || !!workflowURL, workspaceConfigured: nativeSession || !!workspaceURL, entitlementsConfigured: policyConfigured, entitlementsPageId: entitlementPageId, entitlementsSource: entitlementSource, entitlementsFilename: entitlementFilename, entitlementServiceConfigured: nativeSession || !!entitlementURL, metricsConfigured: mode === 'confluence' && (nativeSession || !!metricsURL), directAttachmentWrites: config.allowAttachmentWrites === true, nativePublicationEnabled: publicationEnabled }; } });
+    return Object.freeze({ load: load, loadSuggestionPolicy: async function(options) { return (await readEntitlementAttachment(options && options.signal)).policy; }, loadNavigationAccess: loadNavigationAccess, loadAccess: loadAccess, inspectEntitlementRecovery: inspectEntitlementRecovery, reconcileEntitlementAttachment: reconcileEntitlementAttachment, loadMetrics: loadMetrics, recordView: recordView, submitAction: submitAction, deleteDocument: deleteDocument, submitEntitlementCommand: submitEntitlementCommand, syncEntitlementAccess: syncEntitlementAccess, saveAttachment: saveAttachment, searchPages: searchPages, loadLanding: loadLanding, loadPublishedArticle: loadPublishedArticle, invalidateSearch: clearSearchReads, info: function () { return { mode: mode, authoringMode: nativeSession ? 'confluence-session' : 'service', rootPageId: pageId, searchSpaceKey: verifiedSearchSpace, attachmentPageId: attachmentPageId, attachmentFilename: filename, workflowConfigured: nativeSession || !!workflowURL, workspaceConfigured: nativeSession || !!workspaceURL, entitlementsConfigured: policyConfigured, entitlementsPageId: entitlementPageId, entitlementsSource: entitlementSource, entitlementsFilename: entitlementFilename, entitlementServiceConfigured: nativeSession || !!entitlementURL, metricsConfigured: mode === 'confluence' && (nativeSession || !!metricsURL), directAttachmentWrites: config.allowAttachmentWrites === true, nativePublicationEnabled: publicationEnabled }; } });
   }
   return Object.freeze({ create: create, validateData: validateData, addCategory: addCategory, facetLabel: facetLabel });
 });
@@ -5257,5 +5281,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: 'c15fe3c8ad5b', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '31017340734c', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

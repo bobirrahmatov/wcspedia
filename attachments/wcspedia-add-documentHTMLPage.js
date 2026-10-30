@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var revision = 'c15fe3c8ad5b';
+  var revision = '31017340734c';
   function placeHeader(host) {
     // The Add document action belongs to the existing navBar, never a second
     // header or a viewport FAB. Menus still portal to body to avoid clipping.
@@ -124,7 +124,7 @@
           accessTimeoutMs: accessTimeout,
           reuseNavigationAccess: true,
           canCreate: async function (request) {
-            var access = await adapter.loadAccess({signal: request.signal});
+            var access = await (configuration.authoringMode === 'confluence-session' ? adapter.loadNavigationAccess : adapter.loadAccess)({signal: request.signal});
             if (configuration.authoringMode === 'confluence-session') return access.canOpenDocumentEditor === true;
             if (access.creationMessage && !(access.effectivePermissions && access.effectivePermissions['content.create'] === true)) {
               var setupError = new Error(access.creationMessage);
