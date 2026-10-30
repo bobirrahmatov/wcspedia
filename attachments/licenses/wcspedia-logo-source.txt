@@ -1,19 +1,17 @@
-WCSpedia text wordmark — 30 October 2026
+WCSpedia text wordmark — 31 October 2026
 
-The current wordmark is native HTML text: WCSpedia. brand.js shares the same
-span between the landing page and startup overlay. The shared stylesheet
-uses existing Citi-Sans-Text: WCS at weight 700, pedia at weight 400, with a static blue-to-violet linear
-text gradient and an original small CSS red accent.
+The wordmark is native HTML text: WCSpedia. The shared CSS presents the name
+in lowercase, using the existing registered Citi-Sans-Text bold face,
+a static navy-to-blue text gradient and an original short underline beneath wcs.
+The loading line is “Find clarity. Move forward.”. Status updates are
+announced separately; the landing knowledge headline remains unchanged.
 
-Visual references: local Mosaic typography, blue/red palette and compact
-wordmark; Paysend's typographic identity (https://paysend.com/). No Paysend
-or Mosaic logo artwork is copied. No image, SVG, raster, embedded font,
-remote font or logo URL is used for the current WCSpedia wordmark.
+The same brand.js component and loading-overlay.css rules are used on the
+landing page and in the startup overlay. Theme-aware gradient stops and
+solid-colour, print and forced-colour fallbacks are included. No new font,
+logo image, SVG, data URL or external branding dependency is required.
 
-Solid-colour, dark-theme, print and forced-colour fallbacks are included.
-The existing Citi header and PDF/Word export logos remain separate.
-Earlier supplied PNG and outlined SVG are retained locally for history,
-but are no longer included in runtime deployment or generated settings.
-
-Refined identity: own loading line “Good knowledge. Better work.”, with
-status updates announced separately. Landing headline stays unchanged.
+Visual references: local Mosaic simplicity and compact startup typography.
+No third-party logo artwork is copied. The existing Citi header and PDF/Word
+export logos remain separate. Historical local PNG/SVG wordmarks are not
+included in runtime deployment or generated settings.

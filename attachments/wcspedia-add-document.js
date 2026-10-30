@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '0cb7a477338c') return;
+  if (registry.addDocument && registry.addDocument.version === 'b0ed10d1898b') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -5283,5 +5283,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '0cb7a477338c', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: 'b0ed10d1898b', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('0cb7a477338c'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('b0ed10d1898b'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -145,8 +145,8 @@
 /* Shared text wordmark. Uses registered space fonts and CSS; no logo media request. */
 (function(w){
   'use strict';
-  if(w.WCSBrand?.version==='text-gradient-v2')return;
-  w.WCSBrand=Object.freeze({version:'text-gradient-v2',tagline:'Good knowledge. Better work.',wordmark:'<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>'});
+  if(w.WCSBrand?.version==='text-gradient-v3')return;
+  w.WCSBrand=Object.freeze({version:'text-gradient-v3',tagline:'Find clarity. Move forward.',wordmark:'<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>'});
 })(window);
 
 ;
@@ -230,7 +230,7 @@
         overlay = d.createElement('div');overlay.className = 'wcs-loading-overlay';overlay.setAttribute('role','dialog');
         overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Loading WCSpedia');overlay.tabIndex = -1;
         overlay.innerHTML = '<div class="wcs-loading-panel"><div class="wcs-loading-wordmark">'+(w.WCSBrand?.wordmark || '<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>')+'</div><p class="wcs-loading-tagline"></p><p class="wcs-loading-message" id="'+id+'" role="status" aria-live="polite"></p><div class="wcs-loading-track" role="progressbar" aria-label="Loading WCSpedia"><div class="wcs-loading-fill"></div></div></div>';
-        overlay.querySelector('.wcs-loading-tagline').textContent = w.WCSBrand?.tagline || 'Good knowledge. Better work.';
+        overlay.querySelector('.wcs-loading-tagline').textContent = w.WCSBrand?.tagline || 'Find clarity. Move forward.';
         message = overlay.querySelector('.wcs-loading-message');bar = overlay.querySelector('.wcs-loading-track');fill = overlay.querySelector('.wcs-loading-fill');
         d.body.append(overlay);overlay.focus({preventScroll:true});
         listen(d,'keydown',keys,true);listen(fill,'animationend',animationEnded);listen(d,'visibilitychange',visibilityChanged);
@@ -560,5 +560,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: '0cb7a477338c' };
+  modules['faq'] = { version: 'b0ed10d1898b' };
 })();
