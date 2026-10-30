@@ -1,23 +1,16 @@
-WCSpedia logo
-Source: PNG supplied by the user on 16 October 2026.
-Original filename: codex-clipboard-cb9c6cf1-41cd-4bda-af1a-6ba184199015.png
-Stored filename: wcspedia-logo.png
-Treatment: copied byte-for-byte without resizing or other image changes.
-SHA-256: eb99cd76005d2b41a40c7bab1e4a125af3f1568cad4d01657a2acdc3c915c079
+WCSpedia text wordmark — 30 October 2026
 
-WCSpedia vector wordmark (30 October 2026)
-Stored filename: wcspedia-wordmark.svg
-SVG file SHA-256: 21cbca66c6547cb7ca8d55a536577e4a8e48d9a353ef62e43af5e547051a75e5
-Treatment: WCSpedia lettering outlined from the already available Citi Sans Text
-Bold font; original two-leaf knowledge-book glyph; Citi blue #255BE3 with a
-red #FF3C28 dot above the i. The Mosaic project supplied the visual reference
-for compact blue lettering and the red accent. No Mosaic paths, name or Citi
-logo were copied. No live text, embedded font, raster image or external request
-is needed to render this SVG.
-Source face: Citi Sans Text Bold (citi-text-bold.ttf), existing local approved asset.
-Source font SHA-256: 0a11da652a331d1c434266d6d59e343383c6a621d52a35038a68c09f464982dc
-Development generator: generate-wordmark.py --font /path/to/citi-text-bold.ttf
-The generator writes the same SVG markup into brand.js for startup and into
-assets/wcspedia-wordmark.svg for direct attachment/portable use. CSS may change
-currentColor for a readable dark-theme blue; the red accent is fixed.
-The original supplied PNG above is retained for legacy references.
+The current wordmark is native HTML text: WCSpedia. brand.js shares the same
+span between the landing page and startup overlay. The shared stylesheet
+uses existing Citi-Sans-Text at weight 700, a static blue-to-violet linear
+text gradient and an original small CSS red accent.
+
+Visual references: local Mosaic typography, blue/red palette and compact
+wordmark; Paysend's typographic identity (https://paysend.com/). No Paysend
+or Mosaic logo artwork is copied. No image, SVG, raster, embedded font,
+remote font or logo URL is used for the current WCSpedia wordmark.
+
+Solid-colour, dark-theme, print and forced-colour fallbacks are included.
+The existing Citi header and PDF/Word export logos remain separate.
+Earlier supplied PNG and outlined SVG are retained locally for history,
+but are no longer included in runtime deployment or generated settings.
