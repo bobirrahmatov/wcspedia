@@ -9,7 +9,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   var paths={
-  "print": '<path d="M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v7H6z"/><path d="M17 11h1"/>',
+  "print": '<path d="M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v7H6zM17 12h1"/>',
   "copy": "<rect x=\"8\" y=\"8\" width=\"12\" height=\"13\" rx=\"2\"/><path d=\"M16 8V3H3v13h5\"/>",
   "book": "<path d=\"M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3z\"/>",
   "file": "<path d=\"M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h6\"/>",
@@ -27,7 +27,9 @@
   "grid": "<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/>",
   "clock": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>",
   "close": "<path d=\"m6 6 12 12M6 18 18 6\"/>",
-  "edit": "<path d=\"m15 4 5 5M4 20l5-1L21 7l-5-5L4 14z\"/>",
+  "edit": '<path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15v5Z"/>',
+  "suggest": '<path d="M21 14a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v7ZM7 8h10M7 12h6"/>',
+  "markdown": '<path d="M9 3h11v14H9zM5 7H3v14h13v-2"/>',
   "download": "<path d=\"M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5\"/>",
   "link": "<path d=\"M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2\"/>",
   "users": "<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3 21v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6m1 4c3 0 4 2 4 6\"/>",
@@ -102,7 +104,7 @@
     size=Math.max(12,Math.min(48,size));
     var classes='wcs-icon'+(options.className?' '+String(options.className).replace(/[^a-zA-Z0-9 _-]/g,''):'');
     var accessible=options.label?' role="img" aria-label="'+escape(options.label)+'"':' aria-hidden="true"';
-    return '<svg class="'+classes+'" data-wcs-icon="'+name+'" viewBox="'+(viewBoxes[name]||'0 0 24 24')+'" width="'+size+'" height="'+size+'" fill="'+(isFilled||options.filled===true?'currentColor':'none')+'" stroke="'+(isFilled?'none':'currentColor')+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"'+accessible+'>'+(isFilled?'<path fill-rule="evenodd" clip-rule="evenodd" d="'+filled[name]+'"/>':paths[name])+'</svg>';
+    return '<svg class="'+classes+'" data-wcs-icon="'+name+'" viewBox="'+(viewBoxes[name]||'0 0 24 24')+'" width="'+size+'" height="'+size+'" fill="'+(isFilled||options.filled===true?'currentColor':'none')+'" stroke="'+(isFilled?'none':'currentColor')+'" stroke-width="'+(options.variant==='action'?'1.7':'1.5')+'" stroke-linecap="round" stroke-linejoin="round" focusable="false"'+accessible+'>'+(isFilled?'<path fill-rule="evenodd" clip-rule="evenodd" d="'+filled[name]+'"/>':paths[name])+'</svg>';
   }
   function node(doc,name,options){var holder=doc.createElement('span');holder.innerHTML=svg(name,options);return holder.firstElementChild;}
   function avatar(person,options){
