@@ -2,15 +2,16 @@ WCSpedia text wordmark — 31 October 2026
 
 The wordmark is native HTML text: WCSpedia. The shared CSS presents the name
 in lowercase, using the existing registered Citi-Sans-Text bold face,
-a static navy-to-blue text gradient and an original short underline beneath wcs.
+solid Citi blue letters and a red dot on the native i glyph; no underline.
 The loading line is “Find clarity. Move forward.”. Status updates are
 announced separately; the landing knowledge headline remains unchanged.
 
 The same brand.js component and loading-overlay.css rules are used on the
-landing page and in the startup overlay. Theme-aware gradient stops and
+landing page and in the startup overlay. Theme-aware blue and
 solid-colour, print and forced-colour fallbacks are included. No new font,
 logo image, SVG, data URL or external branding dependency is required.
 
+The red dot uses a clipped two-colour fill on the actual font glyph.
 Visual references: local Mosaic simplicity and compact startup typography.
 No third-party logo artwork is copied. The existing Citi header and PDF/Word
 export logos remain separate. Historical local PNG/SVG wordmarks are not

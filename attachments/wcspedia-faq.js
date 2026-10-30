@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('b0ed10d1898b'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('e873788a7aff'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -145,8 +145,8 @@
 /* Shared text wordmark. Uses registered space fonts and CSS; no logo media request. */
 (function(w){
   'use strict';
-  if(w.WCSBrand?.version==='text-gradient-v3')return;
-  w.WCSBrand=Object.freeze({version:'text-gradient-v3',tagline:'Find clarity. Move forward.',wordmark:'<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>'});
+  if(w.WCSBrand?.version==='citi-text-v4')return;
+  w.WCSBrand=Object.freeze({version:'citi-text-v4',tagline:'Find clarity. Move forward.',wordmark:'<span class="wcs-brand-text" role="img" aria-label="WCSpedia"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">ped<span class="wcs-brand-i">i</span>a</span></span>'});
 })(window);
 
 ;
@@ -229,7 +229,7 @@
         const id = 'wcs-loading-message-' + (++sequence);
         overlay = d.createElement('div');overlay.className = 'wcs-loading-overlay';overlay.setAttribute('role','dialog');
         overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Loading WCSpedia');overlay.tabIndex = -1;
-        overlay.innerHTML = '<div class="wcs-loading-panel"><div class="wcs-loading-wordmark">'+(w.WCSBrand?.wordmark || '<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>')+'</div><p class="wcs-loading-tagline"></p><p class="wcs-loading-message" id="'+id+'" role="status" aria-live="polite"></p><div class="wcs-loading-track" role="progressbar" aria-label="Loading WCSpedia"><div class="wcs-loading-fill"></div></div></div>';
+        overlay.innerHTML = '<div class="wcs-loading-panel"><div class="wcs-loading-wordmark">'+(w.WCSBrand?.wordmark || '<span class="wcs-brand-text" role="img" aria-label="WCSpedia"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">ped<span class="wcs-brand-i">i</span>a</span></span>')+'</div><p class="wcs-loading-tagline"></p><p class="wcs-loading-message" id="'+id+'" role="status" aria-live="polite"></p><div class="wcs-loading-track" role="progressbar" aria-label="Loading WCSpedia"><div class="wcs-loading-fill"></div></div></div>';
         overlay.querySelector('.wcs-loading-tagline').textContent = w.WCSBrand?.tagline || 'Find clarity. Move forward.';
         message = overlay.querySelector('.wcs-loading-message');bar = overlay.querySelector('.wcs-loading-track');fill = overlay.querySelector('.wcs-loading-fill');
         d.body.append(overlay);overlay.focus({preventScroll:true});
@@ -560,5 +560,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: 'b0ed10d1898b' };
+  modules['faq'] = { version: 'e873788a7aff' };
 })();
