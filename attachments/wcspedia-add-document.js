@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '7ab540d82742') return;
+  if (registry.addDocument && registry.addDocument.version === 'c15fe3c8ad5b') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -16,6 +16,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   var paths={
+  "print": '<path d="M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v7H6z"/><path d="M17 11h1"/>',
   "copy": "<rect x=\"8\" y=\"8\" width=\"12\" height=\"13\" rx=\"2\"/><path d=\"M16 8V3H3v13h5\"/>",
   "book": "<path d=\"M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3z\"/>",
   "file": "<path d=\"M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h6\"/>",
@@ -4863,61 +4864,94 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
 ;
-/* Shared page scroll control. Uses the existing Confluence scroll owner; no
- * nested scroll box, network requests or hash navigation. Inline SVG adapted
- * from the user's CodeFronts progress-ring example. */
-(function(win){
+/* WCSpedia page scroll control, adapted from WCSpedia scroll-tools.js. The ring,
+ * arrow and animations preserve the WCSpedia control (original ring reference:
+ * the user's CodeFronts example). Uses the existing native scroll owner; adds
+ * no scroll container, network request or hash navigation. */
+(function (w,d) {
   'use strict';
-  if(!win||win.WCSScrollTools)return;
-  var doc=win.document,instance;
-  function mount(){
-    if(instance){instance.refresh();return instance;}
-    if(!doc.body)return null;
-    var button=doc.getElementById('wcs-back-to-top');if(button)button.remove();
-    button=doc.createElement('button');button.id='wcs-back-to-top';button.type='button';button.hidden=true;
-    button.setAttribute('aria-label','Back to top');button.title='Back to top';button.dataset.wcsScrollControl='';
-    button.innerHTML='<svg class="wcs-scroll-ring-svg" viewBox="0 0 52 52" aria-hidden="true" focusable="false"><circle class="wcs-scroll-track" cx="26" cy="26" r="22" fill="none" stroke-width="3.5"/><circle class="wcs-scroll-ring" cx="26" cy="26" r="22" fill="none" stroke-width="3.5" stroke-linecap="round"/></svg>'+(win.WCSIcons?win.WCSIcons.svg('up',{className:'wcs-scroll-arrow'}):'<svg class="wcs-scroll-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 19V6M6 12l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-    doc.body.append(button);
-    var frame=null,disposed=false,pane=null,content=null,resize=null,mutations=null;
-    function primary(){return doc.querySelector('#wcspedia')||doc.querySelector('#main-content')||doc.querySelector('.wiki-content')||doc.querySelector('main')||doc.body;}
+  if(w.WCSScrollTools)return;
+  var instance=null;
+  function allowed() {
+    if(!d.body)return false;
+    var space=d.querySelector('meta[name="ajs-space-key"]')?.content;
+    try {space=space||(w.AJS&&w.AJS.Meta&&w.AJS.Meta.get('space-key'));}catch(_){}
+    if(space&&space!=='wcspedia')return false;
+    if(!d.querySelector('#wcspedia,[data-wcs-header-add-document],[data-wcs-reader-nav],.wcs-published-article'))return false;
+    var url=new URL(w.location.href);
+    return !/\/(?:admin|plugins\/servlet\/admin)(?:\/|$)/i.test(url.pathname) &&
+      !/(?:editpage|createpage|createblogpost|viewpreviousversions|diffpages|viewpagehistory|preview|spacepermissions)\.action$/i.test(url.pathname) &&
+      !/[?&](?:pageVersion|preview)=/.test(url.search) &&
+      !/^#\/(?:create|edit)(?:[/?]|$)/i.test(url.hash) &&
+      !d.querySelector('#editpageform,#createpageform,#content-editor,body.contenteditor');
+  }
+  function mount(options) {
+    options=options||{};
+    if(instance){instance.setRoot(options.root);instance.refresh();return instance;}
+    if(!allowed())return null;
+    var suppliedRoot=options.root,button=d.createElement('button');
+    button.id='wcs-back-to-top';button.type='button';button.hidden=true;
+    button.setAttribute('aria-label','Back to top');button.title='Back to top';button.setAttribute('data-wcs-scroll-control','');button.setAttribute('data-wcs-owned','');
+    button.innerHTML='<svg class="wcs-scroll-ring-svg" viewBox="0 0 52 52" aria-hidden="true" focusable="false"><circle class="wcs-scroll-track" cx="26" cy="26" r="22" fill="none" stroke-width="3.5"/><circle class="wcs-scroll-ring" cx="26" cy="26" r="22" fill="none" stroke-width="3.5" stroke-linecap="round"/></svg><svg class="wcs-scroll-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>';
+    d.body.append(button);
+    var frame=null,idleTimer=null,disposed=false,pane=null,content=null,lastTop=0,activity=false,scrollPending=false,hovered=false;
+    var resize,mutations,heading=null,headingAdded=false;
+    var idleMs=Number.isFinite(options.idleMs)?Math.max(200,Math.min(10000,options.idleMs)):1400;
+    function primary(){return suppliedRoot?.isConnected?suppliedRoot:d.querySelector('#wcspedia')||d.querySelector('#main-content')||d.querySelector('.wiki-content')||d.querySelector('main')||d.body;}
     function owner(node){
-      for(var el=node;el&&el!==doc.body&&el!==doc.documentElement;el=el.parentElement){
-        if(/^(auto|scroll)$/.test(win.getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight)return el;
+      for(var el=node;el&&el!==d.body&&el!==d.documentElement;el=el.parentElement){
+        if(/^(auto|scroll)$/.test(w.getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight)return el;
       }
-      return doc.scrollingElement||doc.documentElement;
+      return d.scrollingElement||d.documentElement;
     }
-    function rootPane(el){return el===doc.scrollingElement||el===doc.documentElement||el===doc.body;}
-    function modal(){return Array.from(doc.querySelectorAll('[aria-modal="true"]')).some(function(el){return !el.hidden&&el.getClientRects().length;});}
+    function documentPane(el){return el===d.scrollingElement||el===d.documentElement||el===d.body;}
+    function modal(){return Array.from(d.querySelectorAll('[aria-modal="true"]')).some(function(el){var style=w.getComputedStyle(el);return !el.hidden&&style.display!=='none'&&style.visibility!=='hidden'&&el.getClientRects().length;});}
+    function endActivity(){activity=false;w.clearTimeout(idleTimer);idleTimer=null;}
+    function recordActivity(){activity=true;w.clearTimeout(idleTimer);idleTimer=w.setTimeout(function(){idleTimer=null;activity=false;schedule();},idleMs);}
     function update(){
-      frame=null;if(disposed)return;
-      var nextContent=primary(),nextPane=owner(nextContent);
-      if(content!==nextContent||pane!==nextPane){content=nextContent;pane=nextPane;if(resize){resize.disconnect();resize.observe(content);if(pane!==content)resize.observe(pane);}}
-      var top=rootPane(pane)?Math.max(win.scrollY||0,pane.scrollTop||0):pane.scrollTop;
-      var max=Math.max(0,pane.scrollHeight-(rootPane(pane)?doc.documentElement.clientHeight||win.innerHeight:pane.clientHeight));
-      var progress=max?Math.min(1,Math.max(0,top/max)):0;
-      button.style.setProperty('--wcs-scroll-progress',progress.toFixed(4));
-      button.hidden=!max||progress<=0.08||modal();
+      frame=null;if(disposed)return;if(!allowed()){destroy();return;}
+      var moved=scrollPending;scrollPending=false;
+      var nextContent=primary(),nextPane=owner(nextContent),changed=pane!==nextPane||content!==nextContent;
+      if(changed){content=nextContent;pane=nextPane;endActivity();if(resize){resize.disconnect();resize.observe(content);if(pane!==content)resize.observe(pane);}}
+      var viewport=documentPane(pane)?d.documentElement.clientHeight||w.innerHeight:pane.clientHeight;
+      var top=documentPane(pane)?Math.max(w.scrollY||0,pane.scrollTop||0):pane.scrollTop;
+      var max=Math.max(0,pane.scrollHeight-viewport),progress=max?Math.max(0,Math.min(1,top/max)):0;
+      var longPage=viewport>0&&max>=Math.max(320,viewport);
+      if(!changed&&moved&&Math.abs(top-lastTop)>0.5&&longPage&&progress>0.08)recordActivity();
+      lastTop=top;button.style.setProperty('--wcs-scroll-progress',progress.toFixed(4));
+      if(!longPage||progress<=0.08||modal()){endActivity();button.hidden=true;return;}
+      button.hidden=!(activity||hovered||d.activeElement===button);
     }
-    function schedule(){if(!disposed&&frame===null)frame=win.requestAnimationFrame(update);}
+    function schedule(){if(!disposed&&frame===null)frame=w.requestAnimationFrame(update);}
+    function scrolling(){scrollPending=true;schedule();}
+    function pageHide(event){if(!event.persisted)destroy();}
+    function pageShow(event){if(event.persisted){endActivity();hovered=false;}schedule();}
+    function enter(){hovered=true;schedule();}
+    function leave(){hovered=false;schedule();}
+    function releaseHeading(){if(!heading)return;heading.removeEventListener('blur',releaseHeading);if(headingAdded&&heading.getAttribute('tabindex')==='-1')heading.removeAttribute('tabindex');heading=null;headingAdded=false;}
     function toTop(){
-      if(modal())return;
-      pane=owner(primary());var behavior=win.matchMedia&&win.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
-      if(rootPane(pane))win.scrollTo({top:0,behavior:behavior});else if(pane.scrollTo)pane.scrollTo({top:0,behavior:behavior});else pane.scrollTop=0;
-      var heading=primary().querySelector('h1,h2');
-      if(heading){var added=!heading.hasAttribute('tabindex');if(added){heading.setAttribute('tabindex','-1');heading.addEventListener('blur',function cleanup(){heading.removeAttribute('tabindex');},{once:true});}heading.focus({preventScroll:true});}
+      if(disposed||!allowed()||modal())return;
+      var target=primary(),scrollOwner=owner(target),behavior=w.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+      endActivity();hovered=false;
+      if(documentPane(scrollOwner))w.scrollTo({top:0,behavior:behavior});else if(scrollOwner.scrollTo)scrollOwner.scrollTo({top:0,behavior:behavior});else scrollOwner.scrollTop=0;
+      releaseHeading();heading=target.matches('h1,h2')?target:target.querySelector('h1,h2');
+      if(heading){headingAdded=!heading.hasAttribute('tabindex');if(headingAdded)heading.setAttribute('tabindex','-1');heading.addEventListener('blur',releaseHeading,{once:true});heading.focus({preventScroll:true});}
       schedule();
     }
-    button.addEventListener('click',toTop);
-    doc.addEventListener('scroll',schedule,{capture:true,passive:true});win.addEventListener('scroll',schedule,{passive:true});win.addEventListener('resize',schedule,{passive:true});win.addEventListener('pageshow',schedule);
-    if(win.visualViewport)win.visualViewport.addEventListener('resize',schedule,{passive:true});
-    if(win.ResizeObserver)resize=new win.ResizeObserver(schedule);
-    // Only structural changes: writing progress styles does not trigger this.
-    if(win.MutationObserver){mutations=new win.MutationObserver(schedule);mutations.observe(doc.body,{childList:true,subtree:true});}
-    instance={refresh:schedule,destroy:function(){disposed=true;if(frame!==null)win.cancelAnimationFrame(frame);if(resize)resize.disconnect();if(mutations)mutations.disconnect();doc.removeEventListener('scroll',schedule,true);win.removeEventListener('scroll',schedule);win.removeEventListener('resize',schedule);win.removeEventListener('pageshow',schedule);if(win.visualViewport)win.visualViewport.removeEventListener('resize',schedule);button.remove();instance=null;}};
-    update();return instance;
+    function destroy(){
+      if(disposed)return;disposed=true;endActivity();if(frame!==null)w.cancelAnimationFrame(frame);frame=null;
+      resize?.disconnect();mutations?.disconnect();releaseHeading();
+      d.removeEventListener('scroll',scrolling,true);w.removeEventListener('scroll',scrolling);w.removeEventListener('resize',schedule);w.removeEventListener('pageshow',pageShow);w.removeEventListener('pagehide',pageHide);w.removeEventListener('hashchange',schedule);w.removeEventListener('popstate',schedule);w.visualViewport?.removeEventListener('resize',schedule);
+      button.removeEventListener('click',toTop);button.removeEventListener('mouseenter',enter);button.removeEventListener('mouseleave',leave);button.removeEventListener('focus',schedule);button.removeEventListener('blur',schedule);button.remove();instance=null;
+    }
+    button.addEventListener('click',toTop);button.addEventListener('mouseenter',enter);button.addEventListener('mouseleave',leave);button.addEventListener('focus',schedule);button.addEventListener('blur',schedule);
+    d.addEventListener('scroll',scrolling,{capture:true,passive:true});w.addEventListener('scroll',scrolling,{passive:true});w.addEventListener('resize',schedule,{passive:true});w.addEventListener('pageshow',pageShow);w.addEventListener('pagehide',pageHide);w.addEventListener('hashchange',schedule);w.addEventListener('popstate',schedule);w.visualViewport?.addEventListener('resize',schedule,{passive:true});
+    if(w.ResizeObserver)resize=new w.ResizeObserver(schedule);
+    if(w.MutationObserver){mutations=new w.MutationObserver(function(changes){if(changes.some(function(c){return c.type==='childList'||(c.target!==button&&(c.target===d.body||c.target.closest?.('[aria-modal="true"]')));}))schedule();});mutations.observe(d.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden','aria-modal']});}
+    instance={refresh:schedule,setRoot:function(root){if(root?.nodeType===1)suppliedRoot=root;},destroy:destroy};update();return instance;
   }
-  win.WCSScrollTools={mount:mount};
-})(typeof window!=='undefined'?window:null);
+  w.WCSScrollTools={mount:mount,destroy:function(){instance?.destroy();}};
+})(window,document);
 
 ;
 /* Standalone Confluence navigation widget. Authorization is supplied by the
@@ -5223,5 +5257,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '7ab540d82742', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: 'c15fe3c8ad5b', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

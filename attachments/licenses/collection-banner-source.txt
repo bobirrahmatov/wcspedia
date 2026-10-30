@@ -1,0 +1,10 @@
+WCSpedia collection banner
+Copied without modification from ../mosaic/attachments/mosaic-resources-banner.webp
+Reference implementation: Mosaic Resources, src/resources.js and src/site.css.
+
+Original asset generated with imagegen from the user's reference screenshot.
+Original source: /Users/bobrahmatov/.codex/generated_images/01a184a6-5d76-7700-b788-d533823d7b5d/exec-52c69bed-a0f7-446c-960a-b30550bae8d8.png
+Source dimensions: 2243 x 701. Mosaic conversion: cwebp quality 86.
+Photograph: diagonal orange/coral and teal woven threads with wooden loom rods.
+No external runtime image request or font download is required.
+User requested Mosaic Resources visual parity for WCSpedia business areas on 2026-10-30.

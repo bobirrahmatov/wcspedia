@@ -5,15 +5,45 @@
  */
 (function () {
   'use strict';
-  var revision = '7ab540d82742';
-  function placeFloating(host) {
-    // Portal out of themed headers: transforms/overflow there can clip fixed controls.
-    host.setAttribute('data-wcs-floating-add', '');
+  var revision = 'c15fe3c8ad5b';
+  function placeHeader(host) {
+    // The Add document action belongs to the existing navBar, never a second
+    // header or a viewport FAB. Menus still portal to body to avoid clipping.
+    host.removeAttribute('data-wcs-floating-add');
     host.removeAttribute('data-wcs-before-create');
     host.style.removeProperty('--wcs-add-top');
-    document.body.append(host);
-    window.WCSScrollTools?.mount();
-    return function () {};
+    var stopped=false, frame=null, observer=null, slot=host.wcsHeaderSlot||null;
+    function visibility() {
+      var nativeEditor=/(?:editpage|createpage|createblogpost|viewpagehistory|diffpages|viewpreviousversions|preview|spacepermissions)\.action$/i.test(window.location.pathname)||!!document.querySelector('#editpageform,#createpageform,#content-editor,body.contenteditor');
+      var space=document.querySelector('meta[name="ajs-space-key"]')?.content;
+      host.toggleAttribute('data-wcs-authoring-hidden',nativeEditor||!!(space&&space!=='wcspedia')||/^#\/(?:create|edit)(?:[/?]|$)/.test(window.location.hash));
+    }
+    function place() {
+      frame=null;if(stopped)return;
+      var header=host.closest('#navHeader,#navBar')||document.querySelector('#navHeader,#navBar')||host.closest('#header')||document.getElementById('header');
+      if(header){
+        var anchor=header.querySelector('[data-wcs-create-anchor],#quick-create-page-button,#create-page-button');
+        var group=anchor&&(anchor.closest('.aui-buttons')||anchor), parent=group&&group.parentElement;
+        if(parent&&parent.tagName==='LI') {group=parent;parent=parent.parentElement;}
+        if(parent&&/^(UL|OL)$/.test(parent.tagName)) {
+          if(!slot){slot=document.createElement('li');slot.setAttribute('data-wcs-header-add-slot','');host.wcsHeaderSlot=slot;}
+          if(slot.parentNode!==parent||slot.nextElementSibling!==group)parent.insertBefore(slot,group);
+          if(host.parentNode!==slot)slot.append(host);
+        }else if(parent&&!host.contains(group)) {
+          if(host.parentNode!==parent||host.nextElementSibling!==group)parent.insertBefore(host,group);
+        }else if(!header.contains(host))header.append(host);
+      }
+      visibility();
+    }
+    function schedule(){if(!stopped&&frame===null)frame=window.requestAnimationFrame(place);}
+    if(window.MutationObserver){observer=new MutationObserver(function(){
+      if(stopped||!window.document)return;
+      var header=document.querySelector('#navHeader,#navBar')||document.getElementById('header');
+      if(header&&!header.contains(host))schedule();
+    });observer.observe(document.body,{childList:true,subtree:true});}
+    window.addEventListener('hashchange',visibility);window.addEventListener('popstate',visibility);
+    place();window.WCSScrollTools?.mount();
+    return function () {stopped=true;if(frame!==null)window.cancelAnimationFrame(frame);observer?.disconnect();window.removeEventListener('hashchange',visibility);window.removeEventListener('popstate',visibility);};
   }
 
   function start() {
@@ -43,8 +73,8 @@
       button.innerHTML = (modules?.Icons?modules.Icons.svg('plus'):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>')+'<span class="wcs-add-document-label">Add document</span>'; button.setAttribute('aria-label', 'Add document'); button.title = message;
       var shell = document.createElement('div'); shell.className = 'wcs-add-document'; shell.append(button);
       host.replaceChildren(shell); host.hidden = false; host.style.removeProperty('display');
-      if (host.wcsStopFloating) host.wcsStopFloating();
-      host.wcsStopFloating = placeFloating(host);
+      if (host.wcsStopHeaderPlacement) host.wcsStopHeaderPlacement();
+      host.wcsStopHeaderPlacement = placeHeader(host);
       host.dataset.wcsAddState = 'error';
       host.dataset.wcsAddMessage = message;
       host.dataset.wcsAddCode = code || 'CONFIGURATION';
@@ -85,8 +115,8 @@
         var adapter = modules.Confluence.create(configuration);
         var unavailable = !adapter.info().entitlementsConfigured ? 'Add document needs entitlements.json on the configured attachments page.' :
           !adapter.info().workflowConfigured || !adapter.info().workspaceConfigured ? 'Document creation is not connected.' : '';
-        if (host.wcsStopFloating) host.wcsStopFloating();
-        var stopPlacement = host.wcsStopFloating = placeFloating(host);
+        if (host.wcsStopHeaderPlacement) host.wcsStopHeaderPlacement();
+        var stopPlacement = host.wcsStopHeaderPlacement = placeHeader(host);
         var handle = modules.AddDocument.mount(host, {
           types: modules.Content.CREATE_TYPES.map(function (value) { return {value: value, label: modules.Content.typeLabel(value)}; }),
           createUrl: context + '/pages/viewpage.action?pageId=' + encodeURIComponent(workspacePageId) + '#/create',
@@ -137,7 +167,7 @@
         host.dataset.wcsHeaderWidgetStarted = revision;
         function onShow(event) {
           if (!event.persisted || disposed) return;
-          stopPlacement = host.wcsStopFloating = placeFloating(host);
+          stopPlacement = host.wcsStopHeaderPlacement = placeHeader(host);
           retry();
         }
         function onHide(event) {
