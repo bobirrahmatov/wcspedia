@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('e2db2c0c561d'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('0cb7a477338c'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -145,8 +145,8 @@
 /* Shared text wordmark. Uses registered space fonts and CSS; no logo media request. */
 (function(w){
   'use strict';
-  if(w.WCSBrand?.version==='text-gradient-v1')return;
-  w.WCSBrand=Object.freeze({version:'text-gradient-v1',wordmark:'<span class="wcs-brand-text">WCSpedia</span>'});
+  if(w.WCSBrand?.version==='text-gradient-v2')return;
+  w.WCSBrand=Object.freeze({version:'text-gradient-v2',tagline:'Good knowledge. Better work.',wordmark:'<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>'});
 })(window);
 
 ;
@@ -223,20 +223,21 @@
     }
     function display(text) {
       if (closed) return;
-      if (!d.body) { queuedText = text;return; }
+      if (!d.body) { queuedText = text || 'Loading WCSpedia…';return; }
       if (!overlay) {
         before = d.activeElement; overflow = d.body.style.overflow;mark();d.body.style.overflow = 'hidden';
         const id = 'wcs-loading-message-' + (++sequence);
         overlay = d.createElement('div');overlay.className = 'wcs-loading-overlay';overlay.setAttribute('role','dialog');
         overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Loading WCSpedia');overlay.tabIndex = -1;
-        overlay.innerHTML = '<div class="wcs-loading-panel"><div class="wcs-loading-wordmark">'+(w.WCSBrand?.wordmark || '<span class="wcs-brand-text">WCSpedia</span>')+'</div><p class="wcs-loading-message" id="'+id+'" role="status" aria-live="polite"></p><div class="wcs-loading-track" role="progressbar" aria-label="Loading WCSpedia"><div class="wcs-loading-fill"></div></div></div>';
+        overlay.innerHTML = '<div class="wcs-loading-panel"><div class="wcs-loading-wordmark">'+(w.WCSBrand?.wordmark || '<span class="wcs-brand-text"><span class="wcs-brand-initials">WCS</span><span class="wcs-brand-name">pedia</span></span>')+'</div><p class="wcs-loading-tagline"></p><p class="wcs-loading-message" id="'+id+'" role="status" aria-live="polite"></p><div class="wcs-loading-track" role="progressbar" aria-label="Loading WCSpedia"><div class="wcs-loading-fill"></div></div></div>';
+        overlay.querySelector('.wcs-loading-tagline').textContent = w.WCSBrand?.tagline || 'Good knowledge. Better work.';
         message = overlay.querySelector('.wcs-loading-message');bar = overlay.querySelector('.wcs-loading-track');fill = overlay.querySelector('.wcs-loading-fill');
         d.body.append(overlay);overlay.focus({preventScroll:true});
         listen(d,'keydown',keys,true);listen(fill,'animationend',animationEnded);listen(d,'visibilitychange',visibilityChanged);
         listen(w,'hashchange',departed);listen(w,'popstate',departed);
         timer = w.setTimeout(close,30000);startCycle();
       }
-      message.textContent = text || 'A world of knowledge. One place to find it.';
+      message.textContent = text || 'Loading WCSpedia…';
       bar.setAttribute('aria-valuetext',text || 'Loading WCSpedia');
     }
     function show(text) {
@@ -559,5 +560,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: 'e2db2c0c561d' };
+  modules['faq'] = { version: '0cb7a477338c' };
 })();

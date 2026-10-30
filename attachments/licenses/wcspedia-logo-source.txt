@@ -2,7 +2,7 @@ WCSpedia text wordmark — 30 October 2026
 
 The current wordmark is native HTML text: WCSpedia. brand.js shares the same
 span between the landing page and startup overlay. The shared stylesheet
-uses existing Citi-Sans-Text at weight 700, a static blue-to-violet linear
+uses existing Citi-Sans-Text: WCS at weight 700, pedia at weight 400, with a static blue-to-violet linear
 text gradient and an original small CSS red accent.
 
 Visual references: local Mosaic typography, blue/red palette and compact
@@ -14,3 +14,6 @@ Solid-colour, dark-theme, print and forced-colour fallbacks are included.
 The existing Citi header and PDF/Word export logos remain separate.
 Earlier supplied PNG and outlined SVG are retained locally for history,
 but are no longer included in runtime deployment or generated settings.
+
+Refined identity: own loading line “Good knowledge. Better work.”, with
+status updates announced separately. Landing headline stays unchanged.
