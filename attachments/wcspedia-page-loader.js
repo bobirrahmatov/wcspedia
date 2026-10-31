@@ -15,7 +15,7 @@
     if (startup) { if (target) startup.adoptTarget(target); return startup; }
     const d = target?.ownerDocument || w.document, pending = new Set(), cleanups = [];
     target = target || d.createElement('div');
-    let overlay, message, bar, fill, attributes, before, overflow, queuedText, timer, showTimer, frame = 0, closeFrame = 0;
+    let overlay, message, bar, fill, attributes, before, overflow, queuedText, timer, showTimer, cycleTimer, frame = 0, closeFrame = 0;
     let closed = false, ready = false, completing = false, cycleStarted = false, cycleComplete = false, completion;
     let resolveCompletion;
     completion = new Promise(resolve => { resolveCompletion = resolve; });
@@ -33,7 +33,7 @@
     }
     function close() {
       if (closed) return;
-      closed = true; w.clearTimeout(timer); w.clearTimeout(showTimer);
+      closed = true; w.clearTimeout(timer); w.clearTimeout(showTimer); w.clearTimeout(cycleTimer);
       if (frame) w.cancelAnimationFrame(frame); if (closeFrame) w.cancelAnimationFrame(closeFrame);
       cleanups.splice(0).forEach(fn => fn());
       if (overlay) {
@@ -54,21 +54,30 @@
       if (closed || !ready || !cycleComplete || d.hidden || closeFrame) return;
       closeFrame = w.requestAnimationFrame(() => { closeFrame = w.requestAnimationFrame(close); });
     }
+    function completeCycle() {
+      if (closed || d.hidden || !cycleStarted || cycleComplete) return;
+      w.clearTimeout(cycleTimer);cycleTimer = null;
+      cycleComplete = true;overlay.setAttribute('data-cycle-complete','');overlay.removeAttribute('data-cycle-running');settle();
+    }
     function startCycle() {
       if (closed || !overlay || d.hidden || cycleComplete || frame) return;
       frame = w.requestAnimationFrame(() => { frame = w.requestAnimationFrame(() => {
         frame = 0; if (closed || d.hidden || !overlay) return;
         cycleStarted = true; overlay.removeAttribute('data-cycle-restart');overlay.setAttribute('data-cycle-running','');
+        // Host styles and VDI browsers can suppress animationend. Preserve the
+        // visible one-second introduction without holding ready content for 30s.
+        w.clearTimeout(cycleTimer);cycleTimer = w.setTimeout(completeCycle,1250);
       }); });
     }
     function animationEnded(event) {
       if (event.target !== fill || event.animationName !== 'wcs-loading-fill' || !cycleStarted) return;
       if (d.hidden) { cycleStarted = false;overlay.setAttribute('data-cycle-restart','');return; }
-      cycleComplete = true;overlay.setAttribute('data-cycle-complete','');overlay.removeAttribute('data-cycle-running');settle();
+      completeCycle();
     }
     function visibilityChanged() {
       if (closed) return;
       if (d.hidden) {
+        w.clearTimeout(cycleTimer);cycleTimer = null;
         overlay?.removeAttribute('data-cycle-running');
         if (frame) w.cancelAnimationFrame(frame);frame = 0;
         if (closeFrame) w.cancelAnimationFrame(closeFrame);closeFrame = 0;
@@ -218,7 +227,7 @@
     "review": "3961735749",
     "saved": "3961735759",
     "entitlements": "3961735763",
-    "faq": "3973992401"
+    "faq": "3973992410"
   },
   "insightsPageId": "3961735728",
   "workingRootPageId": "3961735834",
@@ -256,7 +265,7 @@
   }
 };
   var context = settings.contextPath.replace(/\/+$/,'');
-  var revision='e873788a7aff',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
+  var revision='7afc1037d062',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
   function signature(value){if(Array.isArray(value))return '['+value.map(signature).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+signature(value[key])).join(',')+'}';return JSON.stringify(value);}
   var settingsSignature=signature(settings),prior=w.__WCSMacroLoader;
   if(prior){if(prior.revision!==revision||prior.settingsSignature!==settingsSignature)prior.fail(Error('WCSpedia files from different packages are mixed. Upload the matching attachments and page macros.'));else prior.start(owner);return;}
@@ -306,10 +315,20 @@
     if(pageState==='failed')return;
     pageState='failed';cancelled=true;dispose.splice(0).forEach(fn=>fn());
     w.WCSHeaderLoading?.cancel();w.WCSLoadingOverlay?.create()?.cancel();
-    var root=d.getElementById('wcspedia');if(!root)return;
+    var root=d.getElementById('wcspedia'),host=root||d.querySelector('#main-content,.wiki-content');if(!host)return;
     var box=d.createElement('div');box.className='boot-state';box.setAttribute('role','alert');box.setAttribute('data-wcs-loader-error','');
     var title=d.createElement('h2'),text=d.createElement('p'),retry=d.createElement('button');title.textContent='WCSpedia could not load';text.textContent=error?.message||'Refresh this page or use the native page tree.';
-    retry.type='button';retry.className='button';retry.textContent='Try again';retry.addEventListener('click',()=>w.location.reload());box.append(title,text,retry);root.replaceChildren(box);
+    retry.type='button';retry.className='button';retry.textContent='Try again';retry.addEventListener('click',()=>w.location.reload());box.append(title,text,retry);if(root)root.replaceChildren(box);else host.prepend(box);
+  }
+  function checkPageMount(){
+    if(cancelled||pageState!=='idle'||d.getElementById('wcspedia'))return;
+    var id;try{id=identity();}catch(_){return;}
+    var area=Object.keys(settings.areaPageIds).find(key=>settings.areaPageIds[key]===id),role=Object.keys(settings.pageIds).find(key=>settings.pageIds[key]===id);
+    if(id===settings.insightsPageId)role='insights';
+    if(!area&&!role)return;
+    var files={home:'landing',mine:'my-workspace',review:'reviewer-workspace',saved:'saved-items',entitlements:'entitlements',insights:'insights',faq:'faq'};
+    var file=area?'pages/business-areas/'+area+'.html':'pages/'+files[role]+'.html';
+    fail(Error('The WCSpedia page macro is missing. Replace this page’s HTML macro with '+file+' from the matching package. Uploading the file as an attachment does not install the page macro.'));
   }
   function makeConfig(role,area){
     var pages={};Object.keys(settings.pageIds).forEach(key=>{pages[key]=context+'/pages/viewpage.action?pageId='+settings.pageIds[key];});pages.insights=context+'/pages/viewpage.action?pageId='+settings.insightsPageId;
@@ -321,8 +340,9 @@
     pageState='loading';
     try{
       if(roots.length!==1)throw Error('Use one WCSpedia page macro on this page. Remove the duplicate macro.');
-      var root=roots[0],role=root.getAttribute('data-wcs-page-role'),area=root.getAttribute('data-wcs-business-area')||'',id=identity(),expected=area?settings.areaPageIds[area]:role==='insights'?settings.insightsPageId:settings.pageIds[role];
-      if(!roles[role]||area&&role!=='home'||!expected||id!==expected||root.getAttribute('data-wcs-page-id')!==expected)throw Error('This WCSpedia page macro does not match the current page. Paste the matching page file from this package.');
+      var root=roots[0],role=root.getAttribute('data-wcs-page-role'),area=root.getAttribute('data-wcs-business-area')||'',id=identity(),declared=root.getAttribute('data-wcs-page-id'),expected=area?settings.areaPageIds[area]:role==='insights'?settings.insightsPageId:settings.pageIds[role];
+      if(!roles[role]||area&&role!=='home'||!expected)throw Error('This WCSpedia page macro does not match the current page. Paste the matching page file from this package.');
+      if(id!==expected||declared!==expected)throw Error('This WCSpedia page macro does not match the current page. The current page ID is '+id+'; the HTML macro declares '+(declared||'no page ID')+'; this package expects '+expected+'. Paste the matching page file from this package.');
       config=makeConfig(role,area);w.WCS_CONFIG=config;root.wcsPageConfig=config;
       await stylesheet();if(cancelled)return;
       if(role!=='faq')await load('wcspedia-core.js',()=>w.WCSCoreVersion===revision&&w.WCSPageRenderer?.version===revision);if(cancelled)return;
@@ -368,7 +388,8 @@
       void bootHeader();
     }
     void bootPage();
-    if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',()=>{void bootPage();},{once:true});
+    if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',()=>{void bootPage();checkPageMount();},{once:true});
+    else checkPageMount();
   }
   try{verifySettings();}catch(error){fail(error);return;}
   var style=d.getElementById('wcs-startup-critical');if(!style){style=d.createElement('style');style.id='wcs-startup-critical';style.textContent="/* One opaque startup surface, matching the Mosaic loading rhythm. */\n.wcs-loading-overlay { --wcs-loading-page:#f6f9fc;--wcs-loading-text:#17355f;--wcs-loading-muted:#5b6c7e;--wcs-loading-brand:#255be3;position:fixed!important;inset:0!important;z-index:2147483000!important;display:grid!important;place-items:center;box-sizing:border-box;padding:28px;background:var(--wcs-loading-page)!important;color:var(--wcs-loading-text)!important;isolation:isolate;overflow:auto;overscroll-behavior:contain;text-align:center;font-family:'Citi-Sans-Text',Arial,sans-serif;outline:none; }\nhtml[data-color-mode=dark] .wcs-loading-overlay,html:not([data-color-mode])[data-theme=dark] .wcs-loading-overlay,body[data-color-mode=dark] .wcs-loading-overlay,body:not([data-color-mode])[data-theme=dark] .wcs-loading-overlay {--wcs-loading-page:#0d1b2d;--wcs-loading-text:#dee4ea;--wcs-loading-muted:#aabbd0;--wcs-loading-brand:#85b8ff;}\n.wcs-loading-overlay *,.wcs-loading-overlay *::before,.wcs-loading-overlay *::after{box-sizing:border-box;}\n.wcs-loading-overlay .wcs-loading-panel {width:360px;max-width:100%;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;}\n.wcs-loading-overlay .wcs-loading-wordmark {--wcs-wordmark-size:clamp(40px,9vw,72px);display:block!important;width:100%!important;margin:0 0 22px!important;background:transparent!important;text-align:center;}\n/* Real text, shared by early startup and the page. The native i glyph supplies its red dot. */\n:is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text {--wcs-brand-blue:#255be3;--wcs-brand-red:#ec1c24;display:inline-block!important;position:relative;padding:0 0 .02em!important;margin:0!important;border:0!important;max-width:100%;font-family:'Citi-Sans-Text',Arial,sans-serif!important;font-size:var(--wcs-wordmark-size,44px)!important;font-weight:700!important;line-height:1.15!important;letter-spacing:-.055em!important;text-transform:lowercase!important;white-space:nowrap;text-decoration:none!important;color:var(--wcs-brand-blue)!important;-webkit-text-fill-color:currentColor;background:none;text-shadow:none;vertical-align:middle;}\n:is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text span {font-family:inherit!important;font-size:inherit!important;font-weight:700!important;line-height:inherit!important;letter-spacing:inherit!important;text-transform:inherit!important;color:inherit!important;-webkit-text-fill-color:inherit;background:none;}\n:is(#wcspedia,.wcs-loading-overlay) .wcs-brand-i {display:inline-block;}\nhtml[data-color-mode=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,html:not([data-color-mode])[data-theme=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,body[data-color-mode=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,body:not([data-color-mode])[data-theme=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text {--wcs-brand-blue:#85b8ff;}\n@supports ((background-clip:text) or (-webkit-background-clip:text)) {\n  :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text .wcs-brand-i {background-image:linear-gradient(to bottom,var(--wcs-brand-red) 0 32%,var(--wcs-brand-blue) 32% 100%)!important;background-clip:text;-webkit-background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;}\n}\n@media(forced-colors:active) {\n  :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,:is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text .wcs-brand-i {background:none!important;color:CanvasText!important;-webkit-text-fill-color:CanvasText!important;}\n}\n@media print {\n  :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,:is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text .wcs-brand-i {background:none!important;color:#17355f!important;-webkit-text-fill-color:#17355f!important;}\n}\n.wcs-loading-overlay .wcs-loading-tagline {margin:0 0 28px!important;min-height:21px;color:var(--wcs-loading-muted)!important;font:15px/1.5 'Citi-Sans-Text',Arial,sans-serif!important;letter-spacing:.01em;}\n.wcs-loading-overlay .wcs-loading-message {position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;}\n.wcs-loading-overlay .wcs-loading-track {display:block!important;position:relative!important;width:112px!important;height:3px!important;margin:auto!important;padding:0!important;border:0!important;background:#dce6f2!important;border-radius:3px;overflow:hidden!important;}\n.wcs-loading-overlay .wcs-loading-fill {display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;padding:0!important;border:0!important;background:#255be3!important;border-radius:inherit;opacity:1!important;transform:scaleX(0);transform-origin:left center;animation:wcs-loading-fill 1000ms linear forwards!important;animation-play-state:paused!important;transition:none!important;}\n.wcs-loading-overlay[data-cycle-running] .wcs-loading-fill {animation-play-state:running!important;}\n.wcs-loading-overlay[data-cycle-restart] .wcs-loading-fill {animation:none!important;transform:scaleX(0);}\n.wcs-loading-overlay[data-cycle-complete] .wcs-loading-fill {animation:none!important;transform:scaleX(1);}\n@keyframes wcs-loading-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}\n@media(forced-colors:active){.wcs-loading-overlay{background:Canvas!important;color:CanvasText!important}.wcs-loading-overlay .wcs-loading-track{border:1px solid CanvasText!important}.wcs-loading-overlay .wcs-loading-fill{background:Highlight!important;forced-color-adjust:none}}\n@media print{.wcs-loading-overlay{display:none!important}}\n\n";d.head.append(style);}

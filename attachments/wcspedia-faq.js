@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('e873788a7aff'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('7afc1037d062'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -150,6 +150,40 @@
 })(window);
 
 ;
+/* Shared page artwork and stable card colours. Reuses the existing WebP attachments. */
+(function(root,factory){
+  'use strict';
+  const api=factory();
+  if(typeof module==='object'&&module.exports)module.exports=api;
+  else root.WCSPagePresentation=api;
+})(typeof window!=='undefined'?window:globalThis,function(){
+  'use strict';
+  const banners=Object.freeze({
+    'credit-approval-control':31,'credit-information-management':14,'credit-management-reporting':29,
+    'deal-closing':17,'documentation-pledging':47,'emea-credit-admin':32,
+    'loan-management':18,'regional-operating-manuals':8,insights:5,
+    mine:36,review:9,saved:7,entitlements:26,faq:37,health:11,search:30
+  });
+  const escape=value=>String(value==null?'':value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  function imageUrl(key,config={}){
+    const index=Object.hasOwn(banners,key)?banners[key]:banners.insights;
+    const file='wcs-insight-cover-'+String(index).padStart(2,'0')+'.webp';
+    const host=String(config.attachmentPageId||''),context=String(config.contextPath||'/confluence').replace(/\/$/,'');
+    if(config.mode==='confluence'&&/^[1-9]\d{0,19}$/.test(host)&&/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context))return context+'/download/attachments/'+host+'/'+file+'?api=v2';
+    return 'assets/insights-covers/'+file;
+  }
+  function banner(key,label,config,options={}){
+    return '<div class="wcs-collection-banner'+(options.compact?' wcs-page-banner-compact':'')+'" data-wcs-banner-key="'+escape(key)+'"><img src="'+escape(imageUrl(key,config))+'" alt="" width="800" height="500" loading="eager" decoding="async" fetchpriority="high"><span class="wcs-collection-label" aria-hidden="true">'+escape(label)+'</span></div>';
+  }
+  function cardTone(key){
+    const value=String(key||'');let hash=2166136261;
+    for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619)>>>0;
+    return ['blue','sky','teal','slate'][hash%4];
+  }
+  return Object.freeze({banner,imageUrl,cardTone,bannerKeys:Object.freeze(Object.keys(banners))});
+});
+
+;
 /* One initial WCSpedia introduction. Later actions keep their own local busy state. */
 (function (w) {
   'use strict';
@@ -159,7 +193,7 @@
     if (startup) { if (target) startup.adoptTarget(target); return startup; }
     const d = target?.ownerDocument || w.document, pending = new Set(), cleanups = [];
     target = target || d.createElement('div');
-    let overlay, message, bar, fill, attributes, before, overflow, queuedText, timer, showTimer, frame = 0, closeFrame = 0;
+    let overlay, message, bar, fill, attributes, before, overflow, queuedText, timer, showTimer, cycleTimer, frame = 0, closeFrame = 0;
     let closed = false, ready = false, completing = false, cycleStarted = false, cycleComplete = false, completion;
     let resolveCompletion;
     completion = new Promise(resolve => { resolveCompletion = resolve; });
@@ -177,7 +211,7 @@
     }
     function close() {
       if (closed) return;
-      closed = true; w.clearTimeout(timer); w.clearTimeout(showTimer);
+      closed = true; w.clearTimeout(timer); w.clearTimeout(showTimer); w.clearTimeout(cycleTimer);
       if (frame) w.cancelAnimationFrame(frame); if (closeFrame) w.cancelAnimationFrame(closeFrame);
       cleanups.splice(0).forEach(fn => fn());
       if (overlay) {
@@ -198,21 +232,30 @@
       if (closed || !ready || !cycleComplete || d.hidden || closeFrame) return;
       closeFrame = w.requestAnimationFrame(() => { closeFrame = w.requestAnimationFrame(close); });
     }
+    function completeCycle() {
+      if (closed || d.hidden || !cycleStarted || cycleComplete) return;
+      w.clearTimeout(cycleTimer);cycleTimer = null;
+      cycleComplete = true;overlay.setAttribute('data-cycle-complete','');overlay.removeAttribute('data-cycle-running');settle();
+    }
     function startCycle() {
       if (closed || !overlay || d.hidden || cycleComplete || frame) return;
       frame = w.requestAnimationFrame(() => { frame = w.requestAnimationFrame(() => {
         frame = 0; if (closed || d.hidden || !overlay) return;
         cycleStarted = true; overlay.removeAttribute('data-cycle-restart');overlay.setAttribute('data-cycle-running','');
+        // Host styles and VDI browsers can suppress animationend. Preserve the
+        // visible one-second introduction without holding ready content for 30s.
+        w.clearTimeout(cycleTimer);cycleTimer = w.setTimeout(completeCycle,1250);
       }); });
     }
     function animationEnded(event) {
       if (event.target !== fill || event.animationName !== 'wcs-loading-fill' || !cycleStarted) return;
       if (d.hidden) { cycleStarted = false;overlay.setAttribute('data-cycle-restart','');return; }
-      cycleComplete = true;overlay.setAttribute('data-cycle-complete','');overlay.removeAttribute('data-cycle-running');settle();
+      completeCycle();
     }
     function visibilityChanged() {
       if (closed) return;
       if (d.hidden) {
+        w.clearTimeout(cycleTimer);cycleTimer = null;
         overlay?.removeAttribute('data-cycle-running');
         if (frame) w.cancelAnimationFrame(frame);frame = 0;
         if (closeFrame) w.cancelAnimationFrame(closeFrame);closeFrame = 0;
@@ -534,7 +577,7 @@
   function mount(root,config){
     const home=global.WCSNavigation.resolve('#/',config,global.location.href);
     const explore=global.WCSNavigation.resolve('#/results',config,global.location.href);
-    root.innerHTML='<div class="shell discovery-shell"><div class="discovery workspace-page wcs-faq-page"><section class="press-heading page-panel"><div class="discovery-container"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="'+escape(home)+'">WCSpedia</a><span class="wcs-breadcrumb-separator" aria-hidden="true">/</span><span aria-current="page">FAQs</span></nav><div class="eyebrow">Help &amp; guidance</div><h1>Frequently asked questions</h1><p>Find your way around WCSpedia, from your first search to publishing a document.</p></div></section><div class="discovery-container"><form class="library-workspace-search" role="search"><label for="wcs-faq-search">Search FAQs</label><div class="wcs-faq-search-row"><input id="wcs-faq-search" type="search" maxlength="200" placeholder="Try publishing, saved items or access…" aria-controls="wcs-faq-list" autocomplete="off"><button class="button secondary" type="reset">Clear</button></div></form><p class="library-count" id="wcs-faq-count" role="status"></p><div id="wcs-faq-list">'+entries.map(([q,a],i)=>'<details class="wcs-help-item"><summary id="wcs-help-q-'+i+'">'+escape(q)+''+(global.WCSIcons?global.WCSIcons.svg('down'):'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>')+'</summary><div role="region" aria-labelledby="wcs-help-q-'+i+'"><p>'+escape(a)+'</p></div></details>').join('')+'</div><p class="wcs-faq-empty" hidden>No matching questions. Try a different word or clear your search.</p><div class="wcs-faq-footer"><p>Ready to find what you need?</p><a class="discovery-text-link" href="'+escape(explore)+'">Explore documents '+(global.WCSIcons?global.WCSIcons.svg('arrow'):'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16m-6-6 6 6-6 6"/></svg>')+'</a></div></div></div></div>';
+    root.innerHTML='<div class="shell discovery-shell"><div class="discovery workspace-page wcs-faq-page wcs-collection-page wcs-utility-page">'+(global.WCSPagePresentation?.banner('faq','FAQs',config,{compact:true})||'')+'<div class="discovery-container wcs-collection-body"><section class="press-heading page-panel"><div class="discovery-container"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="'+escape(home)+'">WCSpedia</a><span class="wcs-breadcrumb-separator" aria-hidden="true">/</span><span aria-current="page">FAQs</span></nav><div class="eyebrow">Help &amp; guidance</div><h1>Frequently asked questions</h1><p>Find your way around WCSpedia, from your first search to publishing a document.</p></div></section><div class="discovery-container"><form class="library-workspace-search" role="search"><label for="wcs-faq-search">Search FAQs</label><div class="wcs-faq-search-row"><input id="wcs-faq-search" type="search" maxlength="200" placeholder="Try publishing, saved items or access…" aria-controls="wcs-faq-list" autocomplete="off"><button class="button secondary" type="reset">Clear</button></div></form><p class="library-count" id="wcs-faq-count" role="status"></p><div id="wcs-faq-list">'+entries.map(([q,a],i)=>'<details class="wcs-help-item"><summary id="wcs-help-q-'+i+'">'+escape(q)+''+(global.WCSIcons?global.WCSIcons.svg('down'):'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>')+'</summary><div role="region" aria-labelledby="wcs-help-q-'+i+'"><p>'+escape(a)+'</p></div></details>').join('')+'</div><p class="wcs-faq-empty" hidden>No matching questions. Try a different word or clear your search.</p><div class="wcs-faq-footer"><p>Ready to find what you need?</p><a class="discovery-text-link" href="'+escape(explore)+'">Explore documents '+(global.WCSIcons?global.WCSIcons.svg('arrow'):'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16m-6-6 6 6-6 6"/></svg>')+'</a></div></div></div></div></div>';
     const input=root.querySelector('#wcs-faq-search'),items=[...root.querySelectorAll('.wcs-help-item')];
     const filter=()=>{
       const words=input.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);let visible=0;
@@ -560,5 +603,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: 'e873788a7aff' };
+  modules['faq'] = { version: '7afc1037d062' };
 })();

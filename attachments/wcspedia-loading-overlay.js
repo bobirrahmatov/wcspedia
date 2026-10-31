@@ -15,7 +15,7 @@
     if (startup) { if (target) startup.adoptTarget(target); return startup; }
     const d = target?.ownerDocument || w.document, pending = new Set(), cleanups = [];
     target = target || d.createElement('div');
-    let overlay, message, bar, fill, attributes, before, overflow, queuedText, timer, showTimer, frame = 0, closeFrame = 0;
+    let overlay, message, bar, fill, attributes, before, overflow, queuedText, timer, showTimer, cycleTimer, frame = 0, closeFrame = 0;
     let closed = false, ready = false, completing = false, cycleStarted = false, cycleComplete = false, completion;
     let resolveCompletion;
     completion = new Promise(resolve => { resolveCompletion = resolve; });
@@ -33,7 +33,7 @@
     }
     function close() {
       if (closed) return;
-      closed = true; w.clearTimeout(timer); w.clearTimeout(showTimer);
+      closed = true; w.clearTimeout(timer); w.clearTimeout(showTimer); w.clearTimeout(cycleTimer);
       if (frame) w.cancelAnimationFrame(frame); if (closeFrame) w.cancelAnimationFrame(closeFrame);
       cleanups.splice(0).forEach(fn => fn());
       if (overlay) {
@@ -54,21 +54,30 @@
       if (closed || !ready || !cycleComplete || d.hidden || closeFrame) return;
       closeFrame = w.requestAnimationFrame(() => { closeFrame = w.requestAnimationFrame(close); });
     }
+    function completeCycle() {
+      if (closed || d.hidden || !cycleStarted || cycleComplete) return;
+      w.clearTimeout(cycleTimer);cycleTimer = null;
+      cycleComplete = true;overlay.setAttribute('data-cycle-complete','');overlay.removeAttribute('data-cycle-running');settle();
+    }
     function startCycle() {
       if (closed || !overlay || d.hidden || cycleComplete || frame) return;
       frame = w.requestAnimationFrame(() => { frame = w.requestAnimationFrame(() => {
         frame = 0; if (closed || d.hidden || !overlay) return;
         cycleStarted = true; overlay.removeAttribute('data-cycle-restart');overlay.setAttribute('data-cycle-running','');
+        // Host styles and VDI browsers can suppress animationend. Preserve the
+        // visible one-second introduction without holding ready content for 30s.
+        w.clearTimeout(cycleTimer);cycleTimer = w.setTimeout(completeCycle,1250);
       }); });
     }
     function animationEnded(event) {
       if (event.target !== fill || event.animationName !== 'wcs-loading-fill' || !cycleStarted) return;
       if (d.hidden) { cycleStarted = false;overlay.setAttribute('data-cycle-restart','');return; }
-      cycleComplete = true;overlay.setAttribute('data-cycle-complete','');overlay.removeAttribute('data-cycle-running');settle();
+      completeCycle();
     }
     function visibilityChanged() {
       if (closed) return;
       if (d.hidden) {
+        w.clearTimeout(cycleTimer);cycleTimer = null;
         overlay?.removeAttribute('data-cycle-running');
         if (frame) w.cancelAnimationFrame(frame);frame = 0;
         if (closeFrame) w.cancelAnimationFrame(closeFrame);closeFrame = 0;
