@@ -857,25 +857,6 @@
 #wcspedia .editor-governance-flags li p{color:var(--muted,#61758c);overflow-wrap:anywhere}
 @media(max-width:700px){#wcspedia .editor-governance-grid,#wcspedia .editor-governance-source-meta{grid-template-columns:minmax(0,1fr);gap:0}#wcspedia .editor-governance>summary{padding:16px}#wcspedia .editor-governance-body{padding:0 16px 18px}#wcspedia .editor-governance-source{padding:12px 12px 0}}
 
-/* The local illustration browser shares the editor dialog and draft lifecycle. */
-#wcspedia .editor-illustration-open{width:100%;margin:12px 0;justify-content:center}
-#wcspedia .editor-illustration-layout{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(0,2fr);gap:24px;align-items:start}
-#wcspedia .editor-illustration-selection{position:sticky;top:0;min-width:0}
-#wcspedia .editor-illustration-preview{overflow:hidden;border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:16px;background:var(--wcs-theme-subtle,#f2f5f9);aspect-ratio:8/5}
-#wcspedia .editor-illustration-preview svg,#wcspedia .editor-illustration-option>svg{display:block!important;width:100%!important;height:auto!important;margin:0!important;max-width:none!important}
-#wcspedia .editor-illustration-selection>p{font-size:14px;line-height:1.5;color:var(--wcs-theme-text,#17355f);margin:12px 0}
-#wcspedia .editor-illustration-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0}
-#wcspedia .editor-illustration-option{appearance:none;display:block;min-width:0;overflow:hidden;padding:0;border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:10px;background:var(--wcs-theme-surface,#fff);color:var(--wcs-theme-text,#17355f);font:inherit;cursor:pointer;text-align:left}
-#wcspedia .editor-illustration-option>span{display:block;padding:8px;font-size:11px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#wcspedia .editor-illustration-option:hover,#wcspedia .editor-illustration-option[aria-checked=true]{border-color:var(--wcs-theme-link,#255be3);box-shadow:0 0 0 1px var(--wcs-theme-link,#255be3)}
-#wcspedia .editor-illustration-option:focus-visible{outline:3px solid var(--wcs-theme-focus,#255be3);outline-offset:3px}
-#wcspedia .editor-illustration-option:disabled{cursor:wait;opacity:.7}
-#wcspedia .editor-illustration-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px}
-#wcspedia .editor-illustration-pagination>span{font-size:12px;color:var(--wcs-theme-muted,#5b6c7e);white-space:nowrap}
-#wcspedia .editor-illustration-pagination .button{min-height:36px;padding:8px 12px;font-size:12px}
-@media(max-width:700px){#wcspedia .editor-illustration-layout{grid-template-columns:1fr;gap:20px}#wcspedia .editor-illustration-selection{position:static;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:center}#wcspedia .editor-illustration-preview{grid-row:span 2}#wcspedia .editor-illustration-selection>p{margin:0}#wcspedia .editor-illustration-selection .button{justify-self:start}#wcspedia .editor-illustration-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:420px){#wcspedia .editor-illustration-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-
 /* Shared recorded-training block in reader, rich editor and preview. */
 #wcspedia .wcs-video{display:block;width:100%;max-width:100%;min-width:0;margin:24px 0;border:1px solid var(--line,#d6e0eb);border-radius:16px;overflow:hidden;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#f3f7fb));color:var(--navy,#002d72);line-height:1.5;text-align:left;white-space:normal}
 #wcspedia .wcs-video-heading{display:block;padding:20px 22px}

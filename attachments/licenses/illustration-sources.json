@@ -8,7 +8,7 @@
     "reviewed": "2026-10-31",
     "observation": "Services business cards use bold white line drawings on a consistent royal-blue field. Used as a visual style reference only."
   },
-  "usage": "Keep authored images first. Automatic inline card fallback artwork uses resolveId(documentKey), with no persisted metadata. An explicit editor choice or shuffle is converted from this trusted SVG to a normal WebP cover and saved through the existing native staged-upload pipeline; the choice is stored as cover artwork, not an illustration ID. The URL API is available for optional asset downloads.",
+  "usage": "Automatic missing-image card artwork only. Select a stable varied illustration using resolveId(documentKey) across views and reloads, with no new persisted metadata or image request. Keep authored covers, body images and Blog photo fallbacks first. There is no user-facing illustration picker or shuffle action. Existing authored image uploads and previously saved covers remain unchanged.",
   "generator": "tools/generate-illustrations.cjs",
   "renderer": "illustrations.js",
   "illustrations": [
