@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('8b6c7bb418b6'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('6321439aad0e'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -138,7 +138,12 @@
     var extra=String(options.className||'').replace(/[^a-zA-Z0-9 _-]/g,'');
     return '<span class="wcs-avatar'+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
   }
-  return Object.freeze({svg:svg,node:node,avatar:avatar,has:has});
+  function cardPlaceholder(type){
+    var name=String(type||'document').trim().toLowerCase().replace(/\s+/g,'-');
+    if(['blog','guide','training','report','job-aid','procedure','knowledge-sharing','reference','playbook','checklist','template','faq'].indexOf(name)<0)name='document';
+    return '<span class="wcs-card-placeholder" aria-hidden="true"><span class="wcs-card-placeholder-orbit"></span><span class="wcs-card-placeholder-sheet"><span class="wcs-card-placeholder-icon">'+svg(name,{size:40})+'</span><span class="wcs-card-placeholder-lines"><span></span><span></span><span></span></span></span></span>';
+  }
+  return Object.freeze({svg:svg,node:node,avatar:avatar,cardPlaceholder:cardPlaceholder,has:has});
 });
 
 ;
@@ -598,5 +603,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: '8b6c7bb418b6' };
+  modules['faq'] = { version: '6321439aad0e' };
 })();

@@ -3514,17 +3514,38 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
 }
 
 /* Page photographs stay distinct; all document cards use the same theme surface. */
-#wcspedia .wcs-insights-card,#wcspedia a.wcs-collection-card,#wcspedia .featured-document {background:var(--wcs-theme-surface,#fff);border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:20px;overflow:hidden;box-shadow:none;align-self:start;transition:border-color .18s ease,box-shadow .18s ease}
+#wcspedia .wcs-insights-card,#wcspedia a.wcs-collection-card,#wcspedia .featured-document {background:var(--wcs-theme-surface,#fff);border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:20px;overflow:hidden;box-shadow:none;align-self:stretch;min-width:0;width:100%;box-sizing:border-box;transition:border-color .18s ease,box-shadow .18s ease}
 #wcspedia .wcs-insights-card:hover,#wcspedia a.wcs-collection-card:hover,#wcspedia .featured-document:hover {border-color:var(--wcs-theme-link);box-shadow:0 6px 20px #10152f12}
 #wcspedia .wcs-insights-card:focus-within,#wcspedia a.wcs-collection-card:focus-visible,#wcspedia .featured-document:focus-within {outline:3px solid var(--wcs-theme-focus);outline-offset:3px}
 #wcspedia .wcs-insights-card-link {height:100%;border-radius:inherit}
 #wcspedia .wcs-insights-card .wcs-insights-cover,#wcspedia .featured-document .feature-media,#wcspedia .featured-document .feature-cover {border-radius:0}
 #wcspedia .wcs-insights-card .wcs-insights-card-body {padding:24px}
 #wcspedia .featured-document .feature-body {padding:22px}
-#wcspedia .wcs-home .featured-grid {align-items:start;gap:24px}
+#wcspedia .wcs-home .featured-grid {align-items:stretch;gap:24px}
+#wcspedia :is(.featured-grid,.wcs-collection-grid,.wcs-insights-grid) {grid-auto-rows:1fr;min-width:0}
+#wcspedia :is(.wcs-collection-card-media,.wcs-insights-cover,.feature-media) {flex-shrink:0}
 #wcspedia .wcs-collection-card-media {position:relative;overflow:hidden;aspect-ratio:1.6;min-height:0;background:var(--wcs-theme-subtle)}
 #wcspedia .wcs-collection-card-media img {display:block!important;width:100%!important;height:100%!important;aspect-ratio:1.6;object-fit:cover!important;margin:0!important;border:0!important;border-radius:0!important}
 #wcspedia .wcs-collection-card-panel {padding:24px}
+/* Equal tracks and media frames keep cards aligned even without photographs.
+   Titles/summaries are previews; full text remains available in the reader. */
+#wcspedia :is(.wcs-collection-card-title,.wcs-insights-card h2,.featured-document h3) {display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.5em;overflow-wrap:anywhere}
+#wcspedia :is(.wcs-insights-topic,.feature-area,.wcs-collection-card-type) {display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.5;min-height:3em;overflow-wrap:anywhere}
+#wcspedia :is(.wcs-insights-summary,.wcs-collection-card-summary) {min-height:4.8em}
+#wcspedia .wcs-home .featured-document p {min-height:3.2em}
+#wcspedia .wcs-home .feature-metrics {margin-top:auto}
+#wcspedia .wcs-home .feature-bottom {margin-top:16px}
+/* Static, theme-aware illustration using the same SVG family as navigation.
+   It is presentation only: no cover is saved and no image request is made. */
+#wcspedia .wcs-card-placeholder {position:relative;display:grid;place-items:center;isolation:isolate;overflow:hidden;width:100%;height:100%;background:var(--wcs-theme-subtle,#f0f5f9);color:var(--wcs-theme-link,#255be3)}
+#wcspedia .wcs-card-placeholder-orbit {position:absolute;width:200px;height:200px;border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:50%;opacity:.65;transform:rotate(-25deg) scaleX(1.35)}
+#wcspedia .wcs-card-placeholder-orbit::after {content:"";position:absolute;inset:22px;border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:50%}
+#wcspedia .wcs-card-placeholder-sheet {position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100px;height:124px;background:var(--wcs-theme-surface,#fff);border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:14px;box-shadow:0 8px 24px #10152f08}
+#wcspedia .wcs-card-placeholder-icon {display:flex;align-items:center;justify-content:center}
+#wcspedia .wcs-card-placeholder-icon svg {display:block;width:36px!important;height:36px!important;flex:none}
+#wcspedia .wcs-card-placeholder-lines {display:grid;gap:5px;width:44px}
+#wcspedia .wcs-card-placeholder-lines>span {display:block;height:3px;border-radius:3px;background:var(--wcs-theme-border,#d5e1ee)}
+#wcspedia .wcs-card-placeholder-lines>span:last-child {width:65%}
 #wcspedia .wcs-collection-banner {width:100%;max-height:330px;min-height:210px}
 #wcspedia .wcs-page-banner-compact {height:220px;min-height:160px;aspect-ratio:auto}
 #wcspedia .wcs-utility-page>.press-heading,#wcspedia .wcs-utility-page>.wcs-collection-body>.press-heading {padding-top:36px;padding-bottom:22px;background:transparent;border:0}
