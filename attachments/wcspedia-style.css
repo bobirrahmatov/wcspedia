@@ -1425,9 +1425,6 @@ html[data-color-mode=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,h
 #wcspedia .wcs-insights-search.wcs-data-table-search input{width:100%!important;min-width:0!important;flex:1!important;height:40px!important;padding:0!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;color:var(--wcs-theme-text,#17355f)!important;box-shadow:none!important;font-size:16px!important}
 #wcspedia .wcs-insights-search input::placeholder{color:var(--wcs-theme-muted,#5b6c7e);opacity:1}
 #wcspedia .wcs-insights-search.wcs-data-table-search .button{min-height:40px!important;padding:9px 19px!important;border-radius:100px!important;font-size:14px!important;flex:none!important}
-#wcspedia .wcs-insights-topic-filter{display:flex;align-items:center;gap:12px;white-space:nowrap;margin:0 0 0 auto;color:inherit}
-#wcspedia .wcs-insights-topic-filter>span{font-size:12px;line-height:1.3;color:var(--wcs-theme-muted,#5b6c7e)}
-#wcspedia .wcs-insights-topic-filter .wcs-ui-select{width:180px}
 #wcspedia .wcs-insights-status{font-size:13px;line-height:1.5;color:var(--wcs-theme-muted,#5b6c7e);margin:22px 0;min-height:20px}
 #wcspedia .wcs-insights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:24px;align-items:stretch}
 #wcspedia .wcs-insights-card{display:flex;min-width:0;padding:0;margin:0;background:transparent;border:0;box-shadow:none;overflow:visible;border-radius:0}
@@ -1457,7 +1454,7 @@ html[data-color-mode=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,h
 #wcspedia .wcs-insights-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 #wcspedia .discovery-section-links{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px 24px}
 @media(max-width:1000px){#wcspedia .wcs-insights-grid{gap:32px 22px}#wcspedia .wcs-insights .wcs-insights-card h2{font-size:22px!important}}
-@media(max-width:760px){#wcspedia .wcs-insights-controls{gap:16px}#wcspedia .wcs-insights-search.wcs-data-table-search{flex-basis:100%!important;max-width:none!important}#wcspedia .wcs-insights-topic-filter{margin-left:0}}
+@media(max-width:760px){#wcspedia .wcs-insights-controls{gap:16px}#wcspedia .wcs-insights-search.wcs-data-table-search{flex-basis:100%!important;max-width:none!important}}
 @media(max-width:520px){#wcspedia .wcs-insights-cover{aspect-ratio:1.65}#wcspedia .wcs-insights-tabs{gap:4px}#wcspedia .wcs-insights-tabs button{font-size:13px;padding:9px 13px}#wcspedia .wcs-insights-heading{margin-bottom:28px}#wcspedia .wcs-insights-status{margin-bottom:24px}#wcspedia .discovery-section-links{justify-content:flex-start;gap:10px 18px}}
 @media(prefers-reduced-motion:reduce){#wcspedia .wcs-insights-cover img{transition:none!important}#wcspedia a.wcs-insights-card-link:is(:hover,:focus-visible) .wcs-insights-cover img{transform:none!important}}
 @media print{#wcspedia .wcs-insights-controls,#wcspedia .wcs-insights-more{display:none!important}#wcspedia .wcs-insights-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#wcspedia .wcs-insights-card{break-inside:avoid}}
@@ -1473,6 +1470,9 @@ html[data-color-mode=dark] :is(#wcspedia,.wcs-loading-overlay) .wcs-brand-text,h
 #wcspedia .wcs-insights-card-footer .document-view-count{display:block;color:var(--ds-text-subtle,var(--wcs-theme-muted,#526880))}
 #wcspedia .wcs-cover-unavailable{background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3fc));min-height:120px}
 @media(max-width:650px){#wcspedia .wcs-search-cover{flex-basis:85px}}
+
+#wcspedia .wcs-insights-legacy-filter {display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0;color:var(--wcs-theme-muted);font-size:13px}
+#wcspedia .wcs-insights-legacy-filter button {border:0;background:transparent;color:var(--wcs-theme-link);text-decoration:underline;cursor:pointer;padding:6px}
 
 /* Native article chrome only. The helper sets this attribute on marked page
    views and removes it in editors, previews, app pages and on teardown.
@@ -3513,21 +3513,15 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
   #wcspedia[data-wcs-has-page-actions] {padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
 }
 
-/* Distinct page photographs share one frame; card tones stay attached to document identity. */
-#wcspedia {--wcs-card-blue-bg:#f3f6fd;--wcs-card-blue-border:#cbdaf1;--wcs-card-sky-bg:#f0f8fc;--wcs-card-sky-border:#c8e1ec;--wcs-card-teal-bg:#f0f8f5;--wcs-card-teal-border:#c6e0d7;--wcs-card-slate-bg:#f5f6fa;--wcs-card-slate-border:#d7ddeb}
-html[data-color-mode=dark] #wcspedia,body[data-color-mode=dark] #wcspedia,html:not([data-color-mode])[data-theme=dark] #wcspedia,body:not([data-color-mode])[data-theme=dark] #wcspedia {--wcs-card-blue-bg:#1a2b46;--wcs-card-blue-border:#34517b;--wcs-card-sky-bg:#172f40;--wcs-card-sky-border:#30576c;--wcs-card-teal-bg:#18332f;--wcs-card-teal-border:#345e53;--wcs-card-slate-bg:#252d40;--wcs-card-slate-border:#45516c}
-#wcspedia [data-wcs-card-tone] {--wcs-card-background:var(--wcs-card-blue-bg);--wcs-card-border:var(--wcs-card-blue-border)}
-#wcspedia [data-wcs-card-tone=sky] {--wcs-card-background:var(--wcs-card-sky-bg);--wcs-card-border:var(--wcs-card-sky-border)}
-#wcspedia [data-wcs-card-tone=teal] {--wcs-card-background:var(--wcs-card-teal-bg);--wcs-card-border:var(--wcs-card-teal-border)}
-#wcspedia [data-wcs-card-tone=slate] {--wcs-card-background:var(--wcs-card-slate-bg);--wcs-card-border:var(--wcs-card-slate-border)}
-#wcspedia .wcs-insights-card[data-wcs-card-tone],#wcspedia a.wcs-collection-card[data-wcs-card-tone],#wcspedia .wcs-home .featured-document[data-wcs-card-tone] {background:var(--wcs-card-background);border:1px solid var(--wcs-card-border);border-radius:20px;overflow:hidden;box-shadow:none;align-self:stretch;transition:border-color .18s ease,box-shadow .18s ease}
-#wcspedia .wcs-insights-card[data-wcs-card-tone]:hover,#wcspedia a.wcs-collection-card[data-wcs-card-tone]:hover,#wcspedia .wcs-home .featured-document[data-wcs-card-tone]:hover {border-color:var(--wcs-theme-link);box-shadow:0 6px 20px #10152f12}
-#wcspedia .wcs-insights-card[data-wcs-card-tone]:focus-within,#wcspedia a.wcs-collection-card[data-wcs-card-tone]:focus-visible,#wcspedia .wcs-home .featured-document[data-wcs-card-tone]:focus-within {outline:3px solid var(--wcs-theme-focus);outline-offset:3px}
+/* Page photographs stay distinct; all document cards use the same theme surface. */
+#wcspedia .wcs-insights-card,#wcspedia a.wcs-collection-card,#wcspedia .featured-document {background:var(--wcs-theme-surface,#fff);border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:20px;overflow:hidden;box-shadow:none;align-self:start;transition:border-color .18s ease,box-shadow .18s ease}
+#wcspedia .wcs-insights-card:hover,#wcspedia a.wcs-collection-card:hover,#wcspedia .featured-document:hover {border-color:var(--wcs-theme-link);box-shadow:0 6px 20px #10152f12}
+#wcspedia .wcs-insights-card:focus-within,#wcspedia a.wcs-collection-card:focus-visible,#wcspedia .featured-document:focus-within {outline:3px solid var(--wcs-theme-focus);outline-offset:3px}
 #wcspedia .wcs-insights-card-link {height:100%;border-radius:inherit}
-#wcspedia .wcs-insights-card .wcs-insights-cover,#wcspedia .wcs-home .featured-document .feature-media,#wcspedia .wcs-home .featured-document .feature-cover {border-radius:0}
+#wcspedia .wcs-insights-card .wcs-insights-cover,#wcspedia .featured-document .feature-media,#wcspedia .featured-document .feature-cover {border-radius:0}
 #wcspedia .wcs-insights-card .wcs-insights-card-body {padding:24px}
-#wcspedia .wcs-home .featured-document .feature-body {padding:22px}
-#wcspedia .wcs-home .featured-grid {align-items:stretch;gap:24px}
+#wcspedia .featured-document .feature-body {padding:22px}
+#wcspedia .wcs-home .featured-grid {align-items:start;gap:24px}
 #wcspedia .wcs-collection-card-media {position:relative;overflow:hidden;aspect-ratio:1.6;min-height:0;background:var(--wcs-theme-subtle)}
 #wcspedia .wcs-collection-card-media img {display:block!important;width:100%!important;height:100%!important;aspect-ratio:1.6;object-fit:cover!important;margin:0!important;border:0!important;border-radius:0!important}
 #wcspedia .wcs-collection-card-panel {padding:24px}
@@ -3539,5 +3533,5 @@ html[data-color-mode=dark] #wcspedia,body[data-color-mode=dark] #wcspedia,html:n
 #wcspedia .wcs-utility-page>.wcs-collection-body>.press-heading {width:100%!important;margin-inline:0!important;padding-inline:0}
 #wcspedia .wcs-utility-page>.wcs-collection-body>.press-heading>.discovery-container {width:100%!important;margin-inline:0!important;padding-inline:0}
 @media(max-width:720px){#wcspedia .wcs-page-banner-compact{height:170px}#wcspedia .wcs-insights-card .wcs-insights-card-body,#wcspedia .wcs-collection-card-panel{padding:20px}#wcspedia .wcs-utility-page .press-heading{padding-top:28px}}
-@media(prefers-reduced-motion:reduce){#wcspedia [data-wcs-card-tone]{transition:none!important}}
-@media print{#wcspedia [data-wcs-card-tone]{background:#fff!important;border-color:#bbb!important;box-shadow:none!important}}
+@media(prefers-reduced-motion:reduce){#wcspedia :is(.wcs-insights-card,.wcs-collection-card,.featured-document){transition:none!important}}
+@media print{#wcspedia :is(.wcs-insights-card,.wcs-collection-card,.featured-document){background:#fff!important;border-color:#bbb!important;box-shadow:none!important}}

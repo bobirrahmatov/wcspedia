@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '7afc1037d062') return;
+  if (registry.addDocument && registry.addDocument.version === '8b6c7bb418b6') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -647,6 +647,45 @@
     return '<a href="' + escape(media.url) + '" rel="noopener noreferrer"' + (media.id ? ' download="' + escape(media.name) + '" data-attachment-id="' + escape(media.id) + '" data-wcs-source="' + escape(source) + '"' : '') + '>';
   };
   function render(value, version) { var env = context(version); return md.renderer.render(parsed(value, env), md.options, env).replace(/>\n(?=<)/g, '>').trim(); }
+  // Shared discovery/reader policy: a real cover or body image wins; only a
+  // Blog without either receives a library illustration. Parse the same inert
+  // Markdown as the reader so image examples in code do not become covers.
+  function resolveCardCover(item, options) {
+    item = item || {}; options = options || {};
+    var fallback = groupType(item.type) === 'Blog' ? insightCoverUrl(options.key || item.documentKey || item.id, options) : '';
+    function candidate(value) {
+      if (!value) return null;
+      try {
+        var src = imageSource(typeof value === 'string' ? value : value.src || value.url, 'Image');
+        if (options.baseUrl && !/^data:/i.test(src) && new URL(src, options.baseUrl).origin !== new URL(options.baseUrl).origin) return null;
+        var alt = typeof value.alt === 'string' ? value.alt.trim().slice(0, 500) : '';
+        return { src: optimizedInsightCoverUrl(src, options), alt: alt, fallback: fallback, isFallback: false };
+      } catch (_) { return null; }
+    }
+    var cover = candidate(item.cover);
+    if (cover) return cover;
+    var bodyImage = candidate(item.bodyImage);
+    if (bodyImage) return bodyImage;
+    var body = '';
+    try { body = typeof item.bodyMarkdown === 'string' ? item.bodyMarkdown : fromSections(item.sections || []); } catch (_) { /* Invalid legacy text cannot supply a card image. */ }
+    if (body.trim() && body.length <= MAX_MARKDOWN && !/\u0000/.test(body)) {
+      var assets = Array.isArray(item.assets) ? item.assets : [];
+      function firstImage(tokens) {
+        for (var i = 0; i < tokens.length; i++) {
+          var token = tokens[i], found = null;
+          if (token.type === 'image') {
+            var src = token.attrGet('src'), ref = attachmentId(src), asset = ref && assets.find(function (entry) { return entry && entry.id === ref[1]; });
+            found = candidate({ src: ref ? asset && asset.src : src, alt: plainTokens(token.children) || asset && asset.alt || token.content || '' });
+          } else if (token.children) found = firstImage(token.children);
+          if (found) return found;
+        }
+        return null;
+      }
+      try { bodyImage = firstImage(md.parse(body, {})); } catch (_) { /* Bad display metadata must not break a listing. */ }
+      if (bodyImage) return bodyImage;
+    }
+    return fallback ? { src: fallback, alt: '', fallback: fallback, isFallback: true } : null;
+  }
   function toSections(value) {
     var tokens = parsed(value), result = [], current = null, used = Object.create(null), listDepth = 0, row = null;
     function section(title, id) { current = { id: id || uniqueId(title, used), title: title, paragraphs: [], bullets: [] }; result.push(current); }
@@ -969,7 +1008,7 @@
     normalizeImport(result);
     return result;
   }
-  return Object.freeze({ INSIGHT_TYPES: INSIGHT_TYPES, INSIGHT_CHOICES: INSIGHT_CHOICES, CREATE_TYPES: CREATE_TYPES, insightCoverUrl: insightCoverUrl, optimizedInsightCoverUrl: optimizedInsightCoverUrl, topicLabel: topicLabel, starterTemplate: starterTemplate, groupType: groupType, typeLabel: typeLabel, typeMembers: typeMembers, isInsightType: isInsightType, publicationModeFor: publicationModeFor, isDirectPublication: isDirectPublication, fromSections: fromSections, toSections: toSections, render: render, validateCover: validateCover, validateAssets: validateAssets, validateAttachments: validateAttachments, validateTags: validateTags, validateReferences: validateReferences, validateSourceMetadata: validateSourceMetadata, validateCommentsEnabled: validateCommentsEnabled, safeUrl: safeUrl, normalizeImport: normalizeImport, toMarkdown: toMarkdown, toMDX: toMDX, governanceDetails: governanceDetails, videoEmbed: videoEmbed, videoMarkdown: videoMarkdown, videoToken: videoToken });
+  return Object.freeze({ INSIGHT_TYPES: INSIGHT_TYPES, INSIGHT_CHOICES: INSIGHT_CHOICES, CREATE_TYPES: CREATE_TYPES, insightCoverUrl: insightCoverUrl, optimizedInsightCoverUrl: optimizedInsightCoverUrl, resolveCardCover: resolveCardCover, topicLabel: topicLabel, starterTemplate: starterTemplate, groupType: groupType, typeLabel: typeLabel, typeMembers: typeMembers, isInsightType: isInsightType, publicationModeFor: publicationModeFor, isDirectPublication: isDirectPublication, fromSections: fromSections, toSections: toSections, render: render, validateCover: validateCover, validateAssets: validateAssets, validateAttachments: validateAttachments, validateTags: validateTags, validateReferences: validateReferences, validateSourceMetadata: validateSourceMetadata, validateCommentsEnabled: validateCommentsEnabled, safeUrl: safeUrl, normalizeImport: normalizeImport, toMarkdown: toMarkdown, toMDX: toMDX, governanceDetails: governanceDetails, videoEmbed: videoEmbed, videoMarkdown: videoMarkdown, videoToken: videoToken });
 });
 
 ;
@@ -2125,7 +2164,14 @@ function renderStorage(document, selected, people = [], options = {}) {
   out += '<ac:structured-macro ac:name="anchor" ac:schema-version="1"><ac:parameter ac:name="">wcs-comments-v1-' + (version.commentsEnabled ? 'enabled' : 'disabled') + '</ac:parameter></ac:structured-macro>';
   out += '<ac:structured-macro ac:name="details" ac:schema-version="1"><ac:parameter ac:name="id">wcspedia-document</ac:parameter>' + (article ? '<ac:parameter ac:name="hidden">true</ac:parameter>' : '') + '<ac:rich-text-body>' + table(rows) + '</ac:rich-text-body></ac:structured-macro>';
   if (article) {
-    out += version.cover ? '<div class="wcs-native-article-cover">' + imageTag(staged(options, '$cover', version.cover.src), version.cover.alt) + (version.cover.caption ? '<p>' + xml(version.cover.caption) + '</p>' : '') + '</div>' : '<div class="wcs-native-article-cover">'+'<ac:structured-macro ac:name="html" ac:schema-version="1"><ac:plain-text-body>'+cdata('<img src="'+xml(content.insightCoverUrl(document.id,{attachmentPageId:options.attachmentPageId,contextPath:options.contextPath}))+'" alt="" decoding="async" loading="eager" fetchpriority="high" width="800" height="500" />')+'</ac:plain-text-body></ac:structured-macro>'+'</div>';
+    const cover=content.resolveCardCover({...version,id:document.id,type:document.type},{attachmentPageId:options.attachmentPageId,contextPath:options.contextPath});
+    if (version.cover) out += '<div class="wcs-native-article-cover">' + imageTag(staged(options, '$cover', version.cover.src), version.cover.alt) + (version.cover.caption ? '<p>' + xml(version.cover.caption) + '</p>' : '') + '</div>';
+    else if (cover && cover.isFallback) out += '<div class="wcs-native-article-cover">'+'<ac:structured-macro ac:name="html" ac:schema-version="1"><ac:plain-text-body>'+cdata('<img src="'+xml(cover.src)+'" alt="" decoding="async" loading="eager" fetchpriority="high" width="800" height="500" />')+'</ac:plain-text-body></ac:structured-macro>'+'</div>';
+    else if (cover) {
+      let first;
+      walk(parser.parse(body, {}), token => { if (!first && token.type === 'image') first={ref:imageReference(token.attrGet('src'),version),alt:token.content}; });
+      if (first) out += '<div class="wcs-native-article-cover">' + imageTag(staged(options,first.ref.key,first.ref.source),first.alt || first.ref.alt || '') + '</div>';
+    }
     out += '<div class="wcs-native-article-layout"><div class="wcs-native-article-body">';
   }
   if (version.summary) out += '<ac:structured-macro ac:name="excerpt" ac:schema-version="1"><ac:rich-text-body><p>' + xml(version.summary) + '</p></ac:rich-text-body></ac:structured-macro>';
@@ -4286,7 +4332,19 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if (!Parser || !storage) return {};
       var xml = new Parser().parseFromString('<root xmlns:ac="urn:ac" xmlns:ri="urn:ri">' + storage + '</root>', 'application/xml');
       if (xml.querySelector('parsererror')) return {};
-      var fields = {}, textBody = '';
+      var fields = {}, textBody = '', content = authoringHelper(), bodyImages=[], sourceOrder=new Map();
+      Array.from(xml.getElementsByTagName('*')).forEach(function(node,index){sourceOrder.set(node,index);});
+      function rememberImage(src, alt, node) {
+        if (fields.bodyImage) return;
+        var image = content.resolveCardCover({type:'Guide',bodyImage:{src:src,alt:alt || ''}},{baseUrl:origin + context + '/'});
+        if (image) bodyImages.push({src:image.src,alt:image.alt,order:sourceOrder.get(node)});
+      }
+      function visibleBodyImage(node) {
+        for (var parent = node.parentElement; parent; parent = parent.parentElement) {
+          if (['pre','code','nav','button'].includes(parent.localName) || /(?:^|\s)(?:wcs-native-article-cover|wcs-page-banner)(?:\s|$)/.test(parent.getAttribute('class') || '')) return false;
+        }
+        return true;
+      }
       // Parse inert storage; never execute HTML macros or include their scripts
       // in the excerpt. Use only the snapshot matching this native revision.
       Array.from(xml.getElementsByTagNameNS('urn:ac','plain-text-body')).forEach(function (node) {
@@ -4299,6 +4357,8 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
             fields.summary = plain(v.summary || ''); fields.cover = v.cover || null;
             fields.documentKey=data.document.id;
             fields.type=data.document.type;
+            var image=content.resolveCardCover(Object.assign({},v,{type:data.document.type,id:data.document.id}),{baseUrl:origin + context + '/'});
+            if (!v.cover && image && !image.isFallback) fields.bodyImage={src:image.src,alt:image.alt};
             var author=(data.people||[]).find(function(person){return person.id===(data.document.authorId||v.createdBy);});
             fields.author=author?plain(author.name||author.displayName||''):null;
             if(metricKey(fields.documentKey)&&integer(v.version)&&integer(v.revision)){
@@ -4309,9 +4369,17 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           }
         } catch (_) { /* Legacy pages can still provide a native text excerpt. */ }
         html.querySelectorAll('script,style,nav,button').forEach(function (node) { node.remove(); });
+        if (visibleBodyImage(node)) Array.from((html.querySelector('.wcs-native-article-body') || html.body).querySelectorAll('img')).filter(visibleBodyImage).forEach(function (image) { rememberImage(image.getAttribute('src'),image.getAttribute('alt'),node); });
         textBody += ' ' + (html.querySelector('.wcs-native-article-body') || html.body).textContent;
         node.remove();
       });
+      Array.from((xml.querySelector('.wcs-native-article-body') || xml.documentElement).getElementsByTagNameNS('urn:ac','image')).filter(visibleBodyImage).forEach(function (image) {
+        var attachment=image.getElementsByTagNameNS('urn:ri','attachment')[0],url=image.getElementsByTagNameNS('urn:ri','url')[0];
+        var filename=attachment && attachment.getAttributeNS('urn:ri','filename');
+        if (filename && !attachment.getElementsByTagNameNS('urn:ri','page').length && /^[1-9]\d{0,19}$/.test(String(item.id))) rememberImage(context + '/download/attachments/' + item.id + '/' + encodeURIComponent(filename),image.getAttributeNS('urn:ac','alt'),image);
+        else if (url) rememberImage(url.getAttributeNS('urn:ri','value'),image.getAttributeNS('urn:ac','alt'),image);
+      });
+      if (!fields.bodyImage && bodyImages.length) { bodyImages.sort(function(a,b){return a.order-b.order;});fields.bodyImage={src:bodyImages[0].src,alt:bodyImages[0].alt}; }
       textBody += ' ' + (xml.querySelector('.wcs-native-article-body') || xml.documentElement).textContent;
       textBody = textBody.replace(/\s+/g,' ').trim();
       fields.searchText = textBody;
@@ -4736,6 +4804,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
             normalized.type = discoveryType(names, ancestors, search, card);
             if (card.summary) normalized.summary = card.summary;
             if (card.cover) normalized.cover = card.cover;
+            if (card.bodyImage) normalized.bodyImage = card.bodyImage;
             if(card.documentKey)normalized.documentKey=card.documentKey;
             if(card.author)normalized.author=card.author;
           }
@@ -5283,5 +5352,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '7afc1037d062', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '8b6c7bb418b6', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

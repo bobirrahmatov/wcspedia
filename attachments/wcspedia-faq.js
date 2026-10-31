@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('7afc1037d062'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('8b6c7bb418b6'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -150,7 +150,7 @@
 })(window);
 
 ;
-/* Shared page artwork and stable card colours. Reuses the existing WebP attachments. */
+/* Shared page artwork. Reuses the existing WebP attachments. */
 (function(root,factory){
   'use strict';
   const api=factory();
@@ -175,12 +175,7 @@
   function banner(key,label,config,options={}){
     return '<div class="wcs-collection-banner'+(options.compact?' wcs-page-banner-compact':'')+'" data-wcs-banner-key="'+escape(key)+'"><img src="'+escape(imageUrl(key,config))+'" alt="" width="800" height="500" loading="eager" decoding="async" fetchpriority="high"><span class="wcs-collection-label" aria-hidden="true">'+escape(label)+'</span></div>';
   }
-  function cardTone(key){
-    const value=String(key||'');let hash=2166136261;
-    for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619)>>>0;
-    return ['blue','sky','teal','slate'][hash%4];
-  }
-  return Object.freeze({banner,imageUrl,cardTone,bannerKeys:Object.freeze(Object.keys(banners))});
+  return Object.freeze({banner,imageUrl,bannerKeys:Object.freeze(Object.keys(banners))});
 });
 
 ;
@@ -603,5 +598,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: '7afc1037d062' };
+  modules['faq'] = { version: '8b6c7bb418b6' };
 })();
