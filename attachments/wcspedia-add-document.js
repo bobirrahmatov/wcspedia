@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '6321439aad0e') return;
+  if (registry.addDocument && registry.addDocument.version === '33777797cdb2') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -10,10 +10,10 @@
  * indicators are separate. Inline vectors need no image/CDN requests. */
 (function(root,factory){
   'use strict';
-  var api=root&&root.WCSIcons||factory();
+  var api=root&&root.WCSIcons||factory(root);
   if(typeof module==='object'&&module.exports)module.exports=api;
   else if(root)root.WCSIcons=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(){
+})(typeof globalThis!=='undefined'?globalThis:this,function(root){
   'use strict';
   var paths={
   "print": '<path d="M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v7H6zM17 12h1"/>',
@@ -119,7 +119,9 @@
     var extra=String(options.className||'').replace(/[^a-zA-Z0-9 _-]/g,'');
     return '<span class="wcs-avatar'+(extra?' '+extra:'')+'" aria-hidden="true">'+svg('user')+'</span>';
   }
-  function cardPlaceholder(type){
+  function cardPlaceholder(type,key){
+    var library=typeof module==='object'&&module.exports?require('./illustrations.js'):root&&root.WCSIllustrations;
+    if(library){var id=library.resolveId(String(key||type||'document'));return '<span class="wcs-card-placeholder wcs-card-placeholder-library" data-wcs-illustration="'+id+'" aria-hidden="true">'+library.svg(id,{decorative:true})+'</span>';}
     var name=String(type||'document').trim().toLowerCase().replace(/\s+/g,'-');
     if(['blog','guide','training','report','job-aid','procedure','knowledge-sharing','reference','playbook','checklist','template','faq'].indexOf(name)<0)name='document';
     return '<span class="wcs-card-placeholder" aria-hidden="true"><span class="wcs-card-placeholder-orbit"></span><span class="wcs-card-placeholder-sheet"><span class="wcs-card-placeholder-icon">'+svg(name,{size:40})+'</span><span class="wcs-card-placeholder-lines"><span></span><span></span><span></span></span></span></span>';
@@ -5357,5 +5359,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '6321439aad0e', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '33777797cdb2', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

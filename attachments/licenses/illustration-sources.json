@@ -1,0 +1,711 @@
+{
+  "version": 1,
+  "count": 100,
+  "viewBox": "0 0 800 500",
+  "provenance": "Original WCSpedia vector artwork created in this repository. No third-party artwork, external fonts, embedded raster images or external requests. Twenty original knowledge and work motifs, each drawn in five distinct spatial compositions. Citi blue, navy and red accent palette matches the application.",
+  "usage": "Keep authored images first. Automatic inline card fallback artwork uses resolveId(documentKey), with no persisted metadata. An explicit editor choice or shuffle is converted from this trusted SVG to a normal WebP cover and saved through the existing native staged-upload pipeline; the choice is stored as cover artwork, not an illustration ID. The URL API is available for optional asset downloads.",
+  "generator": "tools/generate-illustrations.cjs",
+  "renderer": "illustrations.js",
+  "illustrations": [
+    {
+      "id": 1,
+      "label": "Open knowledge · Focus",
+      "filename": "wcs-illustration-001.svg",
+      "bytes": 2073,
+      "sha256": "7c2b7c1039b3390bbd1daaa777af1f9cc16d39f51885f9a8237cc35af847ac05"
+    },
+    {
+      "id": 2,
+      "label": "Open knowledge · Workspace",
+      "filename": "wcs-illustration-002.svg",
+      "bytes": 2247,
+      "sha256": "d0397bf2294e68ca244e3d146e1c848adbbb79efb14c19a5b0e342825a874090"
+    },
+    {
+      "id": 3,
+      "label": "Open knowledge · Connection",
+      "filename": "wcs-illustration-003.svg",
+      "bytes": 2633,
+      "sha256": "170a5b4eeacfcd368d1bca6bf3d704b6a369cb98e679c6a44798eb4b9bceb10c"
+    },
+    {
+      "id": 4,
+      "label": "Open knowledge · Perspective",
+      "filename": "wcs-illustration-004.svg",
+      "bytes": 2129,
+      "sha256": "1d1795d6ee4facb8a941b4802ee7efbdc147113048b4c81eb4cfc6d8d4a7c80e"
+    },
+    {
+      "id": 5,
+      "label": "Open knowledge · Discovery",
+      "filename": "wcs-illustration-005.svg",
+      "bytes": 2139,
+      "sha256": "b9cafccd86621de84e6031b4796ddc4f01d24c800f73af6505d77830b6202fe9"
+    },
+    {
+      "id": 6,
+      "label": "Working notes · Focus",
+      "filename": "wcs-illustration-006.svg",
+      "bytes": 2259,
+      "sha256": "cac135db42c63357885d0c14a9a2f3247053cccb771a543d2264c453875fd79a"
+    },
+    {
+      "id": 7,
+      "label": "Working notes · Workspace",
+      "filename": "wcs-illustration-007.svg",
+      "bytes": 2433,
+      "sha256": "16dec1fb224e85535e7e0318328ce7a53e908e85abcb8942ee035be2cd37d9e9"
+    },
+    {
+      "id": 8,
+      "label": "Working notes · Connection",
+      "filename": "wcs-illustration-008.svg",
+      "bytes": 2819,
+      "sha256": "6e82d7cf75e1d280aac92fe663219c49eee035b52a621a2f0f2a3dba4efd45ef"
+    },
+    {
+      "id": 9,
+      "label": "Working notes · Perspective",
+      "filename": "wcs-illustration-009.svg",
+      "bytes": 2315,
+      "sha256": "729851c8bbc2319a747c5b15b947647b097c2cb6dfdf8b5984ee8f3fa63b81ff"
+    },
+    {
+      "id": 10,
+      "label": "Working notes · Discovery",
+      "filename": "wcs-illustration-010.svg",
+      "bytes": 2326,
+      "sha256": "35905649deeb841140c130e59539b4a72d99fcf1900d3fd35b34032bc332a1db"
+    },
+    {
+      "id": 11,
+      "label": "Ready to review · Focus",
+      "filename": "wcs-illustration-011.svg",
+      "bytes": 2219,
+      "sha256": "7f05eb0fd72fffa89ba58706eab7c6bbb0589298e3526852d5aca44348fb0f10"
+    },
+    {
+      "id": 12,
+      "label": "Ready to review · Workspace",
+      "filename": "wcs-illustration-012.svg",
+      "bytes": 2393,
+      "sha256": "a0185ddeeecc340492c46f688109c479bf4786b4bc441c7f079722894b064afd"
+    },
+    {
+      "id": 13,
+      "label": "Ready to review · Connection",
+      "filename": "wcs-illustration-013.svg",
+      "bytes": 2779,
+      "sha256": "7ce256dbce1220efd5d4c8bdbd2255efda330c329c45645034395a94fe83ef4c"
+    },
+    {
+      "id": 14,
+      "label": "Ready to review · Perspective",
+      "filename": "wcs-illustration-014.svg",
+      "bytes": 2275,
+      "sha256": "16eb93ec47672c7db0ee33acaf1bfd3744e9a109910baa92f6babe6c622b202e"
+    },
+    {
+      "id": 15,
+      "label": "Ready to review · Discovery",
+      "filename": "wcs-illustration-015.svg",
+      "bytes": 2285,
+      "sha256": "4d995463014f0d19748fd06fac99cb155af138ad102d3f83526d6690ba3a276e"
+    },
+    {
+      "id": 16,
+      "label": "A clearer picture · Focus",
+      "filename": "wcs-illustration-016.svg",
+      "bytes": 2104,
+      "sha256": "e30fb41c87e66b081f45c0f87c7756469a428e6818d052dfa914797c03a7c1f1"
+    },
+    {
+      "id": 17,
+      "label": "A clearer picture · Workspace",
+      "filename": "wcs-illustration-017.svg",
+      "bytes": 2278,
+      "sha256": "3bb05625c80790fda3de21fd2cec0ba142d6b65f986b838cf70cb215294c9db1"
+    },
+    {
+      "id": 18,
+      "label": "A clearer picture · Connection",
+      "filename": "wcs-illustration-018.svg",
+      "bytes": 2664,
+      "sha256": "d6cfd3214f3fe9d9e35b562bc49b607bf1ad66bd6537e7e14b8fbd32513ecb2d"
+    },
+    {
+      "id": 19,
+      "label": "A clearer picture · Perspective",
+      "filename": "wcs-illustration-019.svg",
+      "bytes": 2160,
+      "sha256": "b3e2623015727896defa710825e4ca0192732c5003b374428d3c1b25421d71b0"
+    },
+    {
+      "id": 20,
+      "label": "A clearer picture · Discovery",
+      "filename": "wcs-illustration-020.svg",
+      "bytes": 2170,
+      "sha256": "ff0bcddbc69b3b99d6d28fa92f739fd7f8d11ec607ca1c0a17c096ec57803847"
+    },
+    {
+      "id": 21,
+      "label": "Moving forward · Focus",
+      "filename": "wcs-illustration-021.svg",
+      "bytes": 2333,
+      "sha256": "8d9393997a699cb492a9e8c41cc29f26f84be7b592d09f2cfbd2703592e72ee5"
+    },
+    {
+      "id": 22,
+      "label": "Moving forward · Workspace",
+      "filename": "wcs-illustration-022.svg",
+      "bytes": 2507,
+      "sha256": "2932b3f1d7dcb3ae879a629f7f5b499ad4c4279d19c7b2692614afd9ff103e8f"
+    },
+    {
+      "id": 23,
+      "label": "Moving forward · Connection",
+      "filename": "wcs-illustration-023.svg",
+      "bytes": 2893,
+      "sha256": "dfb0782b7e0095b55519ee4033f143326c9e9c9f51504e1800f8d880647803fd"
+    },
+    {
+      "id": 24,
+      "label": "Moving forward · Perspective",
+      "filename": "wcs-illustration-024.svg",
+      "bytes": 2389,
+      "sha256": "a794b3bc7548228cb597d9be75670e4ae2eab8acba401d9caa3c8c90072c7f87"
+    },
+    {
+      "id": 25,
+      "label": "Moving forward · Discovery",
+      "filename": "wcs-illustration-025.svg",
+      "bytes": 2399,
+      "sha256": "235977e460552554ab3ab27d19e171602215025e77dc120550a024f45bf01704"
+    },
+    {
+      "id": 26,
+      "label": "Find your direction · Focus",
+      "filename": "wcs-illustration-026.svg",
+      "bytes": 2248,
+      "sha256": "28d0b3211a076a63b6cf87e69f64d0df9c0322655c94af4e4bb7ac3d9bc6bd39"
+    },
+    {
+      "id": 27,
+      "label": "Find your direction · Workspace",
+      "filename": "wcs-illustration-027.svg",
+      "bytes": 2422,
+      "sha256": "3f08da748cb6b776a478d60548b0806832572bc9a2312c4c5fa7ec8d513a2a82"
+    },
+    {
+      "id": 28,
+      "label": "Find your direction · Connection",
+      "filename": "wcs-illustration-028.svg",
+      "bytes": 2808,
+      "sha256": "6f9cceeed129c7061cc2e35e7a43d376497673c0912bdbf08a3f2bc77ba85c51"
+    },
+    {
+      "id": 29,
+      "label": "Find your direction · Perspective",
+      "filename": "wcs-illustration-029.svg",
+      "bytes": 2304,
+      "sha256": "fc3fbac9a417ef330268c63ee7764c42e8440ebf06887c82f0412e5a025001b4"
+    },
+    {
+      "id": 30,
+      "label": "Find your direction · Discovery",
+      "filename": "wcs-illustration-030.svg",
+      "bytes": 2314,
+      "sha256": "15a060bd68604b041de85286d92624dcbf9e7442ca345894d69a07784e0d66a8"
+    },
+    {
+      "id": 31,
+      "label": "Connected world · Focus",
+      "filename": "wcs-illustration-031.svg",
+      "bytes": 2259,
+      "sha256": "da967f15ce8928c26ea04571911a4f731ba08066cdc84031baab3b996af3c374"
+    },
+    {
+      "id": 32,
+      "label": "Connected world · Workspace",
+      "filename": "wcs-illustration-032.svg",
+      "bytes": 2433,
+      "sha256": "83a93d6c7c3d71a7d76d38b8e80c036fdaa054b540ff431f9384b8c99d3c963c"
+    },
+    {
+      "id": 33,
+      "label": "Connected world · Connection",
+      "filename": "wcs-illustration-033.svg",
+      "bytes": 2819,
+      "sha256": "e213f0e01f1a8364b67593417de6b27e6ca0f9a2645277ee84753ee467c5f1fa"
+    },
+    {
+      "id": 34,
+      "label": "Connected world · Perspective",
+      "filename": "wcs-illustration-034.svg",
+      "bytes": 2315,
+      "sha256": "9ca907106c123c458f39adadc995d1458744b1a30b2d51363724ab5caa51b53f"
+    },
+    {
+      "id": 35,
+      "label": "Connected world · Discovery",
+      "filename": "wcs-illustration-035.svg",
+      "bytes": 2325,
+      "sha256": "1e0332b4bf4767dd98c3c6d3eaffea31389329eeea06ee089753a086aa400ed6"
+    },
+    {
+      "id": 36,
+      "label": "Shared knowledge · Focus",
+      "filename": "wcs-illustration-036.svg",
+      "bytes": 2432,
+      "sha256": "1cc98b137cfbe16383f36ff0c8ffee32044fee4131f10ac3036a40c409834ba8"
+    },
+    {
+      "id": 37,
+      "label": "Shared knowledge · Workspace",
+      "filename": "wcs-illustration-037.svg",
+      "bytes": 2606,
+      "sha256": "5349904f51d9ad9bee99c207a110b9a7e2125f0a132b62dc474d442ca9411786"
+    },
+    {
+      "id": 38,
+      "label": "Shared knowledge · Connection",
+      "filename": "wcs-illustration-038.svg",
+      "bytes": 2992,
+      "sha256": "00196e7e275f41af7c529f5acf261ff3a00c3d884c81ea66586a918f3fd153f6"
+    },
+    {
+      "id": 39,
+      "label": "Shared knowledge · Perspective",
+      "filename": "wcs-illustration-039.svg",
+      "bytes": 2488,
+      "sha256": "2b89f3b620b8a0edb7f2fad3b4df9f2df1b039da3ea243cac09d66ca9fe4bd56"
+    },
+    {
+      "id": 40,
+      "label": "Shared knowledge · Discovery",
+      "filename": "wcs-illustration-040.svg",
+      "bytes": 2498,
+      "sha256": "572d5e106736b183174df23d1ff7fbdc6160fe331884b13c2cee273234a25b2f"
+    },
+    {
+      "id": 41,
+      "label": "Trusted guidance · Focus",
+      "filename": "wcs-illustration-041.svg",
+      "bytes": 1950,
+      "sha256": "0fd701f9a1e48b98bfe348fc6547213d094119003ce432b8b89d560b5d29d108"
+    },
+    {
+      "id": 42,
+      "label": "Trusted guidance · Workspace",
+      "filename": "wcs-illustration-042.svg",
+      "bytes": 2124,
+      "sha256": "c09b12f9b30057b92c421639f89b57c0fdb66989cb23c213ea7a4bb2b43719c7"
+    },
+    {
+      "id": 43,
+      "label": "Trusted guidance · Connection",
+      "filename": "wcs-illustration-043.svg",
+      "bytes": 2510,
+      "sha256": "d0fb12933563751e3fe912a4658bc8d5411163595766082b28594c80bc01de2b"
+    },
+    {
+      "id": 44,
+      "label": "Trusted guidance · Perspective",
+      "filename": "wcs-illustration-044.svg",
+      "bytes": 2006,
+      "sha256": "e7f9c54e7ad96cd25372d7a357c263847a0a92209b0b372ab66e92c6011eb464"
+    },
+    {
+      "id": 45,
+      "label": "Trusted guidance · Discovery",
+      "filename": "wcs-illustration-045.svg",
+      "bytes": 2016,
+      "sha256": "da450983cc3dd2961d0bc2ea074c649cd2f7654b8ed15ab2d0872d282370efd2"
+    },
+    {
+      "id": 46,
+      "label": "Unlock an idea · Focus",
+      "filename": "wcs-illustration-046.svg",
+      "bytes": 1991,
+      "sha256": "df7bbcaaaabb8e928210db1990681f9a2cf6ffe94075a3a08eab25ceb10c6374"
+    },
+    {
+      "id": 47,
+      "label": "Unlock an idea · Workspace",
+      "filename": "wcs-illustration-047.svg",
+      "bytes": 2165,
+      "sha256": "f2f7ff977177bcfd9f2f9f225742f4aeffbe43ccf9319d3d21605c665d6909e3"
+    },
+    {
+      "id": 48,
+      "label": "Unlock an idea · Connection",
+      "filename": "wcs-illustration-048.svg",
+      "bytes": 2551,
+      "sha256": "b9ac27885307154e52202b16311f368b10d66d27677cb47f2a476b2731091b8b"
+    },
+    {
+      "id": 49,
+      "label": "Unlock an idea · Perspective",
+      "filename": "wcs-illustration-049.svg",
+      "bytes": 2047,
+      "sha256": "6cac2751b6052b5a250262934d234dd500af1deb2c933ae50e9afef83c01b45b"
+    },
+    {
+      "id": 50,
+      "label": "Unlock an idea · Discovery",
+      "filename": "wcs-illustration-050.svg",
+      "bytes": 2057,
+      "sha256": "5faa4aaa27d51f5726124fd0c54ef77992b0bc20e23eeaae28f46cac1ba20c98"
+    },
+    {
+      "id": 51,
+      "label": "Keep your focus · Focus",
+      "filename": "wcs-illustration-051.svg",
+      "bytes": 2174,
+      "sha256": "fcc99aff1942b02eceffd6c47664f40d2614d26637b60a92cc038d1dc3f1476b"
+    },
+    {
+      "id": 52,
+      "label": "Keep your focus · Workspace",
+      "filename": "wcs-illustration-052.svg",
+      "bytes": 2348,
+      "sha256": "88bb8da228f33d9dbaa5ddf5e07f1e1e365199cf1975d5f23015cd47a514cac3"
+    },
+    {
+      "id": 53,
+      "label": "Keep your focus · Connection",
+      "filename": "wcs-illustration-053.svg",
+      "bytes": 2734,
+      "sha256": "a395965d21dcf83693ea522002e35464c90611e159ec045d6cc59f9628dfe71e"
+    },
+    {
+      "id": 54,
+      "label": "Keep your focus · Perspective",
+      "filename": "wcs-illustration-054.svg",
+      "bytes": 2230,
+      "sha256": "2b44924e56bc5dc3a49190bfaca529aaa4924cef54fddf0463b454bacdd2aba3"
+    },
+    {
+      "id": 55,
+      "label": "Keep your focus · Discovery",
+      "filename": "wcs-illustration-055.svg",
+      "bytes": 2240,
+      "sha256": "cd04afc8ea3df91b812e764f305e5b417d2817e1329dff8a31292772f750a4dc"
+    },
+    {
+      "id": 56,
+      "label": "A brighter idea · Focus",
+      "filename": "wcs-illustration-056.svg",
+      "bytes": 2299,
+      "sha256": "c7f1e66c66ba5c976688cf82ee5c4abff022b8cd41472bdfdca323c7a5ebcbfe"
+    },
+    {
+      "id": 57,
+      "label": "A brighter idea · Workspace",
+      "filename": "wcs-illustration-057.svg",
+      "bytes": 2473,
+      "sha256": "d2fd2400d33806a7d8a6493e26afaa8c862a0ca621c9c1deedc414006101ccb3"
+    },
+    {
+      "id": 58,
+      "label": "A brighter idea · Connection",
+      "filename": "wcs-illustration-058.svg",
+      "bytes": 2859,
+      "sha256": "34c2c48e871c7b6db8954ed2f22aa00efe6585887295e5ceb0788058e465257f"
+    },
+    {
+      "id": 59,
+      "label": "A brighter idea · Perspective",
+      "filename": "wcs-illustration-059.svg",
+      "bytes": 2355,
+      "sha256": "193a38d3d7fac5eaf2bbbe9476d4bc3523c2185783c7af7266483d73952f589d"
+    },
+    {
+      "id": 60,
+      "label": "A brighter idea · Discovery",
+      "filename": "wcs-illustration-060.svg",
+      "bytes": 2365,
+      "sha256": "383f531bc8169e215c860b9d1dcb3e9cab3bbe6300de41f41237df1dfc17065e"
+    },
+    {
+      "id": 61,
+      "label": "Find the detail · Focus",
+      "filename": "wcs-illustration-061.svg",
+      "bytes": 2302,
+      "sha256": "f340d58ec36b418bedf1ae132b31280f7856a37d5685635a04275a56b731e7a3"
+    },
+    {
+      "id": 62,
+      "label": "Find the detail · Workspace",
+      "filename": "wcs-illustration-062.svg",
+      "bytes": 2476,
+      "sha256": "7a6bc0af74f76f2ae893e904076a9395c7dc40dc118e9c96e21ffb5bfd226ac4"
+    },
+    {
+      "id": 63,
+      "label": "Find the detail · Connection",
+      "filename": "wcs-illustration-063.svg",
+      "bytes": 2862,
+      "sha256": "032d7b515ff35d071bc8aeef0dd1b3bb8d8caeb6eda84117ee040d94c7da1f75"
+    },
+    {
+      "id": 64,
+      "label": "Find the detail · Perspective",
+      "filename": "wcs-illustration-064.svg",
+      "bytes": 2358,
+      "sha256": "7b39b214c623d9f1bae39ef1931ec14abac9f99b104bb7524dba54bac6602a16"
+    },
+    {
+      "id": 65,
+      "label": "Find the detail · Discovery",
+      "filename": "wcs-illustration-065.svg",
+      "bytes": 2368,
+      "sha256": "b4f8a54cf7f1756ebee866a59734a70841849f75df14e8ef9bbb916c012f796e"
+    },
+    {
+      "id": 66,
+      "label": "Organized thinking · Focus",
+      "filename": "wcs-illustration-066.svg",
+      "bytes": 2045,
+      "sha256": "94ba4c2622e7115a701584b1cc10ca021f653c937a7bf2aa341fe38cc19c0c49"
+    },
+    {
+      "id": 67,
+      "label": "Organized thinking · Workspace",
+      "filename": "wcs-illustration-067.svg",
+      "bytes": 2219,
+      "sha256": "fcc96cea7004ad09140e01845acdd6e9ac071f09d89ea8d6e66cfb4f7d2476e0"
+    },
+    {
+      "id": 68,
+      "label": "Organized thinking · Connection",
+      "filename": "wcs-illustration-068.svg",
+      "bytes": 2605,
+      "sha256": "e1c4b5468d99f2e52b34ee3613096d5a10feb47f010a11949be222e6937ea766"
+    },
+    {
+      "id": 69,
+      "label": "Organized thinking · Perspective",
+      "filename": "wcs-illustration-069.svg",
+      "bytes": 2101,
+      "sha256": "b02fa396f114c34a30d4a62cb92ea5038ad97d8d7f52213dfb8c71cde544c83b"
+    },
+    {
+      "id": 70,
+      "label": "Organized thinking · Discovery",
+      "filename": "wcs-illustration-070.svg",
+      "bytes": 2111,
+      "sha256": "0e2a545837f03478d46824a28a91892ea062759d4ec74bd6f214ce5ee9aec1fa"
+    },
+    {
+      "id": 71,
+      "label": "Make a plan · Focus",
+      "filename": "wcs-illustration-071.svg",
+      "bytes": 2339,
+      "sha256": "9bddb23c59ab08a76a1ecbb0fe1d30a3b41ed18cff07b922706e53cfd097fc09"
+    },
+    {
+      "id": 72,
+      "label": "Make a plan · Workspace",
+      "filename": "wcs-illustration-072.svg",
+      "bytes": 2513,
+      "sha256": "6902c649e0a816a034341534fc5fe654cf815d9e97e200b0d993a0674bd9e872"
+    },
+    {
+      "id": 73,
+      "label": "Make a plan · Connection",
+      "filename": "wcs-illustration-073.svg",
+      "bytes": 2899,
+      "sha256": "9f379f77fd12af32d4bfec8688346fc4503237ff765a8a878e1fe838593098fe"
+    },
+    {
+      "id": 74,
+      "label": "Make a plan · Perspective",
+      "filename": "wcs-illustration-074.svg",
+      "bytes": 2395,
+      "sha256": "e92f39c063a69a10db47e8c15d4fa351ad7cb8575f9a625e8f64a1e5bae0f20e"
+    },
+    {
+      "id": 75,
+      "label": "Make a plan · Discovery",
+      "filename": "wcs-illustration-075.svg",
+      "bytes": 2405,
+      "sha256": "68248819369620b5a2b5d36c2a70d893706e5cc24444907b349bdf6423ed275c"
+    },
+    {
+      "id": 76,
+      "label": "Learning together · Focus",
+      "filename": "wcs-illustration-076.svg",
+      "bytes": 2562,
+      "sha256": "ca0fb7bceb08123a05efc4f97b2c70a7d293ae2c94de617b68c0b16db334b267"
+    },
+    {
+      "id": 77,
+      "label": "Learning together · Workspace",
+      "filename": "wcs-illustration-077.svg",
+      "bytes": 2736,
+      "sha256": "f0d1bec59bad7b5476a5b7b09313e8e5cbe44a2fb485a2504d6e616e0530dba8"
+    },
+    {
+      "id": 78,
+      "label": "Learning together · Connection",
+      "filename": "wcs-illustration-078.svg",
+      "bytes": 3122,
+      "sha256": "e181738f4d9c92779ae379957a7102e57dcfae3f607ae4a5b8a2e0823d8f1b81"
+    },
+    {
+      "id": 79,
+      "label": "Learning together · Perspective",
+      "filename": "wcs-illustration-079.svg",
+      "bytes": 2618,
+      "sha256": "0869af6e9a52c69e727c97d3eb3f500ad240b76a04dce818c7eb1289b4a6c232"
+    },
+    {
+      "id": 80,
+      "label": "Learning together · Discovery",
+      "filename": "wcs-illustration-080.svg",
+      "bytes": 2628,
+      "sha256": "384118b87a61b70d51ee7fba13b8cf80bf0cf38fa1569911da3e800442eca0f0"
+    },
+    {
+      "id": 81,
+      "label": "Build the foundation · Focus",
+      "filename": "wcs-illustration-081.svg",
+      "bytes": 2369,
+      "sha256": "58e6825f39dcc28ba8325a22ad7adad1fcb14536d74e0398aeaff80684ffa760"
+    },
+    {
+      "id": 82,
+      "label": "Build the foundation · Workspace",
+      "filename": "wcs-illustration-082.svg",
+      "bytes": 2543,
+      "sha256": "e72f683d8faff00d841402c0d5c80c19b40f1bee5bf60cd664a23d12df9e0b18"
+    },
+    {
+      "id": 83,
+      "label": "Build the foundation · Connection",
+      "filename": "wcs-illustration-083.svg",
+      "bytes": 2929,
+      "sha256": "b9288f94ce9352a13807d8c9eae5a091a05421f215202366ee61f0e1fa71a2ee"
+    },
+    {
+      "id": 84,
+      "label": "Build the foundation · Perspective",
+      "filename": "wcs-illustration-084.svg",
+      "bytes": 2425,
+      "sha256": "95187f618bac91ab8250f879aecdb8c21a3a17bc635a897acf7ff7902e886438"
+    },
+    {
+      "id": 85,
+      "label": "Build the foundation · Discovery",
+      "filename": "wcs-illustration-085.svg",
+      "bytes": 2435,
+      "sha256": "8813defdbe46fffb7d52de0faad0cfc3c9f7598c54d86129266eb291b0259392"
+    },
+    {
+      "id": 86,
+      "label": "Across the bridge · Focus",
+      "filename": "wcs-illustration-086.svg",
+      "bytes": 2243,
+      "sha256": "125b9612054db49d7d89b47f28cfbe9309483c18c57f6cc64a8458c6f4301727"
+    },
+    {
+      "id": 87,
+      "label": "Across the bridge · Workspace",
+      "filename": "wcs-illustration-087.svg",
+      "bytes": 2417,
+      "sha256": "691fbd8368e954b907489a4596482c2ce4e536c9bd4745068b25b1af1611346e"
+    },
+    {
+      "id": 88,
+      "label": "Across the bridge · Connection",
+      "filename": "wcs-illustration-088.svg",
+      "bytes": 2803,
+      "sha256": "89c93ee2ee31e4facbc91a657aeb83b7ae549d88a1a59c6c85090db63aaae0ef"
+    },
+    {
+      "id": 89,
+      "label": "Across the bridge · Perspective",
+      "filename": "wcs-illustration-089.svg",
+      "bytes": 2299,
+      "sha256": "e99f360f1e288891e4e4271bddf0d99558aed0e8b61b94e30ab170ac8259193d"
+    },
+    {
+      "id": 90,
+      "label": "Across the bridge · Discovery",
+      "filename": "wcs-illustration-090.svg",
+      "bytes": 2309,
+      "sha256": "f69cc529f181042fc639319333ac60b432739e8fc58638be76de583fb0e1fbfd"
+    },
+    {
+      "id": 91,
+      "label": "Grow your knowledge · Focus",
+      "filename": "wcs-illustration-091.svg",
+      "bytes": 2399,
+      "sha256": "63b330fcd5d401543de19d7b4ea898b58bab61646591b985d3d46e4a7abc8c65"
+    },
+    {
+      "id": 92,
+      "label": "Grow your knowledge · Workspace",
+      "filename": "wcs-illustration-092.svg",
+      "bytes": 2573,
+      "sha256": "18f96ff2b93a8b8b1458d0823b4bbabfba148e9e3ea7452aa9a871e3e7ab2298"
+    },
+    {
+      "id": 93,
+      "label": "Grow your knowledge · Connection",
+      "filename": "wcs-illustration-093.svg",
+      "bytes": 2959,
+      "sha256": "498f02fb61350d7ce9f2f94bb00043b6568e436c1f566485a6943af8c8c7e6c9"
+    },
+    {
+      "id": 94,
+      "label": "Grow your knowledge · Perspective",
+      "filename": "wcs-illustration-094.svg",
+      "bytes": 2455,
+      "sha256": "5f6bfac9611ad4850701cddd08cc836c866d4146d0224d8141935304a6f2c9ff"
+    },
+    {
+      "id": 95,
+      "label": "Grow your knowledge · Discovery",
+      "filename": "wcs-illustration-095.svg",
+      "bytes": 2465,
+      "sha256": "464a6f331fb3d6f46291a6a26861fb5df3d8eae45fc295a92821e4d76a4a8212"
+    },
+    {
+      "id": 96,
+      "label": "The next chapter · Focus",
+      "filename": "wcs-illustration-096.svg",
+      "bytes": 2178,
+      "sha256": "e0421883f039fa9d8e7d9de30d606dea5cfd31785bf03c63eacb2b044eb4f74d"
+    },
+    {
+      "id": 97,
+      "label": "The next chapter · Workspace",
+      "filename": "wcs-illustration-097.svg",
+      "bytes": 2352,
+      "sha256": "87b3baf6f9891378c5d043c6ee5e1e67e6de6188d5b74c20120a4149ee0791c4"
+    },
+    {
+      "id": 98,
+      "label": "The next chapter · Connection",
+      "filename": "wcs-illustration-098.svg",
+      "bytes": 2738,
+      "sha256": "1f6e88039b23694b7635dfd3b49cf6fafaa76bd6d165c1dcdcff2e4b3cf7e447"
+    },
+    {
+      "id": 99,
+      "label": "The next chapter · Perspective",
+      "filename": "wcs-illustration-099.svg",
+      "bytes": 2234,
+      "sha256": "091fea289f9b4f5b077feef4ca3d12d5ab0405a6737d614866517a27da5b04ee"
+    },
+    {
+      "id": 100,
+      "label": "The next chapter · Discovery",
+      "filename": "wcs-illustration-100.svg",
+      "bytes": 2245,
+      "sha256": "d37f23c2cdb8c6fcfd87c949a7cff4e9b90e4cc9583101ed530454fcd802561b"
+    }
+  ]
+}
