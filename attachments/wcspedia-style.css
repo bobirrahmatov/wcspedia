@@ -3463,6 +3463,26 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
   #wcspedia .wcs-collection-card-action {display:none}
 }
 
+/* A reader's details live in the action drawer: don't reserve an empty column. */
+#wcspedia .detail-layout:has(>.detail-main:only-child){grid-template-columns:minmax(0,1fr);gap:0}
+#wcspedia .detail-page .detail-main>.document-body{width:100%;max-width:none}
+/* Keep results comfortably inside the surface, including the last pagination row. */
+#wcspedia .wcs-utility-page>.discovery-container:last-child{padding-bottom:clamp(28px,4vw,56px)}
+#wcspedia .discovery-pagination{min-height:40px;align-items:center;flex-wrap:wrap;gap:16px;margin-top:24px}
+/* Cover/attachment tools belong to authoring; the writing canvas grows with content. */
+#wcspedia .authoring-surface:not(.editor-focus-mode) .rich-body{height:auto;max-height:none;overflow:visible;min-height:460px}
+#wcspedia .authoring-surface:not(.editor-focus-mode) .markdown-source{max-height:none;overflow:hidden;resize:none}
+#wcspedia .editor-media-panel{padding:20px;border-bottom:1px solid var(--line);background:var(--wcs-theme-surface)}
+#wcspedia .editor-media-panel[hidden],#wcspedia .editor-media-panel>[hidden]{display:none!important}
+#wcspedia .editor-media-panel .editor-cover-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
+#wcspedia .editor-media-panel .editor-cover-settings>.editor-settings-label,#wcspedia .editor-media-panel #editor-cover-preview{grid-column:1/-1}
+#wcspedia .editor-media-panel .editor-cover-settings>label,#wcspedia .editor-media-panel .cover-url{margin:0}
+#wcspedia .editor-media-panel .editor-attachments{display:block;margin:0;padding:0;border:0}
+#wcspedia .editor-toolbar [aria-expanded=true]{background:var(--wcs-theme-selected);color:var(--wcs-theme-link)}
+@media(max-width:600px){#wcspedia .editor-media-panel .editor-cover-settings{grid-template-columns:minmax(0,1fr)}}
+
+[data-wcs-fluid-container="true"]{width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+
 /* Page-only reader presentation; workflow controls retain their original owner. */
 #wcspedia .detail-layout.wcs-reader-wide {grid-template-columns:minmax(0,1fr);gap:0}
 #wcspedia .wcs-reader-wide .document-body {max-width:none}

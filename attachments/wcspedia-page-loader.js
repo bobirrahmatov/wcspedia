@@ -265,7 +265,7 @@
   }
 };
   var context = settings.contextPath.replace(/\/+$/,'');
-  var revision='e12a9c225c25',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
+  var revision='ad46cdd65c5c',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
   function signature(value){if(Array.isArray(value))return '['+value.map(signature).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+signature(value[key])).join(',')+'}';return JSON.stringify(value);}
   var settingsSignature=signature(settings),prior=w.__WCSMacroLoader;
   if(prior){if(prior.revision!==revision||prior.settingsSignature!==settingsSignature)prior.fail(Error('WCSpedia files from different packages are mixed. Upload the matching attachments and page macros.'));else prior.start(owner);return;}
@@ -357,6 +357,7 @@
       var id;try{id=identity();}catch(_){headerState='inactive';return;}
       var ids=Object.values(settings.pageIds).concat(Object.values(settings.areaPageIds),settings.insightsPageId);
       if(!ids.includes(id)&&meta('space-key')!==settings.spaceKey)return;
+      if(!d.querySelector('[data-wcs-header-add-document],[data-wcs-add-document]')){var navbarEntry=d.querySelector('script[data-wcs-loader-owner="navbar"]');if(navbarEntry&&navbarEntry.parentElement!==d.head){var addHost=d.createElement('span');addHost.setAttribute('data-wcs-header-add-document','');addHost.setAttribute('aria-label','Add a WCSpedia document');navbarEntry.before(addHost);}}
       w.WCSHeaderLoading.start(settings);
       w.WCS_FILE_DROP_CONFIG={enabled:true,spaceKey:settings.spaceKey};
       w.WCS_ADD_DOCUMENT_CONFIG={mode:'confluence',authoringMode:'confluence-session',spaceKey:settings.spaceKey,nativePublication:{enabled:true,workingRootPageId:settings.workingRootPageId,insightsPageId:settings.insightsPageId},contextPath:context,attachmentPageId:settings.attachmentPageId,rootPageId:settings.pageIds.home,workspacePageId:settings.pageIds.mine,workflowEndpoint:settings.services.workflowEndpoint||'',workspaceEndpoint:settings.services.workspaceEndpoint||'',accessTimeoutMs:12000,types:['Job aid','Guide','Blog','Training','Report']};

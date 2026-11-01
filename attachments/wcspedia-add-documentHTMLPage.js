@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var revision = 'e12a9c225c25';
+  var revision = 'ad46cdd65c5c';
   function placeHeader(host) {
     // The Add document action belongs to the existing navBar, never a second
     // header or a viewport FAB. Menus still portal to body to avoid clipping.
@@ -13,6 +13,8 @@
     host.removeAttribute('data-wcs-before-create');
     host.style.removeProperty('--wcs-add-top');
     var stopped=false, frame=null, observer=null, slot=host.wcsHeaderSlot||null;
+    function visibleHeader(node){for(var el=node;el&&el!==document.body;el=el.parentElement){var style=window.getComputedStyle(el);if(el.hidden||style.display==='none'||style.visibility==='hidden'||Number(style.opacity||1)<.05)return false;}return true;}
+    function headerTarget(){return host.closest('#navHeader,#navBar')||Array.from(document.querySelectorAll('#navHeader,#navBar')).find(visibleHeader)|| (visibleHeader(document.getElementById('header'))?host.closest('#header'):null);}
     function visibility() {
       var nativeEditor=/(?:editpage|createpage|createblogpost|viewpagehistory|diffpages|viewpreviousversions|preview|spacepermissions)\.action$/i.test(window.location.pathname)||!!document.querySelector('#editpageform,#createpageform,#content-editor,body.contenteditor');
       var space=document.querySelector('meta[name="ajs-space-key"]')?.content;
@@ -20,7 +22,7 @@
     }
     function place() {
       frame=null;if(stopped)return;
-      var header=host.closest('#navHeader,#navBar')||document.querySelector('#navHeader,#navBar')||host.closest('#header')||document.getElementById('header');
+      var header=headerTarget();
       if(header){
         var anchor=header.querySelector('[data-wcs-create-anchor],#quick-create-page-button,#create-page-button');
         var group=anchor&&(anchor.closest('.aui-buttons')||anchor), parent=group&&group.parentElement;
@@ -38,7 +40,7 @@
     function schedule(){if(!stopped&&frame===null)frame=window.requestAnimationFrame(place);}
     if(window.MutationObserver){observer=new MutationObserver(function(){
       if(stopped||!window.document)return;
-      var header=document.querySelector('#navHeader,#navBar')||document.getElementById('header');
+      var header=headerTarget();
       if(header&&!header.contains(host))schedule();
     });observer.observe(document.body,{childList:true,subtree:true});}
     window.addEventListener('hashchange',visibility);window.addEventListener('popstate',visibility);

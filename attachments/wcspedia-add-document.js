@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === 'e12a9c225c25') return;
+  if (registry.addDocument && registry.addDocument.version === 'ad46cdd65c5c') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -3263,7 +3263,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if (object(value)) return ['object', Object.keys(value).sort().map(function (key) { return [key, canonical(value[key])]; })];
         return [typeof value, String(value)];
       }
-      var defaults = { insights: false, nativeChildren: false, scope: 'published', query: '', area: '', type: '', types: undefined, tag: '', process: '', region: '', year: '', updated: 'any', sort: 'relevance', limit: 20, start: 0, continuation: undefined, excerpt: true, excludeIds: undefined, excludeAncestorIds: undefined };
+      var defaults = { insights: false, nativeChildren: false, areaSubtreeOnly: false, scope: 'published', query: '', area: '', type: '', types: undefined, tag: '', process: '', region: '', year: '', updated: 'any', sort: 'relevance', limit: 20, start: 0, continuation: undefined, excerpt: true, excludeIds: undefined, excludeAncestorIds: undefined };
       return JSON.stringify(Object.keys(defaults).map(function (key) {
         return [key, canonical(options[key] === undefined ? defaults[key] : options[key])];
       }));
@@ -4627,10 +4627,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // Validate all user filters before network I/O. Never accept raw CQL.
       search.buildCQL(queryOptions, scope);
       var mappings = object(nativePublication.areaPageIds) ? nativePublication.areaPageIds : {}, areaPageId = options.area && mappings[options.area];
+      if (options.areaSubtreeOnly && (!tree || !/^[1-9]\d{0,19}$/.test(String(areaPageId || '')))) fail('Choose a configured business-area subtree.', 'INVALID_SCOPE');
       if (tree && /^[1-9]\d{0,19}$/.test(String(areaPageId || ''))) {
         scope.subtreePageId = String(areaPageId);
         queryOptions.categories = [];
-        if (nativePublication.insightsPageId) {
+        if (nativePublication.insightsPageId && options.areaSubtreeOnly !== true) {
           scope.additionalSubtreePageId = String(nativePublication.insightsPageId);
           scope.additionalSubtreeCategory = options.area;
         }
@@ -5359,5 +5360,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: 'e12a9c225c25', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: 'ad46cdd65c5c', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();
