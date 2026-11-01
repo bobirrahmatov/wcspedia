@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var revision = 'ad46cdd65c5c';
+  var revision = 'e8e59404d0c3';
   function placeHeader(host) {
     // The Add document action belongs to the existing navBar, never a second
     // header or a viewport FAB. Menus still portal to body to avoid clipping.

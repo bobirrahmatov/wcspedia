@@ -3483,6 +3483,23 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
 
 [data-wcs-fluid-container="true"]{width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
 
+/* Stable in-page discovery, with the landing hero and area identity retained. */
+#wcspedia .home-discovery {min-height:240px;padding-bottom:clamp(28px,4vw,56px)}
+#wcspedia .home-search-results {margin-top:32px}
+#wcspedia .home-search-results .discovery-results-toolbar {margin:20px 0}
+#wcspedia .home-search-results .press-card-list {gap:14px}
+/* Topic-matched original artwork. Contain the complete drawing at every width. */
+#wcspedia .wcs-area-art-banner {background:#255be8;aspect-ratio:4.4;min-height:220px}
+#wcspedia .wcs-area-art-banner>img {left:auto!important;right:4%!important;width:55%!important;object-fit:contain!important;object-position:center!important}
+#wcspedia .wcs-area-art-banner:before {content:"";position:absolute;width:70%;aspect-ratio:1;border:1px solid #ffffff24;border-radius:50%;left:-30%;top:-110%;box-shadow:0 0 0 70px #ffffff08,0 0 0 140px #ffffff06;pointer-events:none}
+#wcspedia .wcs-area-art-banner .wcs-collection-label {max-width:48%;min-width:0;text-align:left;background:transparent;padding:24px 40px;font-size:clamp(24px,2.6vw,38px);border-radius:0}
+@media(max-width:600px){
+ #wcspedia .wcs-area-art-banner {min-height:220px;aspect-ratio:auto}
+ #wcspedia .wcs-area-art-banner>img {right:0!important;width:58%!important;height:76%!important}
+ #wcspedia .wcs-area-art-banner .wcs-collection-label {max-width:85%;padding:16px 20px;font-size:23px}
+ #wcspedia .home-search-results .discovery-section-heading {align-items:flex-start;gap:16px}
+}
+
 /* Page-only reader presentation; workflow controls retain their original owner. */
 #wcspedia .detail-layout.wcs-reader-wide {grid-template-columns:minmax(0,1fr);gap:0}
 #wcspedia .wcs-reader-wide .document-body {max-width:none}
