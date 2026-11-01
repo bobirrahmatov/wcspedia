@@ -3578,6 +3578,8 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
 /* Static, theme-aware illustration using the same SVG family as navigation.
    It is presentation only: no cover is saved and no image request is made. */
 #wcspedia .wcs-card-placeholder {position:relative;display:grid;place-items:center;isolation:isolate;overflow:hidden;width:100%;height:100%;background:var(--wcs-theme-subtle,#f0f5f9);color:var(--wcs-theme-link,#255be3)}
+/* Extend the artwork canvas across wide/tall card frames without stretching the drawing. */
+#wcspedia .wcs-card-placeholder-library {background:#255be8}
 #wcspedia .wcs-card-placeholder-library>svg {display:block;width:100%!important;height:100%!important;max-width:none;max-height:none}
 #wcspedia .wcs-card-placeholder-orbit {position:absolute;width:200px;height:200px;border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:50%;opacity:.65;transform:rotate(-25deg) scaleX(1.35)}
 #wcspedia .wcs-card-placeholder-orbit::after {content:"";position:absolute;inset:22px;border:1px solid var(--wcs-theme-border,#d5e1ee);border-radius:50%}

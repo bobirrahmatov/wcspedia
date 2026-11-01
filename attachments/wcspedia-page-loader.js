@@ -265,7 +265,7 @@
   }
 };
   var context = settings.contextPath.replace(/\/+$/,'');
-  var revision='2f871e9d5af9',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
+  var revision='25880ed94162',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
   function signature(value){if(Array.isArray(value))return '['+value.map(signature).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+signature(value[key])).join(',')+'}';return JSON.stringify(value);}
   var settingsSignature=signature(settings),prior=w.__WCSMacroLoader;
   if(prior){if(prior.revision!==revision||prior.settingsSignature!==settingsSignature)prior.fail(Error('WCSpedia files from different packages are mixed. Upload the matching attachments and page macros.'));else prior.start(owner);return;}
