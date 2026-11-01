@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '2980d4513474') return;
+  if (registry.addDocument && registry.addDocument.version === '5ef423cae624') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -654,12 +654,12 @@
     return '<a href="' + escape(media.url) + '" rel="noopener noreferrer"' + (media.id ? ' download="' + escape(media.name) + '" data-attachment-id="' + escape(media.id) + '" data-wcs-source="' + escape(source) + '"' : '') + '>';
   };
   function render(value, version) { var env = context(version); return md.renderer.render(parsed(value, env), md.options, env).replace(/>\n(?=<)/g, '>').trim(); }
-  // Shared discovery/reader policy: a real cover or body image wins; only a
-  // Blog without either receives a library illustration. Parse the same inert
-  // Markdown as the reader so image examples in code do not become covers.
+  // Use the first actual content image. Missing images are handled by the
+  // shared stable SVG card placeholder, never by a separate or stock cover.
+  // Parse inert Markdown so code examples cannot become covers.
   function resolveCardCover(item, options) {
     item = item || {}; options = options || {};
-    var fallback = groupType(item.type) === 'Blog' ? insightCoverUrl(options.key || item.documentKey || item.id, options) : '';
+    var fallback = '';
     function candidate(value) {
       if (!value) return null;
       try {
@@ -669,10 +669,10 @@
         return { src: optimizedInsightCoverUrl(src, options), alt: alt, fallback: fallback, isFallback: false };
       } catch (_) { return null; }
     }
-    var cover = candidate(item.cover);
-    if (cover) return cover;
-    var bodyImage = candidate(item.bodyImage);
-    if (bodyImage) return bodyImage;
+    var hasBody = typeof item.bodyMarkdown === 'string' || Array.isArray(item.sections);
+    // Native discovery may project a body image without carrying full content.
+    if (!hasBody) return candidate(item.bodyImage);
+    var bodyImage;
     var body = '';
     try { body = typeof item.bodyMarkdown === 'string' ? item.bodyMarkdown : fromSections(item.sections || []); } catch (_) { /* Invalid legacy text cannot supply a card image. */ }
     if (body.trim() && body.length <= MAX_MARKDOWN && !/\u0000/.test(body)) {
@@ -691,7 +691,7 @@
       try { bodyImage = firstImage(md.parse(body, {})); } catch (_) { /* Bad display metadata must not break a listing. */ }
       if (bodyImage) return bodyImage;
     }
-    return fallback ? { src: fallback, alt: '', fallback: fallback, isFallback: true } : null;
+    return null;
   }
   function toSections(value) {
     var tokens = parsed(value), result = [], current = null, used = Object.create(null), listDepth = 0, row = null;
@@ -2172,9 +2172,7 @@ function renderStorage(document, selected, people = [], options = {}) {
   out += '<ac:structured-macro ac:name="details" ac:schema-version="1"><ac:parameter ac:name="id">wcspedia-document</ac:parameter>' + (article ? '<ac:parameter ac:name="hidden">true</ac:parameter>' : '') + '<ac:rich-text-body>' + table(rows) + '</ac:rich-text-body></ac:structured-macro>';
   if (article) {
     const cover=content.resolveCardCover({...version,id:document.id,type:document.type},{attachmentPageId:options.attachmentPageId,contextPath:options.contextPath});
-    if (version.cover) out += '<div class="wcs-native-article-cover">' + imageTag(staged(options, '$cover', version.cover.src), version.cover.alt) + (version.cover.caption ? '<p>' + xml(version.cover.caption) + '</p>' : '') + '</div>';
-    else if (cover && cover.isFallback) out += '<div class="wcs-native-article-cover">'+'<ac:structured-macro ac:name="html" ac:schema-version="1"><ac:plain-text-body>'+cdata('<img src="'+xml(cover.src)+'" alt="" decoding="async" loading="eager" fetchpriority="high" width="800" height="500" />')+'</ac:plain-text-body></ac:structured-macro>'+'</div>';
-    else if (cover) {
+    if (cover) {
       let first;
       walk(parser.parse(body, {}), token => { if (!first && token.type === 'image') first={ref:imageReference(token.attrGet('src'),version),alt:token.content}; });
       if (first) out += '<div class="wcs-native-article-cover">' + imageTag(staged(options,first.ref.key,first.ref.source),first.alt || first.ref.alt || '') + '</div>';
@@ -2182,7 +2180,6 @@ function renderStorage(document, selected, people = [], options = {}) {
     out += '<div class="wcs-native-article-layout"><div class="wcs-native-article-body">';
   }
   if (version.summary) out += '<ac:structured-macro ac:name="excerpt" ac:schema-version="1"><ac:rich-text-body><p>' + xml(version.summary) + '</p></ac:rich-text-body></ac:structured-macro>';
-  if (version.cover && !article) out += '<p>' + imageTag(staged(options, '$cover', version.cover.src), version.cover.alt) + '</p>' + (version.cover.caption ? '<p><em>' + xml(version.cover.caption) + '</em></p>' : '');
   if (Array.isArray(version.highlights) && version.highlights.length) out += '<h2>Key points</h2><ul>' + version.highlights.map(item => '<li>' + xml(item) + '</li>').join('') + '</ul>';
   out += renderTokens(parser.parse(body, {}), version, options);
   if (governance) {
@@ -4374,7 +4371,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
             fields.documentKey=data.document.id;
             fields.type=data.document.type;
             var image=content.resolveCardCover(Object.assign({},v,{type:data.document.type,id:data.document.id}),{baseUrl:origin + context + '/'});
-            if (!v.cover && image && !image.isFallback) fields.bodyImage={src:image.src,alt:image.alt};
+            if (image && !image.isFallback) fields.bodyImage={src:image.src,alt:image.alt};
             var author=(data.people||[]).find(function(person){return person.id===(data.document.authorId||v.createdBy);});
             fields.author=author?plain(author.name||author.displayName||''):null;
             if(metricKey(fields.documentKey)&&integer(v.version)&&integer(v.revision)){
@@ -5369,5 +5366,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '2980d4513474', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '5ef423cae624', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

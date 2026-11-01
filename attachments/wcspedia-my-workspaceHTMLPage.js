@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('2980d4513474'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('5ef423cae624'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -23,11 +23,11 @@
   }
 
   if (mount.dataset.wcsPageStarted) return;
-  if (!window.WCSPageModules || window.WCSPageModules['mine']?.version !== '2980d4513474') {
+  if (!window.WCSPageModules || window.WCSPageModules['mine']?.version !== '5ef423cae624') {
     failPage('Load wcspedia-my-workspace.js before wcspedia-my-workspaceHTMLPage.js. Use both files from the same upload package and check their attachment URLs.');
     return;
   }
-  if (window.WCSPageRenderer?.version !== '2980d4513474' || typeof window.WCSPageRenderer.start !== 'function') { failPage('The WCSpedia page renderer is unavailable. Upload the matching package.'); return; }
+  if (window.WCSPageRenderer?.version !== '5ef423cae624' || typeof window.WCSPageRenderer.start !== 'function') { failPage('The WCSpedia page renderer is unavailable. Upload the matching package.'); return; }
   mount.dataset.wcsPageStarted = 'mine';
   const pageReady=window.WCSPageRenderer.start();
   if(pageReady&&typeof pageReady.catch==='function')pageReady.catch(error=>failPage(error.message));
