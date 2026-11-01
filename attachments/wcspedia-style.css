@@ -1513,7 +1513,7 @@ body[data-wcs-active-style-flags~="hide-footer"] #footer {
 .wcs-open-published-reader { display: inline-flex; align-items: center; padding: 12px 20px; margin: 16px 0; border-radius: 8px; background: #255be3; color: #fff !important; font: inherit; text-decoration: none; }
 .wcs-open-published-reader:focus-visible { outline: 3px solid var(--ds-border,var(--wcs-theme-border,#17365d)); outline-offset: 3px; }
 
-/* Native sidebar skin, adapted from PAL / Lending Analytics. Reader-only host activation; Confluence retains geometry and native handlers. */
+/* Native sidebar skin, adapted from PAL / Lending Analytics. Reader and enabled-landing host activation; Confluence retains geometry and native handlers. */
 .wcs-reader-navigation{font-family:var(--wcs-space-font,var(--wcs-resolved-space-font,"Citi-Sans-Text"))!important;color:var(--ds-text,var(--wcs-theme-text,#17385e))!important;border-color:var(--ds-border,var(--wcs-theme-border,#dce6ef))!important;box-shadow:0 3px 12px #17385e0b}
 /* Paint nested native panels too: the outer wrapper alone cannot override an
  * opaque host sidebar/content/footer. Use the same WCSpedia reader surface;

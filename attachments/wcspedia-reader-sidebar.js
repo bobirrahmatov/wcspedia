@@ -123,7 +123,7 @@
 });
 
 ;
-/* Reader-only styling of Confluence's own sidebar. Never creates navigation,
+/* Shared reader and enabled-landing styling of Confluence's own sidebar. Never creates navigation,
  * replaces collapse handlers or fetches a second tree. The PAL-style top button
  * forwards to the original native collapse control, which stays mounted. */
 (function (w,d) {
@@ -132,7 +132,7 @@
   var defaultedHosts=new WeakSet();
   var host=null,observer=null,resizeObserver=null,queued=false,destroyed=false,revealOwned=false;
   var originalSurface=null;
-  var surfaceSelector='#wcspedia .detail-page,#main-content .wcs-native-article,.wiki-content .wcs-native-article';
+  var surfaceSelector='#wcspedia .detail-page,#wcspedia .wcs-home,#main-content .wcs-native-article,.wiki-content .wcs-native-article';
   var compactPaths=new Set(),compactLinks=new Set(),tooltip=null,tooltipLink=null,previousDescription=null;
   var links=new Map(),checks=new Map(),pending=[],running=0,generation=0,controllers=new Set(),leafMarkers=new Set(),treeRows=new Set(),collections=new Set();
   function config(){
@@ -452,7 +452,12 @@
   function active(){
     if(!w.location||w.top!==w.self)return false;
     if(d.querySelector('#editpageform,#content-editor,body.contenteditor')||/[?&](?:wcsNativeUi=1|pageVersion=|preview=)/.test(w.location.search))return false;
-    if(d.getElementById('wcspedia'))return !!d.querySelector('#wcspedia .detail-page');
+    if(d.getElementById('wcspedia')){
+      if(d.querySelector('#wcspedia .detail-page'))return true;
+      // Honour the landing page's native visibility setting. A reader-owned
+      // reveal must not accidentally enable the sidebar after returning home.
+      return !!d.querySelector('#wcspedia .wcs-home')&&!revealOwned&&!d.body.classList.contains('citi-hide-sidebar');
+    }
     return !!d.querySelector('#main-content .wcs-native-article,.wiki-content .wcs-native-article')&&!!d.body.getAttribute('data-wcs-active-style-flags');
   }
   function readerSurface(){
