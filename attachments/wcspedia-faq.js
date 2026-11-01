@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('e8e59404d0c3'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('2980d4513474'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -157,7 +157,7 @@
 })(window);
 
 ;
-/* Shared page artwork: topic-matched business illustrations and existing editorial photos. */
+/* Shared page artwork: Citi Insights photographs from the bundled WebP attachments. */
 (function(root,factory){
   'use strict';
   const api=factory();
@@ -166,22 +166,21 @@
 })(typeof window!=='undefined'?window:globalThis,function(){
   'use strict';
   const banners=Object.freeze({
-    'credit-approval-control':31,'credit-information-management':14,'credit-management-reporting':29,
-    'deal-closing':17,'documentation-pledging':47,'emea-credit-admin':32,
-    'loan-management':18,'regional-operating-manuals':8,insights:5,
+    'credit-approval-control':31,'credit-information-management':10,'credit-management-reporting':29,
+    'deal-closing':17,'documentation-pledging':39,'emea-credit-admin':32,
+    'loan-management':36,'regional-operating-manuals':8,insights:5,
     mine:36,review:9,saved:7,entitlements:26,faq:37,health:11,search:30
   });
-  const areaArt=Object.freeze({'credit-approval-control':57,'credit-information-management':89,'credit-management-reporting':86,'deal-closing':55,'documentation-pledging':54,'emea-credit-admin':95,'loan-management':23,'regional-operating-manuals':51});
   const escape=value=>String(value==null?'':value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   function imageUrl(key,config={}){
     const index=Object.hasOwn(banners,key)?banners[key]:banners.insights;
-    const art=areaArt[key],file=art?'wcs-illustration-'+String(art).padStart(3,'0')+'.svg':'wcs-insight-cover-'+String(index).padStart(2,'0')+'.webp';
+    const file='wcs-insight-cover-'+String(index).padStart(2,'0')+'.webp';
     const host=String(config.attachmentPageId||''),context=String(config.contextPath||'/confluence').replace(/\/$/,'');
     if(config.mode==='confluence'&&/^[1-9]\d{0,19}$/.test(host)&&/^\/(?:[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*)?$/.test(context))return context+'/download/attachments/'+host+'/'+file+'?api=v2';
-    return (art?'assets/illustrations/':'assets/insights-covers/')+file;
+    return 'assets/insights-covers/'+file;
   }
   function banner(key,label,config,options={}){
-    return '<div class="wcs-collection-banner'+(options.compact?' wcs-page-banner-compact':'')+(areaArt[key]?' wcs-area-art-banner':'')+'" data-wcs-banner-key="'+escape(key)+'"><img src="'+escape(imageUrl(key,config))+'" alt="" width="800" height="500" loading="eager" decoding="async" fetchpriority="high"><span class="wcs-collection-label" aria-hidden="true">'+escape(label)+'</span></div>';
+    return '<div class="wcs-collection-banner'+(options.compact?' wcs-page-banner-compact':'')+'" data-wcs-banner-key="'+escape(key)+'"><img src="'+escape(imageUrl(key,config))+'" alt="" width="800" height="500" loading="eager" decoding="async" fetchpriority="high"><span class="wcs-collection-label" aria-hidden="true">'+escape(label)+'</span></div>';
   }
   return Object.freeze({banner,imageUrl,bannerKeys:Object.freeze(Object.keys(banners))});
 });
@@ -606,5 +605,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: 'e8e59404d0c3' };
+  modules['faq'] = { version: '2980d4513474' };
 })();

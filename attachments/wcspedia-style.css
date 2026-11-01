@@ -718,8 +718,6 @@
 #wcspedia .editor-toolbar>button:hover,#wcspedia .editor-toolbar>button[aria-pressed="true"]{color:var(--ds-link,var(--wcs-theme-link,#255be3));background:var(--ds-background-neutral,var(--wcs-theme-subtle,#e6eefb))}
 #wcspedia .editor-toolbar .wcs-ui-select{width:130px;min-width:130px;max-width:130px;margin-right:6px}
 #wcspedia .editor-toolbar .wcs-ui-select-trigger{width:100%;height:auto;min-height:34px;font-size:12px;padding:6px 10px}
-#wcspedia .toolbar-break{display:block;flex-basis:100%;height:1px;margin:3px 0;border-top:1px solid var(--ds-border,var(--wcs-theme-border,#e6ecf3))}
-@media(max-width:1100px){#wcspedia .toolbar-break{display:none}}
 #wcspedia .editor-table-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 15px;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#edf3fc));border-bottom:1px solid var(--line);font-size:11px;color:var(--navy)}
 #wcspedia .editor-table-tools button{border:1px solid var(--ds-border,var(--wcs-theme-border,#c9d8ef));border-radius:4px;background:var(--ds-surface,var(--wcs-theme-surface,white));color:var(--ds-link,var(--wcs-theme-link,#255be3));padding:5px 9px;font:inherit;cursor:pointer}
 #wcspedia .editor-table-tools span{margin-right:6px;color:var(--muted)}
@@ -782,7 +780,6 @@
 #wcspedia .editor-focus-mode .editor-topbar{position:relative;top:0;z-index:3;flex:none}
 #wcspedia .editor-focus-mode .editor-toolbar{position:relative;top:0;z-index:2;background:var(--ds-background-neutral,var(--wcs-theme-subtle,#f7f9fc));flex:none}
 #wcspedia .editor-focus-mode .editor-table-tools,#wcspedia .editor-focus-mode .editor-body-bottom{flex:none}
-#wcspedia .editor-focus-mode .toolbar-break{display:none}
 #wcspedia .editor-focus-mode #editor-reader{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 #wcspedia .editor-focus-exit{color:var(--ds-link,var(--wcs-theme-link,#255be3));white-space:nowrap}
 #wcspedia .editor-field [aria-invalid="true"]{border-color:var(--ds-border,var(--wcs-theme-border,#b4433f));box-shadow:0 0 0 2px #b4433f14}
@@ -3474,12 +3471,12 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
 #wcspedia .authoring-surface:not(.editor-focus-mode) .markdown-source{max-height:none;overflow:hidden;resize:none}
 #wcspedia .editor-media-panel{padding:20px;border-bottom:1px solid var(--line);background:var(--wcs-theme-surface)}
 #wcspedia .editor-media-panel[hidden],#wcspedia .editor-media-panel>[hidden]{display:none!important}
-#wcspedia .editor-media-panel .editor-cover-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
-#wcspedia .editor-media-panel .editor-cover-settings>.editor-settings-label,#wcspedia .editor-media-panel #editor-cover-preview{grid-column:1/-1}
-#wcspedia .editor-media-panel .editor-cover-settings>label,#wcspedia .editor-media-panel .cover-url{margin:0}
+#wcspedia .editor-media-panel .editor-cover-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
+#wcspedia .editor-media-panel .editor-cover-fields>.editor-settings-label,#wcspedia .editor-media-panel #editor-cover-preview{grid-column:1/-1}
+#wcspedia .editor-media-panel .editor-cover-fields>label,#wcspedia .editor-media-panel .cover-url{margin:0}
 #wcspedia .editor-media-panel .editor-attachments{display:block;margin:0;padding:0;border:0}
 #wcspedia .editor-toolbar [aria-expanded=true]{background:var(--wcs-theme-selected);color:var(--wcs-theme-link)}
-@media(max-width:600px){#wcspedia .editor-media-panel .editor-cover-settings{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){#wcspedia .editor-media-panel .editor-cover-fields{grid-template-columns:minmax(0,1fr)}}
 
 [data-wcs-fluid-container="true"]{width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
 
@@ -3489,16 +3486,22 @@ html:not([data-color-mode])[data-theme="dark"],body:not([data-color-mode])[data-
 #wcspedia .home-search-results .discovery-results-toolbar {margin:20px 0}
 #wcspedia .home-search-results .press-card-list {gap:14px}
 /* Topic-matched original artwork. Contain the complete drawing at every width. */
-#wcspedia .wcs-area-art-banner {background:#255be8;aspect-ratio:4.4;min-height:220px}
-#wcspedia .wcs-area-art-banner>img {left:auto!important;right:4%!important;width:55%!important;object-fit:contain!important;object-position:center!important}
-#wcspedia .wcs-area-art-banner:before {content:"";position:absolute;width:70%;aspect-ratio:1;border:1px solid #ffffff24;border-radius:50%;left:-30%;top:-110%;box-shadow:0 0 0 70px #ffffff08,0 0 0 140px #ffffff06;pointer-events:none}
-#wcspedia .wcs-area-art-banner .wcs-collection-label {max-width:48%;min-width:0;text-align:left;background:transparent;padding:24px 40px;font-size:clamp(24px,2.6vw,38px);border-radius:0}
-@media(max-width:600px){
- #wcspedia .wcs-area-art-banner {min-height:220px;aspect-ratio:auto}
- #wcspedia .wcs-area-art-banner>img {right:0!important;width:58%!important;height:76%!important}
- #wcspedia .wcs-area-art-banner .wcs-collection-label {max-width:85%;padding:16px 20px;font-size:23px}
- #wcspedia .home-search-results .discovery-section-heading {align-items:flex-start;gap:16px}
-}
+
+/* One toolbar and one media collection: attached images can also be covers. */
+#wcspedia .editor-toolbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+#wcspedia .editor-toolbar>button,#wcspedia .editor-toolbar>.toolbar-divider{flex-shrink:0}
+#wcspedia .editor-media-panel .editor-cover-settings{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+#wcspedia #editor-image-library{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px}
+#wcspedia .editor-image-choice{min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+#wcspedia .editor-image-choice>img{width:100%;height:100px;object-fit:cover;border-radius:6px}
+#wcspedia .editor-image-choice>span{font-size:12px;overflow-wrap:anywhere}
+#wcspedia .editor-image-choice>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+#wcspedia .editor-image-choice button{font-size:12px}
+#wcspedia .editor-image-choice [aria-pressed=true]{font-weight:700;color:var(--wcs-theme-text)}
+#wcspedia .editor-cover-fields>.editor-field-hint{grid-column:1/-1;margin:0}
+
+#wcspedia .editor-cover-settings>summary{cursor:pointer;font-size:13px;color:var(--navy)}
+#wcspedia .editor-cover-fields{padding-top:16px}
 
 /* Page-only reader presentation; workflow controls retain their original owner. */
 #wcspedia .detail-layout.wcs-reader-wide {grid-template-columns:minmax(0,1fr);gap:0}

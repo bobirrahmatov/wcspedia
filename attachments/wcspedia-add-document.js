@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === 'e8e59404d0c3') return;
+  if (registry.addDocument && registry.addDocument.version === '2980d4513474') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -2634,10 +2634,19 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
           mapping[resource.key]=entry;
         }
       });
+      // The cover, inline image and file can reference the same media. Stage its
+      // bytes once per action and preserve all logical keys in the mapping.
+      var stagedBySource=new Map();
+      resources.forEach(function(r){if(mapping[r.key])stagedBySource.set(r.sourceUrl,Promise.resolve(mapping[r.key]));});
+      async function stageOnce(resource,prepare){
+        var pending=stagedBySource.get(resource.sourceUrl);
+        if(!pending){pending=Promise.resolve().then(prepare).then(function(item){return upload(p.id,item,signal);});stagedBySource.set(resource.sourceUrl,pending);}
+        mapping[resource.key]=await pending;
+      }
       var remote=resources.filter(function(r){return !mapping[r.key]&&!r.sourceUrl.startsWith('data:');});
-      await mediaBatch(remote,async function(r){var item=await readMedia(r,sourcePageId);mapping[r.key]=await upload(p.id,item,signal);});
+      await mediaBatch(remote,async function(r){await stageOnce(r,function(){return readMedia(r,sourcePageId);});});
       var uploads=await Renderer.collectMedia(document,v,{media:mapping});
-      await mediaBatch(uploads,async function(item){mapping[item.key]=await upload(p.id,item,signal);});
+      await mediaBatch(uploads,async function(item){await stageOnce(item,function(){return item;});});
       return mapping;
     }
     function externalize(doc,media){
@@ -5360,5 +5369,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: 'e8e59404d0c3', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '2980d4513474', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();
