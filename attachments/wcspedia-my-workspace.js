@@ -1,4 +1,4 @@
-/* WCSpedia My workspace: page logic and dependencies.
+/* WCSpedia Workspace: page logic and dependencies.
  * Shared external loader validates the native page, loads one reusable core,
  * then this role registry and its matching HTMLPage renderer.
  * This file alone does not render a page or make data requests.
@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('07159e8182ed'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('bbb93c4444c6'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -24,6 +24,6 @@
 
   const modules = window.WCSPageModules = window.WCSPageModules || {};
   if (modules['mine']) return;
-  if (window.WCSCoreVersion !== '07159e8182ed') { failPage('The shared WCSpedia core is unavailable. Upload the matching package.'); return; }
-  modules['mine'] = { version: '07159e8182ed' };
+  if (window.WCSCoreVersion !== 'bbb93c4444c6') { failPage('The shared WCSpedia core is unavailable. Upload the matching package.'); return; }
+  modules['mine'] = { version: 'bbb93c4444c6' };
 })();

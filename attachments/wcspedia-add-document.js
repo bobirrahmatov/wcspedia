@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '07159e8182ed') return;
+  if (registry.addDocument && registry.addDocument.version === 'bbb93c4444c6') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -2378,7 +2378,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     async function load(input){return loadWithContext(input,null);}
     async function loadWithContext(input,verifiedContext){
       input=input||{};var signal=input.signal,scope=input.workspaceScope||'all';
-      if(!['all','create','mine','review'].includes(scope)&&!/^document:[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(scope))fail('Choose a supported workspace view.','CONFIGURATION');
+      if(!['all','create','mine','review','workspace'].includes(scope)&&!/^document:[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(scope))fail('Choose a supported workspace view.','CONFIGURATION');
       var ctx=verifiedContext||await contextFor(scope==='create'?Object.assign({},input,{skipDocuments:true}):input,signal,true);
       var canOpen=E.hasGrant(ctx.policy,ctx.dir.who,'content.create','*');
       if(input.skipDocuments)return Object.assign({},ctx.access,{data:Object.assign({},ctx.catalog,{people:ctx.dir.people,documents:[],isDemo:false}),actorId:ctx.dir.actor.id,actor:ctx.dir.actor,identity:ctx.dir.who,entitlementPolicy:ctx.policy,mode:'confluence',authoringMode:'confluence-session',identityMapped:true,workspaceLoaded:false,discoveryOnly:false,attachmentVersion:1,attachmentId:null,canWriteAttachment:false,canSubmit:false,canOpenDocumentEditor:canOpen});
@@ -2395,8 +2395,14 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if(ctx.dir.actor.role!=='Manager'&&!(summary.value.people||[]).includes(ctx.dir.actor.id))return null;
         var people=summary.value.people,actorId=ctx.dir.actor.id;
         if(Array.isArray(people)&&people.length===4){
-          if(scope==='mine'&&!people.slice(0,2).includes(actorId))return null;
-          if(scope==='review'&&!((summary.value.status==='In review'&&people[2]===actorId)||(summary.value.status==='Awaiting approval'&&people[3]===actorId)))return null;
+          var owned=people.slice(0,2).includes(actorId),assigned=(summary.value.status==='In review'&&people[2]===actorId)||(summary.value.status==='Awaiting approval'&&people[3]===actorId);
+          if(scope==='mine'&&!owned)return null;
+          if(scope==='review'&&!assigned)return null;
+          // One physical Workspace serves both responsibilities. Hydrate the
+          // union once, rather than loading every manager-visible history or
+          // rereading the workspace when its tabs change. Revoked review grants
+          // must not pull assigned-only records into this personal view.
+          if(scope==='workspace'&&!owned&&!(assigned&&ctx.dir.actor.role!=='Reader'))return null;
         }
         // Journal and page/state reads are independent. All mutation checks still
         // use freshly read native state in submit(), never a listing summary.
@@ -2405,6 +2411,11 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
         if(!p.body||!p.body.storage||typeof p.body.storage.value!=='string')p=await page(p.id,signal,parent(p));
         return readState(p,signal);})();
         var pair=await Promise.all([itemRead,journalRead]),item=pair[0],journal=pair[1];
+        if(scope==='workspace'&&item.document){
+          var actual=item.document,version=W.currentVersion(actual),mine=[actual.ownerId,actual.authorId].includes(ctx.dir.actor.id);
+          var review=ctx.dir.actor.role!=='Reader'&&actual.type==='Job aid'&&((version.status==='In review'&&actual.reviewerId===ctx.dir.actor.id)||(version.status==='Awaiting approval'&&actual.approverId===ctx.dir.actor.id));
+          if(!mine&&!review)return null;
+        }
         if(journal&&journal.value&&!journal.value.done)pending.push({documentKey:summary.value.documentKey,requestId:journal.value.requestId,action:journal.value.action});
         return item.document?Object.assign(item,{page:p,pending:!!(journal&&journal.value&&!journal.value.done)}):null;
       });
@@ -5369,5 +5380,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '07159e8182ed', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: 'bbb93c4444c6', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();

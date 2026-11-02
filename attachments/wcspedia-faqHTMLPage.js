@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('07159e8182ed'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('bbb93c4444c6'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -23,7 +23,7 @@
   }
 
   if (mount.dataset.wcsPageStarted) return;
-  if (!window.WCSPageModules || window.WCSPageModules['faq']?.version !== '07159e8182ed') {
+  if (!window.WCSPageModules || window.WCSPageModules['faq']?.version !== 'bbb93c4444c6') {
     failPage('Load wcspedia-faq.js before wcspedia-faqHTMLPage.js. Use both files from the same upload package and check their attachment URLs.');
     return;
   }

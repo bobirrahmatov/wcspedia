@@ -224,11 +224,11 @@
   "pageIds": {
     "home": "3954553300",
     "mine": "3961735744",
-    "review": "3961735749",
     "saved": "3961735759",
     "entitlements": "3961735763",
     "faq": "3973992410"
   },
+  "legacyReviewerPageId": "3961735749",
   "insightsPageId": "3961735728",
   "workingRootPageId": "3961735834",
   "areaPageIds": {
@@ -243,7 +243,9 @@
   },
   "search": {
     "timeoutMs": 12000,
-    "excludePageIds": [],
+    "excludePageIds": [
+      "3961735749"
+    ],
     "excludeAncestorIds": []
   },
   "services": {
@@ -265,12 +267,12 @@
   }
 };
   var context = settings.contextPath.replace(/\/+$/,'');
-  var revision='07159e8182ed',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
+  var revision='bbb93c4444c6',entry=d.currentScript,owner=entry?.getAttribute('data-wcs-loader-owner')||'page';
   function signature(value){if(Array.isArray(value))return '['+value.map(signature).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+signature(value[key])).join(',')+'}';return JSON.stringify(value);}
   var settingsSignature=signature(settings),prior=w.__WCSMacroLoader;
   if(prior){if(prior.revision!==revision||prior.settingsSignature!==settingsSignature)prior.fail(Error('WCSpedia files from different packages are mixed. Upload the matching attachments and page macros.'));else prior.start(owner);return;}
   var jobs=new Map(),pageState='idle',headerState='idle',dispose=[],cancelled=false,interrupted=false,config;
-  var roles={home:'wcspedia-landing',mine:'wcspedia-my-workspace',review:'wcspedia-reviewer-workspace',saved:'wcspedia-saved-items',entitlements:'wcspedia-entitlements',insights:'wcspedia-insights',faq:'wcspedia-faq'};
+  var roles={home:'wcspedia-landing',mine:'wcspedia-my-workspace',saved:'wcspedia-saved-items',entitlements:'wcspedia-entitlements',insights:'wcspedia-insights',faq:'wcspedia-faq'};
   function url(file){return context+'/download/attachments/'+settings.attachmentPageId+'/'+file+'?api=v2&wcsBuild='+encodeURIComponent(revision);}
   function meta(name){try{return String(d.querySelector('meta[name="ajs-'+name+'"]')?.content||w.AJS?.Meta?.get(name)||'');}catch(_){return '';}}
   function identity(){
@@ -282,7 +284,7 @@
   }
   function verifySettings(){
     if(!/^\/(?:[A-Za-z0-9_-]+\/?)*$/.test(context)||!/^[A-Za-z0-9_~-]+$/.test(settings.spaceKey))throw Error('The WCSpedia loader configuration is incomplete. Upload the configured package.');
-    var ids=[settings.attachmentPageId,settings.workingRootPageId,settings.insightsPageId].concat(Object.values(settings.pageIds||{}),Object.values(settings.areaPageIds||{}));
+    var ids=[settings.attachmentPageId,settings.workingRootPageId,settings.insightsPageId].concat(settings.legacyReviewerPageId?[settings.legacyReviewerPageId]:[],Object.values(settings.pageIds||{}),Object.values(settings.areaPageIds||{}));
     if(ids.some(value=>!/^[1-9]\d*$/.test(value))||new Set(ids).size!==ids.length)throw Error('The WCSpedia loader needs the configured numeric page IDs.');
     if(entry?.src){var source=new URL(entry.src,d.baseURI);if(source.origin!==w.location.origin||source.pathname!==context+'/download/attachments/'+settings.attachmentPageId+'/wcspedia-page-loader.js')throw Error('The WCSpedia loader must use the configured same-origin attachment.');}
     Object.values(settings.services||{}).forEach(value=>{if(value&&!value.startsWith(context+'/'))throw Error('WCSpedia services must use this Confluence origin.');});
@@ -326,13 +328,49 @@
     var area=Object.keys(settings.areaPageIds).find(key=>settings.areaPageIds[key]===id),role=Object.keys(settings.pageIds).find(key=>settings.pageIds[key]===id);
     if(id===settings.insightsPageId)role='insights';
     if(!area&&!role)return;
-    var files={home:'landing',mine:'my-workspace',review:'reviewer-workspace',saved:'saved-items',entitlements:'entitlements',insights:'insights',faq:'faq'};
+    var files={home:'landing',mine:'my-workspace',saved:'saved-items',entitlements:'entitlements',insights:'insights',faq:'faq'};
     var file=area?'pages/business-areas/'+area+'.html':'pages/'+files[role]+'.html';
     fail(Error('The WCSpedia page macro is missing. Replace this page’s HTML macro with '+file+' from the matching package. Uploading the file as an attachment does not install the page macro.'));
   }
   function makeConfig(role,area){
     var pages={};Object.keys(settings.pageIds).forEach(key=>{pages[key]=context+'/pages/viewpage.action?pageId='+settings.pageIds[key];});pages.insights=context+'/pages/viewpage.action?pageId='+settings.insightsPageId;
     return Object.assign({},settings.services,{mode:'confluence',authoringMode:settings.authoringMode||'confluence-session',contextPath:context,spaceKey:settings.spaceKey,rootPageId:settings.pageIds.home,attachmentPageId:settings.attachmentPageId,attachmentFilename:'wcspedia-published.json',pageRole:role,businessArea:area||'',governanceEnabled:false,nativeAccessSync:true,pages:pages,showConnectionStatus:false,mountGlobalTools:false,nativePublication:{enabled:true,publishedRootPageId:settings.pageIds.home,workingRootPageId:settings.workingRootPageId,areaPageIds:settings.areaPageIds,insightsPageId:settings.insightsPageId,insightsTypes:['Procedure','Knowledge sharing','Blog','Training','Reference','Report','Guide','Playbook','Checklist','Template','FAQ']},search:settings.search,charts:Object.assign({},settings.charts,{allowCDN:false,highchartsSrc:url('highcharts-13.1.0.js'),accessibilitySrc:url('highcharts-13.1.0-accessibility.js')}),exports:Object.assign({},settings.exports,{allowCDN:false,pdfMakeUrl:url('pdfmake-0.2.20.min.js'),pdfFontsUrl:url('pdfmake-0.2.20-vfs-fonts.js'),docxUrl:url('docx-9.5.1.iife.js'),logoUrl:url('citi-logo.png'),mdxTemplateUrl:url('wcspedia-document.mdx')})});
+  }
+  function workspaceURL(){return context+'/pages/viewpage.action?pageId='+settings.pageIds.mine;}
+  function redirectLegacyWorkspace(){
+    if(!settings.legacyReviewerPageId)return false;
+    var id;try{id=identity();}catch(_){return false;}
+    if(id!==settings.legacyReviewerPageId)return false;
+    var hash=w.location.hash;
+    if(!/^#\/(?:review|results|document|edit)(?:[/?]|$)/.test(hash))hash='#/review';
+    pageState='redirecting';cancelled=true;w.WCSHeaderLoading?.cancel();
+    w.location.replace(workspaceURL()+hash);return true;
+  }
+  function workspaceNavigation(){
+    var headers=Array.from(d.querySelectorAll('#navHeader,#navBar,header#header'));
+    function matches(link){
+      try{
+        var u=new URL(link.href,w.location.href);if(u.origin!==w.location.origin)return false;
+        var id=u.searchParams.get('pageId')||(u.pathname.match(/\/spaces\/[^/]+\/pages\/([1-9]\d*)(?:\/|$)/)||[])[1];
+        if(id)return id===settings.pageIds.mine||!!settings.legacyReviewerPageId&&id===settings.legacyReviewerPageId;
+        var prefix=context+'/display/'+settings.spaceKey+'/';
+        if(!u.pathname.startsWith(prefix))return false;
+        var title=decodeURIComponent(u.pathname.slice(prefix.length)).toLowerCase().replace(/[+\s-]/g,'');
+        return ['myworkspace','reviewerworkspace','workspace'].includes(title);
+      }catch(_){return false;}
+    }
+    headers.forEach(function(header){
+      function sync(){
+        var links=Array.from(header.querySelectorAll('a[href]')).filter(matches);
+        links.forEach(function(link,index){
+          if(index){var item=link.parentElement; if(item?.tagName==='LI'&&item.querySelectorAll('a').length===1)item.remove();else link.remove();return;}
+          if(link.getAttribute('href')!==workspaceURL())link.setAttribute('href',workspaceURL());
+          if(link.textContent.trim()!=='Workspace')link.textContent='Workspace';
+          link.setAttribute('data-wcs-workspace-link','');
+        });
+      }
+      sync();var observer=new MutationObserver(sync);observer.observe(header,{childList:true,subtree:true,attributes:true,attributeFilter:['href']});dispose.push(()=>observer.disconnect());
+    });
   }
   async function bootPage(){
     if(pageState!=='idle'||cancelled)return;
@@ -357,6 +395,7 @@
       var id;try{id=identity();}catch(_){headerState='inactive';return;}
       var ids=Object.values(settings.pageIds).concat(Object.values(settings.areaPageIds),settings.insightsPageId);
       if(!ids.includes(id)&&meta('space-key')!==settings.spaceKey)return;
+      workspaceNavigation();
       if(!d.querySelector('[data-wcs-header-add-document],[data-wcs-add-document]')){var navbarEntry=d.querySelector('script[data-wcs-loader-owner="navbar"]');if(navbarEntry&&navbarEntry.parentElement!==d.head){var addHost=d.createElement('span');addHost.setAttribute('data-wcs-header-add-document','');addHost.setAttribute('aria-label','Add a WCSpedia document');navbarEntry.before(addHost);}}
       w.WCSHeaderLoading.start(settings);
       w.WCS_FILE_DROP_CONFIG={enabled:true,spaceKey:settings.spaceKey};
@@ -376,6 +415,7 @@
   }
   function start(kind){
     if(cancelled)return;
+    if(redirectLegacyWorkspace())return;
     if(d.querySelectorAll('[id="wcspedia"]').length>1){fail(Error('Use one WCSpedia page macro on this page. Remove the duplicate macro.'));return;}
     if(kind==='navbar'){
       // The file-drop guard belongs to the whole space, including the native

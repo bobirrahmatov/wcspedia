@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('07159e8182ed'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('bbb93c4444c6'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -475,7 +475,7 @@
     if(path==='/faq')return 'faq';
     if(path==='/insights')return 'insights';
     if(path==='/entitlements')return 'entitlements';
-    if(path==='/review'||path.startsWith('/review/')||(path==='/results'&&p.get('view')==='review'))return 'review';
+    if(path==='/review'||path.startsWith('/review/')||(path==='/results'&&p.get('view')==='review'))return 'mine';
     if(path==='/saved')return 'saved';
     if(path==='/health')return 'mine';
     if(path==='/create'||path.startsWith('/edit/')||path==='/categories'||(path==='/results'&&p.get('view')==='mine'))return 'mine';
@@ -567,10 +567,10 @@
     ['How do I find a document or browse a business area?', 'Search from the landing page to find documents and Insights articles. Choose Explore documents to filter by business area, content type, topic or updated year. Only content your signed-in Confluence account can access is included.'],
     ['What is Insights, and which content type should I choose?', 'Insights brings together Guides, Blogs, Training and Reports. Use a Guide for procedures, playbooks or checklists; a Blog for updates and stories; Training for learning materials; and a Report for findings or reference information. Choose Job aid for operational instructions that require review and approval.'],
     ['How do I create a document and use a template?', 'Select Add document in the header, then choose a content type. In the editor, use the template button for that type and complete the title, summary, topics and content. Available actions depend on your entitlements and native Confluence permissions.'],
-    ['Where are my drafts, and how does publishing work?', 'My Workspace contains your documents and their workflow status. Save unfinished work there. Guides, Blogs, Training and Reports publish directly to Insights when you select Publish to Insights. Job aids require a business area and assigned reviewers, then follow the review and manager approval steps. Saving a draft does not publish it.'],
-    ['How do I review a Job aid or respond to requested changes?', 'Open Reviewer Workspace for work assigned to you. Read the document and review comments before choosing an available action. Authors can find requested changes in My Workspace, update the document and resubmit it. The audit trail records workflow decisions.'],
+    ['Where are my drafts, and how does publishing work?', 'Workspace → My documents contains your documents and their workflow status. Save unfinished work there. Guides, Blogs, Training and Reports publish directly to Insights when you select Publish to Insights. Job aids require a business area and assigned reviewers, then follow the review and manager approval steps. Saving a draft does not publish it.'],
+    ['How do I review a Job aid or respond to requested changes?', 'Open Workspace → Reviews & approvals for work assigned to you. Read the document and review comments before choosing an available action. Authors can find requested changes in Workspace, update the document and resubmit it. The audit trail records workflow decisions.'],
     ['How do I save an article for later?', 'Use the save action in the document reader, then open Saved from the header to return to it. Removing a saved item removes your bookmark, not the original document. A saved article may become unavailable if it is deleted or your Confluence access changes.'],
-    ['How do I edit, suggest a correction or delete a document?', 'Open your document from My Workspace and use the actions available to you. For someone else’s article, use Suggest an edit when available. Deletion requires the document key and a decision comment; you can copy the key from the confirmation dialog. A successful deletion returns you to your originating list.'],
+    ['How do I edit, suggest a correction or delete a document?', 'Open your document from Workspace and use the actions available to you. For someone else’s article, use Suggest an edit when available. Deletion requires the document key and a decision comment; you can copy the key from the confirmation dialog. A successful deletion returns you to your originating list.'],
     ['How are covers, summaries, authors and view counts shown?', 'An uploaded cover takes priority. Insights without a cover use a fallback image assigned consistently to the article. Cards use the document’s summary and author, and display recorded view counts when available. “Views unavailable” means a count could not be retrieved; it does not mean zero views.'],
     ['Why can’t I see a document or use an action?', 'Native Confluence permissions control access to pages and attachments. WCSpedia entitlements control the application actions offered to your account; they do not grant Confluence access. If something is missing, ask your space administrator to check both your native access and your entitlement record.'],
     ['What should I do if loading, search or publishing fails?', 'Keep your editor open if a save or publication fails and read the error before retrying. For loading or search errors, use Try again and check that your Confluence session is still signed in. Newly published articles can take time to appear in native search. If the problem continues, share the page link and error with your space administrator; do not share tokens or cookies.']
@@ -605,5 +605,5 @@
   global.WCSFAQ={mount};
 })(window);
 
-  modules['faq'] = { version: '07159e8182ed' };
+  modules['faq'] = { version: 'bbb93c4444c6' };
 })();
