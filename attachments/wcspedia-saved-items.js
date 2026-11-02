@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const mount = document.getElementById('wcspedia');
-  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('25880ed94162'))) return;
+  if (!mount || (window.__WCSMacroLoader && !window.__WCSMacroLoader.canRender?.('07159e8182ed'))) return;
   function failPage(message) {
     if (window.__WCSMacroLoader) { window.__WCSMacroLoader.fail(Error(message)); return; }
     const box = document.createElement('div');
@@ -24,6 +24,6 @@
 
   const modules = window.WCSPageModules = window.WCSPageModules || {};
   if (modules['saved']) return;
-  if (window.WCSCoreVersion !== '25880ed94162') { failPage('The shared WCSpedia core is unavailable. Upload the matching package.'); return; }
-  modules['saved'] = { version: '25880ed94162' };
+  if (window.WCSCoreVersion !== '07159e8182ed') { failPage('The shared WCSpedia core is unavailable. Upload the matching package.'); return; }
+  modules['saved'] = { version: '07159e8182ed' };
 })();

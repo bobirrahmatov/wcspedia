@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var registry = window.WCSHeaderWidgetModules = window.WCSHeaderWidgetModules || {};
-  if (registry.addDocument && registry.addDocument.version === '25880ed94162') return;
+  if (registry.addDocument && registry.addDocument.version === '07159e8182ed') return;
   var scope = { crypto: window.crypto, FormData: window.FormData, Blob: window.Blob, fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : undefined, location: window.location, DOMParser: window.DOMParser };
   (function (globalThis) {
 /* Shared WCSpedia interface glyphs. Exact PAL sidebar paths retain their license
@@ -2283,25 +2283,22 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     async function page(id,signal,expectedParent){return assertPage(await storage.page(numeric(id),EXPAND,options(signal)),expectedParent);}
     async function restrictions(id,operation,signal){return request('/rest/api/content/'+id+'/restriction/byOperation/'+operation+'?expand=restrictions.user,restrictions.group&limit=200',null,undefined,signal);}
     function restrictionRows(r,operation){if(!r||r.operation!==operation||!object(r.restrictions))fail('Confluence did not return verifiable native restrictions.','INVALID_PERMISSIONS');var users=r.restrictions.user,groups=r.restrictions.group;if(!users||!groups||!Array.isArray(users.results)||!Array.isArray(groups.results))fail('Confluence did not expand native restriction subjects.','INVALID_PERMISSIONS');if((users._links&&users._links.next)||(groups._links&&groups._links.next))fail('The restriction list is too large to verify safely.','PERMISSIONS_LIMIT');return {users:users.results,groups:groups.results};}
-    async function boundaries(signal,reading,currentUserRead,skipWorking){
+    async function boundaries(signal,skipWorking){
       var workingError=null;
       var results=await Promise.all([storage.page(rootId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}),skipWorking?Promise.resolve(null):storage.page(workingId,'space,ancestors,version,operations',options(signal)).then(function(p){return assertPage(p);}).catch(function(error){aborted(signal);if(error.name==='AbortError')throw error;workingError=error;return null;}),request('/rest/api/space/'+encodeURIComponent(space)+'?expand=operations',null,undefined,signal)]);
       if(results[2].key!==space||results[2].operations!=null&&!Array.isArray(results[2].operations))fail('Confluence space permissions could not be verified.','INVALID_PERMISSIONS');
       // Each private workflow record protects its own body, history and
       // attachments. Working is a location, not a global authoring entitlement.
       // Do not scan its ancestors or require a parent restriction before saving.
-      // Parent editing is not a creation/review capability. Where DC omits
-      // space.operations, query the signed-in user's native space permissions.
-      var canCreate=false,permissionError=null;
-      if(Array.isArray(results[2].operations))canCreate=op(results[2],'create','page');
-      else try {
-        var currentUser=await (currentUserRead||storage.user(options(signal)));
-        if(!currentUser.userKey)fail('Confluence did not return a user key for the native Add page check.','INVALID_PERMISSIONS');
-        var grants=await request('/rest/api/space/'+encodeURIComponent(space)+'/permissions/user/'+encodeURIComponent(currentUser.userKey),null,undefined,signal);
-        if(!Array.isArray(grants))fail('Confluence did not return native space permissions.','INVALID_PERMISSIONS');
-        canCreate=grants.some(function(g){return (!g.spaceKey||g.spaceKey===space)&&g.operation&&g.operation.targetType==='page'&&g.operation.operationKey==='create';});
-      }catch(error){aborted(signal);permissionError=error;}
-      return {root:results[0],working:results[1],workingError:workingError,space:results[2],canCreate:canCreate,nativeCreationVerified:!permissionError,creationCode:permissionError?'CREATE_PERMISSION_UNVERIFIED':'',creationMessage:permissionError?'Confluence could not verify native Add page permission. '+permissionError.message:''};
+      // A space-only/empty operations array is not an effective denial of
+      // page creation. The user-grant listing can require administration and
+      // does not establish effective group access. Do not make either a new
+      // requirement for authors/reviewers. Keep positive evidence for the UI;
+      // otherwise the requested native POST enforces Add page as this user.
+      // Its seed contains no private content; verified child protection still
+      // precedes all private journal/body/media writes. No permission is cached.
+      var canCreate=op(results[2],'create','page');
+      return {root:results[0],working:results[1],workingError:workingError,space:results[2],canCreate:canCreate,nativeCreationVerified:canCreate,creationCode:'',creationMessage:''};
     }
     function directory(catalog,policy,user,previousPeople){
       var bySOEID=new Map(),byId=new Map();
@@ -2319,7 +2316,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
     }
     async function contextFor(input,signal,reading){
       input=input||{};var currentUserRead=input.user?Promise.resolve(input.user):storage.user(options(signal));
-      var responses=await Promise.all([currentUserRead,input.policy?Promise.resolve(input.policy):deps.loadPolicy(options(signal)),input.skipDocuments?Promise.resolve(null):boundaries(signal,reading,currentUserRead,input.skipWorking===true)]);
+      var responses=await Promise.all([currentUserRead,input.policy?Promise.resolve(input.policy):deps.loadPolicy(options(signal)),input.skipDocuments?Promise.resolve(null):boundaries(signal,input.skipWorking===true)]);
       var policy=E.validatePolicy(responses[1].data||responses[1]),catalog=clone(input.catalog||(lastContext&&lastContext.catalog)||config.catalog||{schemaVersion:1,isDemo:false,people:[],areas:[],documents:[]});
       var dir=directory(catalog,policy,responses[0]);var ctx={user:responses[0],policy:policy,bounds:responses[2],catalog:catalog,dir:dir,access:input.access||{}};lastContext=ctx;return ctx;
     }
@@ -2530,7 +2527,13 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       // search again, and Confluence still enforces the title on the POST.
       var marker='wcs-document-'+documentKey,existing=seedCheckedAbsent?null:await findSeed(title,marker,signal,expectedParent);
       if(existing){if(!marked(existing,'wcs-created-'+requestId)&&!marked(existing,'wcs-operation-'+requestId))fail('This document key already exists. Reload the workspace.','CONFLICT');return existing;}
-      var created=await request('/rest/api/content','POST',{type:'page',title:title,space:{key:space},ancestors:[{id:expectedParent}],body:{storage:{representation:'storage',value:anchor(marker)+anchor('wcs-created-'+requestId)+anchor('wcs-kind-'+kind)+(expectedParent===insightsId?anchor('wcs-single-insight'):'')+'<p>WCSpedia content is being prepared.</p>'}}},signal);
+      var created;
+      try{
+        created=await request('/rest/api/content','POST',{type:'page',title:title,space:{key:space},ancestors:[{id:expectedParent}],body:{storage:{representation:'storage',value:anchor(marker)+anchor('wcs-created-'+requestId)+anchor('wcs-kind-'+kind)+(expectedParent===insightsId?anchor('wcs-single-insight'):'')+'<p>WCSpedia content is being prepared.</p>'}}},signal);
+      }catch(error){
+        if(error.status===403)error.message='Confluence denied creating a page under '+expectedParent+'. Check native Pages > Add permission and viewing access to that parent. '+error.message;
+        throw error;
+      }
       if(!created||!/^[1-9]\d{0,19}$/.test(String(created.id||'')))fail('Confluence did not confirm the created page ID. Check this same save before retrying.','UNKNOWN_COMMIT');
       // POST does not promise expanded operations/body/ancestors. Read the
       // actual saved page; absence in the POST is not a permission denial.
@@ -2716,7 +2719,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       var creationBoundsReady=creating;
       if(!creating)ctx.bounds={root:{operations:[]},working:null,space:null,canCreate:false,nativeCreationVerified:false,creationCode:'',creationMessage:''};
       async function ensureCreationBounds(){
-        if(!creationBoundsReady){ctx.bounds=await boundaries(signal,true,Promise.resolve(ctx.user));creationBoundsReady=true;}
+        if(!creationBoundsReady){ctx.bounds=await boundaries(signal);creationBoundsReady=true;}
         return ctx.bounds;
       }
       if(!session||session.actorId!==actor.id||!session.identity||session.identity.soeid!==who.soeid||['userKey','accountId'].some(function(k){return (session.identity[k]||null)!==(who[k]||null);}))fail('Your signed-in account changed. Reload before saving.','IDENTITY_MAPPING');
@@ -2730,7 +2733,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       }
       var fingerprint=await digest(JSON.stringify(canonical(command)));
       if(creating){
-        if(!ctx.bounds.canCreate||!E.hasGrant(ctx.policy,who,'content.create','*'))fail('Your account needs Add page permission and the WCSpedia creation grant.','FORBIDDEN');
+        if(!E.hasGrant(ctx.policy,who,'content.create','*'))fail('Your WCSpedia Add document entitlement is missing.','FORBIDDEN');
         if(Content.isInsightType(command.fields.type)&&!Content.isDirectPublication(command.fields))fail('Publish non-Job-aid content directly to Insights.','INVALID_MAPPING');
         if((!areas[command.fields.area]&&!(Content.isDirectPublication(command.fields)))||!TYPES.includes(command.fields.type))fail('Choose a configured business area and content type.','INVALID_MAPPING');
         doc=W.createDocument(command.fields,{people:ctx.dir.people,actorId:actor.id,actorSOEID:who.soeid,now:new Date().toISOString(),requireGovernance:governanceEnabled,reviewScheduleRequired:governanceEnabled,permissionContext:{actorId:actor.id,documentId:documentKey,create:true}});
@@ -2832,7 +2835,7 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
       if(!single&&(command.action==='approve'||(command.action==='reassign-owner'&&doc.publishedConfluencePageId)||(Content.isDirectPublication(doc)&&['create','edit','revise'].includes(command.action)))){
         var dest=await actionDestination(doc),publishedId=doc.publishedConfluencePageId||j.publishedPageId,published;
         if(publishedId){published=await page(publishedId,signal);if(parent(published)!==dest.id&&parent(published)!==workingId&&!(Content.isDirectPublication(doc)&&parent(published)===journal.value.priorPublishedParentId))fail('The published page was moved.','PAGE_SCOPE');if(!marked(published,'wcs-document-'+documentKey))fail('The published document identity changed.','PAGE_SCOPE');if(!op(published,'update'))fail('Confluence does not permit updating the published page.','FORBIDDEN');if(doc.publishedConfluencePageId&&!j.expectedPublishedVersion&&!journal.value.expectedPublishedVersion&&published.version.number!==doc.publishedConfluencePageVersion)fail('The published page changed outside this workflow. Reconcile its native history before approving.','CONFLICT');}
-        else{await ensureCreationBounds();if(!ctx.bounds.canCreate)fail('Publishing needs your Confluence space Add page permission.','FORBIDDEN');published=await createPage('WCSpedia publication '+documentKey,documentKey,'published',requestId,signal);await checkpoint({publishedPageId:published.id,expectedPublishedVersion:published.version.number,stage:'publication-created'});}
+        else{await ensureCreationBounds();published=await createPage('WCSpedia publication '+documentKey,documentKey,'published',requestId,signal);await checkpoint({publishedPageId:published.id,expectedPublishedVersion:published.version.number,stage:'publication-created'});}
         if(!j.expectedPublishedVersion&&!journal.value.expectedPublishedVersion)await checkpoint({publishedPageId:published.id,expectedPublishedVersion:published.version.number,stage:'publication-prepared'});
         if(!op(published,'update'))fail('Confluence does not permit updating the published page.','FORBIDDEN');
         if(!direct&&command.action!=='reassign-owner'){
@@ -5366,5 +5369,5 @@ return Object.freeze({ renderStorage, collectMedia, mediaResources });
 });
 
   })(scope);
-  registry.addDocument = { version: '25880ed94162', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
+  registry.addDocument = { version: '07159e8182ed', Confluence: scope.WCSConfluence, AddDocument: scope.WCSAddDocument, Content: scope.WCSEditorContent, Icons: scope.WCSIcons };
 })();
